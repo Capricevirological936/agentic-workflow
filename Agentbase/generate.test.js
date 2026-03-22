@@ -85,6 +85,7 @@ const testManifest = {
     forbidden: [
       { type: 'block', pattern: 'rm -rf /', reason: 'Tehlikeli komut' },
       { type: 'warn', pattern: 'console.log', reason: 'Debug kodu' },
+      { hook_type: 'block', command: 'git push --force', reason: 'Force push yasak' },
     ],
   },
   environments: [
@@ -338,10 +339,10 @@ describe('processJsonGenerateKeys', () => {
     };
 
     const result = processJsonGenerateKeys(obj, testManifest);
-    // forbidden rules'dan bir hook uretilmeli (sadece type: "block" olanlar)
-    assert.ok(result.obj.hooks.length >= 1);
-    const firstHook = result.obj.hooks[0];
-    assert.ok(firstHook.command.includes('rm -rf /'));
+    // forbidden rules'dan hook uretilmeli (sadece type/hook_type: "block" olanlar)
+    assert.strictEqual(result.obj.hooks.length, 2, 'iki block kuraldan iki hook uretilmeli');
+    assert.ok(result.obj.hooks[0].command.includes('rm -rf /'));
+    assert.ok(result.obj.hooks[1].command.includes('git push --force'), 'hook_type/command formati da desteklenmeli');
   });
 
   it('Bash matcher li GENERATE blogu hook group olusturur', () => {

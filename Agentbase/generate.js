@@ -306,8 +306,10 @@ function getForbiddenRules(manifest) {
   if (!Array.isArray(forbidden)) return rules;
 
   for (const item of forbidden) {
-    if (item.type === 'block' && item.pattern && item.reason) {
-      rules.push({ pattern: item.pattern, reason: item.reason });
+    const type = item.type || item.hook_type;
+    const pattern = item.pattern || item.command;
+    if (type === 'block' && pattern && item.reason) {
+      rules.push({ pattern, reason: item.reason });
     }
   }
   return rules;
@@ -595,7 +597,8 @@ const SIMPLE_GENERATORS = {
       const rows = subprojects.map(sp => {
         const cmd = sp.test_command || testCommands[sp.name] || 'npm test';
         const spPath = sp.path || `../Codebase/${sp.name}`;
-        return `| ${sp.name} | \`cd "${spPath}" && ${cmd}\` |`;
+        const fullCmd = cmd.startsWith('cd ') ? cmd : `cd "${spPath}" && ${cmd}`;
+        return `| ${sp.name} | \`${fullCmd}\` |`;
       });
 
       return [
@@ -756,7 +759,7 @@ const SIMPLE_GENERATORS = {
     for (const sp of subprojects) {
       const spPath = (sp.path || sp.name).replace(/\.\.\//g, '').replace(/\//g, '\\/');
       const cmd = sp.test_command || testCommands[sp.name] || 'npm test';
-      const fullCmd = `cd "${sp.path || '../Codebase/' + sp.name}" && ${cmd}`;
+      const fullCmd = cmd.startsWith('cd ') ? cmd : `cd "${sp.path || '../Codebase/' + sp.name}" && ${cmd}`;
 
       entries.push(
         `  { pattern: /${spPath}\\/src\\//, layer: '${sp.name}', command: '${fullCmd}', extra: null }`
