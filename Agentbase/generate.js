@@ -121,7 +121,14 @@ function processJsonGenerateKeys(obj, manifest) {
 
   function walk(node) {
     if (Array.isArray(node)) {
-      return node.map(item => walk(item));
+      return node.map(item => walk(item))
+        .filter(item => {
+          // Bos objeleri temizle (aktif modulu olmayan GENERATE bloklarinin kalintisi)
+          if (item && typeof item === 'object' && !Array.isArray(item) && Object.keys(item).length === 0) {
+            return false;
+          }
+          return true;
+        });
     }
     if (node && typeof node === 'object') {
       const result = {};
@@ -139,9 +146,12 @@ function processJsonGenerateKeys(obj, manifest) {
               filled.push(blockName);
               // Entries'i parent'a merge et
               for (const entry of entries) {
-                if (entry._mergeKey && entry._mergeValue) {
+                if ('_mergeKey' in entry) {
                   // Root-level merge (ENABLED_PLUGINS gibi)
                   result[entry._mergeKey] = entry._mergeValue;
+                } else if (entry._hookGroupEntry) {
+                  // Tam hook grubu (matcher + hooks) — dogrudan result'a merge et
+                  Object.assign(result, entry._hookGroupEntry);
                 } else if (entry._hookEntry) {
                   // hooks array'ine ekleme
                   if (!result._pendingHooks) result._pendingHooks = [];
@@ -388,33 +398,33 @@ function getMigrationCommands(manifest, ormType) {
 
   const commands = {
     prisma: [
-      ['Schema dogrulama', `cd ${ormPath} && npx prisma validate`],
-      ['Migration olustur', `cd ${ormPath} && npx prisma migrate dev --name <aciklama>`],
-      ['Migration durumu', `cd ${ormPath} && npx prisma migrate status`],
-      ['Client olustur', `cd ${ormPath} && npx prisma generate`],
-      ['DB sifirla (DEV)', `cd ${ormPath} && npx prisma migrate reset`],
-      ['Seed calistir', `cd ${ormPath} && npx prisma db seed`],
-      ['Studio ac', `cd ${ormPath} && npx prisma studio`],
+      ['Schema dogrulama', `cd "${ormPath}" && npx prisma validate`],
+      ['Migration olustur', `cd "${ormPath}" && npx prisma migrate dev --name <aciklama>`],
+      ['Migration durumu', `cd "${ormPath}" && npx prisma migrate status`],
+      ['Client olustur', `cd "${ormPath}" && npx prisma generate`],
+      ['DB sifirla (DEV)', `cd "${ormPath}" && npx prisma migrate reset`],
+      ['Seed calistir', `cd "${ormPath}" && npx prisma db seed`],
+      ['Studio ac', `cd "${ormPath}" && npx prisma studio`],
     ],
     eloquent: [
-      ['Migration olustur', `cd ${ormPath} && php artisan make:migration <aciklama>`],
-      ['Migration calistir', `cd ${ormPath} && php artisan migrate`],
-      ['Migration geri al', `cd ${ormPath} && php artisan migrate:rollback`],
-      ['Migration durumu', `cd ${ormPath} && php artisan migrate:status`],
-      ['DB sifirla (DEV)', `cd ${ormPath} && php artisan migrate:fresh --seed`],
-      ['Seed calistir', `cd ${ormPath} && php artisan db:seed`],
+      ['Migration olustur', `cd "${ormPath}" && php artisan make:migration <aciklama>`],
+      ['Migration calistir', `cd "${ormPath}" && php artisan migrate`],
+      ['Migration geri al', `cd "${ormPath}" && php artisan migrate:rollback`],
+      ['Migration durumu', `cd "${ormPath}" && php artisan migrate:status`],
+      ['DB sifirla (DEV)', `cd "${ormPath}" && php artisan migrate:fresh --seed`],
+      ['Seed calistir', `cd "${ormPath}" && php artisan db:seed`],
     ],
     'django-orm': [
-      ['Migration olustur', `cd ${ormPath} && python manage.py makemigrations`],
-      ['Migration calistir', `cd ${ormPath} && python manage.py migrate`],
-      ['Migration durumu', `cd ${ormPath} && python manage.py showmigrations`],
-      ['SQL onizleme', `cd ${ormPath} && python manage.py sqlmigrate <app> <migration>`],
+      ['Migration olustur', `cd "${ormPath}" && python manage.py makemigrations`],
+      ['Migration calistir', `cd "${ormPath}" && python manage.py migrate`],
+      ['Migration durumu', `cd "${ormPath}" && python manage.py showmigrations`],
+      ['SQL onizleme', `cd "${ormPath}" && python manage.py sqlmigrate <app> <migration>`],
     ],
     typeorm: [
-      ['Migration olustur', `cd ${ormPath} && npx typeorm migration:generate -n <aciklama>`],
-      ['Migration calistir', `cd ${ormPath} && npx typeorm migration:run`],
-      ['Migration geri al', `cd ${ormPath} && npx typeorm migration:revert`],
-      ['Schema senkronize', `cd ${ormPath} && npx typeorm schema:sync`],
+      ['Migration olustur', `cd "${ormPath}" && npx typeorm migration:generate -n <aciklama>`],
+      ['Migration calistir', `cd "${ormPath}" && npx typeorm migration:run`],
+      ['Migration geri al', `cd "${ormPath}" && npx typeorm migration:revert`],
+      ['Schema senkronize', `cd "${ormPath}" && npx typeorm schema:sync`],
     ],
   };
 
@@ -585,7 +595,7 @@ const SIMPLE_GENERATORS = {
       const rows = subprojects.map(sp => {
         const cmd = sp.test_command || testCommands[sp.name] || 'npm test';
         const spPath = sp.path || `../Codebase/${sp.name}`;
-        return `| ${sp.name} | \`cd ${spPath} && ${cmd}\` |`;
+        return `| ${sp.name} | \`cd "${spPath}" && ${cmd}\` |`;
       });
 
       return [
@@ -605,7 +615,7 @@ const SIMPLE_GENERATORS = {
       '',
       '| Islem | Komut |',
       '|---|---|',
-      `| Test | \`cd ${codebasePath} && ${testCmd}\` |`,
+      `| Test | \`cd "${codebasePath}" && ${testCmd}\` |`,
     ].join('\n');
   },
 
@@ -624,7 +634,7 @@ const SIMPLE_GENERATORS = {
         .map(sp => {
           const cmd = sp.build_command || sp.scripts?.build || 'npm run build';
           const spPath = sp.path || `${codebasePath}/${sp.name}`;
-          return `| ${sp.name} | \`cd ${spPath} && ${cmd}\` |`;
+          return `| ${sp.name} | \`cd "${spPath}" && ${cmd}\` |`;
         });
 
       if (rows.length === 0) return '## Derleme Komutlari\n\nDerleme komutu tanimlanmadi.';
@@ -637,7 +647,7 @@ const SIMPLE_GENERATORS = {
       '',
       '| Islem | Komut |',
       '|---|---|',
-      `| Build | \`cd ${codebasePath} && ${buildCmd}\` |`,
+      `| Build | \`cd "${codebasePath}" && ${buildCmd}\` |`,
     ].join('\n');
   },
 
@@ -746,7 +756,7 @@ const SIMPLE_GENERATORS = {
     for (const sp of subprojects) {
       const spPath = (sp.path || sp.name).replace(/\.\.\//g, '').replace(/\//g, '\\/');
       const cmd = sp.test_command || testCommands[sp.name] || 'npm test';
-      const fullCmd = `cd ${sp.path || '../Codebase/' + sp.name} && ${cmd}`;
+      const fullCmd = `cd "${sp.path || '../Codebase/' + sp.name}" && ${cmd}`;
 
       entries.push(
         `  { pattern: /${spPath}\\/src\\//, layer: '${sp.name}', command: '${fullCmd}', extra: null }`

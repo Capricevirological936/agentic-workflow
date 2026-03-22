@@ -343,6 +343,80 @@ describe('processJsonGenerateKeys', () => {
     const firstHook = result.obj.hooks[0];
     assert.ok(firstHook.command.includes('rm -rf /'));
   });
+
+  it('Bash matcher li GENERATE blogu hook group olusturur', () => {
+    const obj = {
+      hooks: {
+        PreToolUse: [
+          {
+            __GENERATE__PRETOOLUSE_BASH_HOOKS__: {
+              __doc__: 'Bash icin hook gruplari',
+              matcher: 'Bash',
+              prisma_active: {
+                __doc__: 'Prisma guard',
+                type: 'command',
+                command: 'node prisma-bash-guard.js',
+                timeout: 5,
+              },
+            },
+          },
+        ],
+      },
+    };
+
+    const result = processJsonGenerateKeys(obj, testManifest);
+    assert.ok(result.filled.includes('PRETOOLUSE_BASH_HOOKS'));
+    // PreToolUse array'inde matcher: "Bash" olan bir hook group olmali
+    const bashGroup = result.obj.hooks.PreToolUse.find(g => g.matcher === 'Bash');
+    assert.ok(bashGroup, 'Bash matcher li hook group olmali');
+    assert.ok(Array.isArray(bashGroup.hooks), 'hooks array olmali');
+    assert.strictEqual(bashGroup.hooks.length, 1);
+    assert.strictEqual(bashGroup.hooks[0].command, 'node prisma-bash-guard.js');
+  });
+
+  it('ENABLED_PLUGINS root-level merge yapar', () => {
+    const expoManifest = {
+      ...testManifest,
+      modules: { active: { orm: ['prisma'], mobile: ['expo'] } },
+    };
+
+    const obj = {
+      env: {},
+      __GENERATE__ENABLED_PLUGINS__: {
+        expo_active: {
+          'react-native-expo-complete@skills': true,
+        },
+      },
+    };
+
+    const result = processJsonGenerateKeys(obj, expoManifest);
+    assert.ok(result.filled.includes('ENABLED_PLUGINS'));
+    // Root seviyesine merge edilmis olmali
+    assert.strictEqual(result.obj['react-native-expo-complete@skills'], true);
+  });
+
+  it('aktif modulu olmayan GENERATE blogu bos {} birakmaz', () => {
+    const emptyManifest = { modules: { active: {} } };
+    const obj = {
+      hooks: {
+        PreToolUse: [
+          { matcher: 'Edit', hooks: [{ type: 'command', command: 'always.js' }] },
+          {
+            __GENERATE__BASH_HOOKS__: {
+              matcher: 'Bash',
+              prisma_active: { type: 'command', command: 'guard.js', timeout: 5 },
+            },
+          },
+        ],
+      },
+    };
+
+    const result = processJsonGenerateKeys(obj, emptyManifest);
+    // Bos {} filtrelenmis olmali
+    const preToolUse = result.obj.hooks.PreToolUse;
+    assert.strictEqual(preToolUse.length, 1, 'bos obje filtrelenmeli');
+    assert.strictEqual(preToolUse[0].matcher, 'Edit');
+  });
 });
 
 // ─────────────────────────────────────────────────────
