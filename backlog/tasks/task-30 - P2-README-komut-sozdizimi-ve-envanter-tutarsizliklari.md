@@ -1,9 +1,11 @@
 ---
 id: TASK-30
 title: 'P2: README komut sozdizimi ve envanter tutarsizliklari'
-status: To Do
-assignee: []
+status: Done
+assignee:
+  - '@claude'
 created_date: '2026-03-22 19:18'
+updated_date: '2026-03-22 19:47'
 labels:
   - readme
   - documentation
@@ -49,7 +51,13 @@ Duzeltme: README yi skeleton ile eslestir.
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 task-conductor ornekleri skeleton ile tutarli (top 5, all, virgullu ID, keyword, resume)
-- [ ] #2 deep-audit komutu README komut listesine eklendi
-- [ ] #3 task-hunter coklu gorev sozdizimi skeleton ile tutarli
+- [x] #1 task-conductor ornekleri skeleton ile tutarli (top 5, all, virgullu ID, keyword, resume)
+- [x] #2 deep-audit komutu README komut listesine eklendi
+- [x] #3 task-hunter coklu gorev sozdizimi skeleton ile tutarli
 <!-- AC:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+README komut ornekleri skeleton dosyalariyla eslesitirildi: task-conductor (top 5 varsayilan, virgullu ID, keyword modu eklendi), task-hunter (virgullu coklu gorev), deep-audit komutu README ye eklendi.
+<!-- SECTION:FINAL_SUMMARY:END -->

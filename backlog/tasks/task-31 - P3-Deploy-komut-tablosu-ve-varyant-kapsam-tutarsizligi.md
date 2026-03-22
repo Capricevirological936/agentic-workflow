@@ -1,9 +1,11 @@
 ---
 id: TASK-31
 title: 'P3: Deploy komut tablosu ve varyant kapsam tutarsizligi'
-status: To Do
-assignee: []
+status: Done
+assignee:
+  - '@claude'
 created_date: '2026-03-22 19:18'
+updated_date: '2026-03-22 19:48'
 labels:
   - readme
   - documentation
@@ -38,6 +40,12 @@ Vercel icin post-deploy skeleton i yok. Ya olusturulmali ya da README den Vercel
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Deploy komut tablosu varyant bazli hangi komutun mevcut oldugunu dogru gosteriyor
-- [ ] #2 Vercel icin post-deploy durumu netlestirildi (ya skeleton eklendi ya da README de belirtildi)
+- [x] #1 Deploy komut tablosu varyant bazli hangi komutun mevcut oldugunu dogru gosteriyor
+- [x] #2 Vercel icin post-deploy durumu netlestirildi (ya skeleton eklendi ya da README de belirtildi)
 <!-- AC:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Deploy komut tablosuna Varyantlar sutunu eklendi. pre-deploy (Docker, Coolify, Vercel), post-deploy (Docker, Coolify — Vercel serverless yapisi nedeniyle desteklenmiyor). Vercel post-deploy durumu tabloda acikca belirtildi; gereksiz skeleton olusturulmadi.
+<!-- SECTION:FINAL_SUMMARY:END -->
