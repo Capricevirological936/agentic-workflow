@@ -12,7 +12,7 @@
 
 ## Activates
 
-- rules/design-system.md
+- rules/design-system.skeleton.md
 
 ## Affects Core
 

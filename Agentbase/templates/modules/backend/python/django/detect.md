@@ -13,7 +13,7 @@
 ## Activates
 
 - hooks/django-guard.js (PreToolUse Bash)
-- rules/django-rules.md
+- rules/django-rules.skeleton.md
 
 ## Affects Core
 

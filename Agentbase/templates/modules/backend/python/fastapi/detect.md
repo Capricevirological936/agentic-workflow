@@ -12,7 +12,7 @@
 
 ## Activates
 
-- rules/fastapi-rules.md
+- rules/fastapi-rules.skeleton.md
 
 ## Affects Core
 

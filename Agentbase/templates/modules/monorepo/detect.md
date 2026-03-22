@@ -15,8 +15,8 @@
 
 ## Activates
 
-- commands/review-module.md (slash command)
-- hooks/auto-format.js (PostToolUse Edit|Write)
+- commands/review-module.skeleton.md (slash command)
+- hooks/auto-format.skeleton.js (PostToolUse Edit|Write)
 
 ## Affects Core
 

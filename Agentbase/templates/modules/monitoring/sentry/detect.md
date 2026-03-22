@@ -12,7 +12,7 @@
 
 ## Activates
 
-- rules/sentry-rules.md
+- rules/sentry-rules.skeleton.md
 
 ## Affects Core
 

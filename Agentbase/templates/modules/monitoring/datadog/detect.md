@@ -12,7 +12,7 @@
 
 ## Activates
 
-- rules/datadog-rules.md
+- rules/datadog-rules.skeleton.md
 
 ## Affects Core
 

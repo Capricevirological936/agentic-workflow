@@ -12,7 +12,7 @@
 
 ## Activates
 
-- rules/github-actions-rules.md
+- rules/github-actions-rules.skeleton.md
 
 ## Affects Core
 

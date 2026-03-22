@@ -287,6 +287,42 @@ describe('processJsonGenerateKeys', () => {
     assert.ok(!commands.includes('python check.py'));
   });
 
+  it('3-seviyeli modul isimli kosullari isler (nodejs/express_active)', () => {
+    const obj = {
+      hooks: [],
+      __GENERATE__NESTED_HOOKS__: {
+        'nodejs/express_active': {
+          __doc__: 'Express hook',
+          type: 'command',
+          command: 'node express-check.js',
+          timeout: 10,
+        },
+        'python/django_active': {
+          __doc__: 'Django hook — aktif degil',
+          type: 'command',
+          command: 'python django-check.py',
+          timeout: 10,
+        },
+        prisma_active: {
+          __doc__: 'Prisma hook — duz isim, hala calismali',
+          type: 'command',
+          command: 'node prisma-nested.js',
+          timeout: 10,
+        },
+      },
+    };
+
+    const result = processJsonGenerateKeys(obj, testManifest);
+    assert.ok(result.filled.includes('NESTED_HOOKS'));
+    const commands = result.obj.hooks.map(h => h.command);
+    // nodejs/express aktif → dahil edilmeli
+    assert.ok(commands.includes('node express-check.js'), 'nodejs/express_active eslesmeli');
+    // python/django aktif degil → haric
+    assert.ok(!commands.includes('python django-check.py'), 'python/django_active eslesmemeli');
+    // prisma aktif → duz isim hala calismali
+    assert.ok(commands.includes('node prisma-nested.js'), 'prisma_active hala calismali');
+  });
+
   it('forbidden_commands template\'ini isler', () => {
     const obj = {
       hooks: [],

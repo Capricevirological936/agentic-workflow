@@ -13,7 +13,7 @@
 ## Activates
 
 - hooks/manage-py-guard.js (PreToolUse Bash)
-- rules/django-orm-rules.md
+- rules/django-orm-rules.skeleton.md
 
 ## Affects Core
 

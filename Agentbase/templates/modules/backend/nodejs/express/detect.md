@@ -12,7 +12,7 @@
 
 ## Activates
 
-- rules/express-rules.md
+- rules/express-rules.skeleton.md
 
 ## Affects Core
 

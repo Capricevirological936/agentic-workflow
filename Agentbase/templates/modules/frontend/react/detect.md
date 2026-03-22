@@ -12,7 +12,7 @@
 
 ## Activates
 
-- rules/react-rules.md
+- rules/react-rules.skeleton.md
 
 ## Affects Core
 

@@ -13,7 +13,7 @@
 ## Activates
 
 - hooks/typeorm-sync-guard.js (PreToolUse Bash)
-- rules/typeorm-rules.md
+- rules/typeorm-rules.skeleton.md
 
 ## Affects Core
 

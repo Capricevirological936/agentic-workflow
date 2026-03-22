@@ -12,7 +12,7 @@
 
 ## Activates
 
-- rules/nestjs-rules.md
+- rules/nestjs-rules.skeleton.md
 
 ## Affects Core
 

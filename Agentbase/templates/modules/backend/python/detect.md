@@ -19,7 +19,7 @@
 
 ## Activates
 
-- rules/python-backend-rules.md
+- rules/python-backend-rules.skeleton.md
 
 ## Affects Core
 

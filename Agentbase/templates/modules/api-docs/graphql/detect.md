@@ -12,7 +12,7 @@
 
 ## Activates
 
-- rules/graphql-rules.md
+- rules/graphql-rules.skeleton.md
 
 ## Affects Core
 

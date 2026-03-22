@@ -19,7 +19,7 @@
 
 ## Activates
 
-- rules/php-backend-rules.md
+- rules/php-backend-rules.skeleton.md
 
 ## Affects Core
 

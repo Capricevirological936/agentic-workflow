@@ -15,7 +15,7 @@
 - hooks/prisma-db-push-guard.js (PreToolUse Bash)
 - hooks/prisma-migration-check.js (PostToolUse Edit|Write)
 - hooks/destructive-migration-check.js (PostToolUse Bash)
-- rules/prisma-rules.md
+- rules/prisma-rules.skeleton.md
 
 ## Affects Core
 

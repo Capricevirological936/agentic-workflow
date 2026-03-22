@@ -12,7 +12,7 @@
 
 ## Activates
 
-- rules/html-rules.md
+- rules/html-rules.skeleton.md
 
 ## Affects Core
 

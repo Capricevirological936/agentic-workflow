@@ -12,9 +12,9 @@
 
 ## Activates
 
-- commands/pre-deploy.md (slash command)
-- commands/post-deploy.md (slash command)
-- agents/devops.md (sub-agent)
+- commands/pre-deploy.skeleton.md (slash command)
+- commands/post-deploy.skeleton.md (slash command)
+- agents/devops.skeleton.md (sub-agent)
 
 ## Affects Core
 

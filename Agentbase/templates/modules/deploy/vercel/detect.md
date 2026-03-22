@@ -12,7 +12,7 @@
 
 ## Activates
 
-- commands/pre-deploy.md (slash command)
+- commands/pre-deploy.skeleton.md (slash command)
 
 ## Affects Core
 

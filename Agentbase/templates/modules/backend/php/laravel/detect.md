@@ -13,7 +13,7 @@
 ## Activates
 
 - hooks/artisan-guard.js (PreToolUse Bash)
-- rules/laravel-rules.md
+- rules/laravel-rules.skeleton.md
 
 ## Affects Core
 

@@ -13,7 +13,7 @@
 ## Activates
 
 - hooks/spark-guard.js (PreToolUse Bash)
-- rules/codeigniter4-rules.md
+- rules/codeigniter4-rules.skeleton.md
 
 ## Affects Core
 

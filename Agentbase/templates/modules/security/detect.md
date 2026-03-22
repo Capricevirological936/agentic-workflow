@@ -12,7 +12,7 @@
 
 ## Activates
 
-- commands/idor-scan.md (slash command)
+- commands/idor-scan.skeleton.md (slash command)
 
 ## Affects Core
 

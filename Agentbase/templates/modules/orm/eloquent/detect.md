@@ -14,7 +14,7 @@
 
 - hooks/artisan-migrate-guard.js (PreToolUse Bash)
 - hooks/eloquent-migration-check.js (PostToolUse Edit|Write)
-- rules/eloquent-rules.md
+- rules/eloquent-rules.skeleton.md
 
 ## Affects Core
 

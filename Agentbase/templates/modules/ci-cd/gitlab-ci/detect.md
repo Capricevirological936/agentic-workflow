@@ -12,7 +12,7 @@
 
 ## Activates
 
-- rules/gitlab-ci-rules.md
+- rules/gitlab-ci-rules.skeleton.md
 
 ## Affects Core
 

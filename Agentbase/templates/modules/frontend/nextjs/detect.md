@@ -12,7 +12,7 @@
 
 ## Activates
 
-- rules/nextjs-rules.md
+- rules/nextjs-rules.skeleton.md
 
 ## Affects Core
 

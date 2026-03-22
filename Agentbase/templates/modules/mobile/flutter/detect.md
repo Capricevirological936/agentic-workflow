@@ -12,7 +12,7 @@
 
 ## Activates
 
-- rules/flutter-rules.md
+- rules/flutter-rules.skeleton.md
 
 ## Affects Core
 

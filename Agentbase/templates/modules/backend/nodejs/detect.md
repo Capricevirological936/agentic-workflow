@@ -20,7 +20,7 @@
 
 ## Activates
 
-- rules/nodejs-rules.md
+- rules/nodejs-rules.skeleton.md
 
 ## Affects Core
 

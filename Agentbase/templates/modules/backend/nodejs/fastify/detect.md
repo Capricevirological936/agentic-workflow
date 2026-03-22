@@ -12,7 +12,7 @@
 
 ## Activates
 
-- rules/fastify-rules.md
+- rules/fastify-rules.skeleton.md
 
 ## Affects Core
 

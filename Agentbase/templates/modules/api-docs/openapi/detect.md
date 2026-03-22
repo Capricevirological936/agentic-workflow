@@ -12,8 +12,8 @@
 
 ## Activates
 
-- hooks/openapi-sync-check.js (PostToolUse Edit|Write)
-- rules/openapi-rules.md
+- hooks/openapi-sync-check.skeleton.js (PostToolUse Edit|Write)
+- rules/openapi-rules.skeleton.md
 
 ## Affects Core
 

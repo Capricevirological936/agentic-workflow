@@ -12,7 +12,7 @@
 
 ## Activates
 
-- rules/react-native-rules.md
+- rules/react-native-rules.skeleton.md
 
 ## Affects Core
 
