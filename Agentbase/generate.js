@@ -859,14 +859,20 @@ const SIMPLE_GENERATORS = {
     const envs = manifest?.environments || [];
     const prodEnv = envs.find(e => e.name === 'production' || e.name === 'prod');
     const url = prodEnv?.url || '<PROJE_URL>';
+    const healthCheck = prodEnv?.health_check;
+    const apiPrefix = manifest?.project?.api_prefix || '';
+
+    // health_check manifest te varsa oldugu gibi kullan, yoksa url + /health
+    const healthUrl = healthCheck || `${url}/health`;
+    const statusUrl = `${url}${apiPrefix}/status`;
 
     return [
       '## Smoke Test Endpoint\'leri',
       '',
       '| Endpoint | Beklenen |',
       '|---|---|',
-      `| \`GET ${url}/health\` | 200 OK |`,
-      `| \`GET ${url}/api/status\` | 200 OK |`,
+      `| \`GET ${healthUrl}\` | 200 OK |`,
+      `| \`GET ${statusUrl}\` | 200 OK |`,
     ].join('\n');
   },
 

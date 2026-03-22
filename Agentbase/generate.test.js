@@ -890,7 +890,25 @@ describe('SIMPLE_GENERATORS', () => {
   it('SMOKE_TEST_ENDPOINTS production endpoint\'lerini uretir', () => {
     const result = SIMPLE_GENERATORS.SMOKE_TEST_ENDPOINTS(testManifest, 'md');
     assert.ok(result.includes('https://api.example.com'));
-    assert.ok(result.includes('/health'));
+    assert.ok(result.includes('/status'), 'status endpoint olmali');
+  });
+
+  it('SMOKE_TEST_ENDPOINTS health_check manifest degerini kullaniyor', () => {
+    const manifest = {
+      environments: [{ name: 'production', url: 'https://api.example.com', health_check: 'https://api.example.com/readyz' }],
+    };
+    const result = SIMPLE_GENERATORS.SMOKE_TEST_ENDPOINTS(manifest);
+    assert.ok(result.includes('/readyz'), 'health_check alani kullanilmali');
+    assert.ok(!result.includes('/health'), 'varsayilan /health olmamali');
+  });
+
+  it('SMOKE_TEST_ENDPOINTS api_prefix manifest degerini kullaniyor', () => {
+    const manifest = {
+      project: { api_prefix: '/v1' },
+      environments: [{ name: 'production', url: 'https://api.example.com' }],
+    };
+    const result = SIMPLE_GENERATORS.SMOKE_TEST_ENDPOINTS(manifest);
+    assert.ok(result.includes('/v1/status'), 'api_prefix yansimali');
   });
 
   it('SUBPROJECT_CONFIGS Codebase-relative path uretiyor (../Codebase prefix yok)', () => {
