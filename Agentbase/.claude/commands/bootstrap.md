@@ -70,10 +70,10 @@ Kurduktan sonra /bootstrap komutunu tekrar calistirin.
 
 Bash ile calistir: `ls ../Codebase/ 2>/dev/null | head -5`
 
-- **Dizin yoksa veya bossa** → Kullaniciya su mesaji goster ve KOMPLE DUR:
+- **Dizin yoksa** → Kullaniciya su mesaji goster ve KOMPLE DUR:
 
 ```
-❌ Codebase/ dizini bos veya bulunamadi.
+❌ Codebase/ dizini bulunamadi.
 Projenizi bu dizine koyun veya sembolik link olusturun:
 
   ln -s /path/to/your/project ../Codebase
@@ -81,7 +81,20 @@ Projenizi bu dizine koyun veya sembolik link olusturun:
 Ardindan /bootstrap komutunu tekrar calistirin.
 ```
 
-- **Dosyalar varsa** → `✅ Codebase bulundu` yazdir, bulunan ust-duzey dosya/klasorleri listele ve devam et.
+- **Dizin var ama bos** → Greenfield moduna gec. Kullaniciya sor:
+
+```
+📦 Codebase/ dizini bos. Sifirdan yeni bir proje mi basliyorsunuz?
+   a) Evet — greenfield modunda devam et (stack ve proje bilgileri roportajda sorulacak)
+   b) Hayir — once projeyi Codebase/ dizinine koyacagim
+
+>
+```
+
+  - **a secilirse** → `GREENFIELD_MODE = true` olarak kaydet. `✅ Greenfield modu aktif` yazdir ve devam et.
+  - **b secilirse** → KOMPLE DUR (mevcut davranis).
+
+- **Dosyalar varsa** → `GREENFIELD_MODE = false`. `✅ Codebase bulundu` yazdir, bulunan ust-duzey dosya/klasorleri listele ve devam et.
 
 ### 1.3 Onceki Bootstrap Kontrolu
 
@@ -148,6 +161,13 @@ Tum kontroller basarili oldugunda:
 ---
 
 ## ADIM 2 — CODEBASE ANALIZI (Otomatik)
+
+> **GREENFIELD_MODE = true ise** bu adimin tamamini atla. Asagidaki mesaji goster ve dogrudan ADIM 3'e gec:
+>
+> ```
+> 🌱 Greenfield modu — otomatik codebase analizi atlanıyor.
+>    Tum proje bilgileri roportajda sorulacak.
+> ```
 
 `../Codebase/` dizinini tarayarak proje hakkinda mumkun olan her seyi otomatik tespit et. Her alt adimin sonucunu bir degiskende tut — roportajda ve manifest'te kullanilacak.
 
@@ -557,6 +577,30 @@ Eger `templates/interview/phase-{N}-*.md` dosyalari mevcutsa onlari oku ve soru 
 ### Faz 1 — Proje Temelleri
 *Bu faz PROJECT.md ve ARCHITECTURE.md icin veri toplar.*
 
+> **GREENFIELD_MODE = true ise** otomatik tespit sonuclari yok. Bu fazda S0 (stack secimi) ek sorusu sorulur ve tum sorular (S2, S3 dahil) skip condition'siz sorulur.
+
+**S0 (SADECE GREENFIELD_MODE — stack secimi):**
+```
+━━━ Faz 1/4: Proje Temelleri (Greenfield) ━━━
+
+S0: Hangi teknoloji stack'ini kullanacaksiniz?
+    a) Node.js (Express/Fastify/Next.js/Expo)
+    b) Python (Django/FastAPI/Flask)
+    c) PHP (Laravel/CodeIgniter)
+    d) Go
+    e) Rust
+    f) Java/Kotlin
+    g) Diger: ___
+
+    Birden fazla secebilirsiniz (orn: a,c)
+
+>
+```
+
+S0 cevabina gore:
+- `manifest.stack.primary` ve `manifest.stack.detected` doldurulur.
+- Sonraki sorulardaki "[Tespit edilen: ...]" ipuclari bos birakilir.
+
 **S1 (her zaman sor):**
 ```
 ━━━ Faz 1/4: Proje Temelleri ━━━
@@ -567,7 +611,7 @@ S1: Bu projeyi kisaca tanimlar misiniz?
 >
 ```
 
-**S2 (ortamlar):**
+**S2 (ortamlar — greenfield'da da sor, skip condition yok):**
 ```
 S2: Projenin calisma ortamlari nelerdir?
     a) Sadece local
@@ -581,7 +625,7 @@ S2: Projenin calisma ortamlari nelerdir?
 >
 ```
 
-**S3 (deploy — sadece Docker veya CI/CD tespit edildiyse sor):**
+**S3 (deploy — greenfield'da da sor, skip condition yok):**
 ```
 S3: Deploy yonteminiz nedir?
     a) Manuel (SSH/FTP)
@@ -602,7 +646,7 @@ S4: Alt projelerin rollerini dogrulayalim:
 >
 ```
 
-**S5 (API prefix — sadece API tespit edildiyse sor):**
+**S5 (API prefix — sadece API tespit edildiyse veya S0'da secildiyse sor):**
 ```
 S5: API prefix'iniz nedir?
     a) /api
@@ -1750,6 +1794,8 @@ EOF
 
 Asagidaki gorevleri olustur (backlog CLI ile):
 
+**GREENFIELD_MODE = false (mevcut proje):**
+
 ```bash
 backlog task create "Codebase'i incele ve ARCHITECTURE.md'yi detaylandir" \
   -d "Bootstrap tarafindan olusturulan iskelet ARCHITECTURE.md dosyasini, codebase'i derinlemesine inceleyerek detaylandir. Katman yapisi, veri akisi, bagimlilik kurallari, onemli pattern'ler ekle." \
@@ -1762,8 +1808,27 @@ backlog task create "Ilk feature/bug task'ini olustur" \
   -l bootstrap
 ```
 
+**GREENFIELD_MODE = true (yeni proje):**
+
+```bash
+backlog task create "Proje scaffold'unu olustur" \
+  -d "Codebase/ dizininde proje scaffold'unu olustur. Stack: [manifest.stack.primary]. Gerekli komutlar Bootstrap raporunda listelenmistir." \
+  --priority high \
+  -l bootstrap -l greenfield
+
+backlog task create "ARCHITECTURE.md'yi proje planina gore yaz" \
+  -d "Greenfield projesi icin hedef mimariyi, katmanlari ve veri akisini tanimla. Henuz kod yok — bu bir hedef dokuman." \
+  --priority high \
+  -l bootstrap -l greenfield
+
+backlog task create "Ilk feature'i planla ve implement et" \
+  -d "Proje scaffold'u olustuktan sonra ilk feature'i planla. /task-plan ile baslayabilirsiniz." \
+  --priority medium \
+  -l bootstrap -l greenfield
 ```
-✅ Backlog hazir — 2 baslangic gorevi olusturuldu.
+
+```
+✅ Backlog hazir — [2|3] baslangic gorevi olusturuldu.
 ```
 
 ---
@@ -1810,7 +1875,23 @@ backlog task create "Ilk feature/bug task'ini olustur" \
    Bypass: TESTS_VERIFIED=1 git commit -m "..."
 
 📖 Sonraki Adimlar:
-   1. /task-hunter 1 → ARCHITECTURE.md'yi codebase analizi ile detaylandirir
+   [GREENFIELD_MODE ise asagidaki blogu goster:]
+   🌱 Greenfield — Proje Scaffold Kurulumu:
+      Stack'inize gore asagidaki komutu Codebase/ icinde calistirin:
+
+      Node.js:     cd ../Codebase && npm init -y
+      Next.js:     cd ../Codebase && npx create-next-app@latest .
+      Expo:        cd ../Codebase && npx create-expo-app@latest .
+      Python:      cd ../Codebase && python -m venv venv && pip init
+      Django:      cd ../Codebase && django-admin startproject myproject .
+      FastAPI:     cd ../Codebase && pip install fastapi uvicorn
+      Laravel:     cd ../Codebase && composer create-project laravel/laravel .
+      Go:          cd ../Codebase && go mod init [modul-adi]
+
+      Scaffold olustuktan sonra: /task-hunter 1
+
+   [Her durumda goster:]
+   1. /task-hunter 1 → [Greenfield: scaffold olustur | Normal: ARCHITECTURE.md detaylandir]
    2. /task-plan "istediginiz ozellik veya bug" → backlog'a yeni gorev olusturur
    3. /task-master → tum acik gorevleri onceliklendirir
    4. /task-hunter <id> → gorevi otonom implement eder

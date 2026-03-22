@@ -2,7 +2,7 @@
 
 Claude Code ile yazılım geliştirmenin tüm yaşam döngüsünü yöneten bir workflow sistemidir. Görev planlamadan code review'a, bug fix'ten deploy kontrolüne kadar her adımı yapılandırılmış komutlar, ajanlar ve otomatik koruma mekanizmalarıyla yönetir.
 
-Mevcut bir projeye entegre ederken veya en azından başlangıç scaffold'u olan yeni bir projede çalışır (`Codebase/` dizininde en az bir dosya — örneğin `package.json`, `composer.json` veya `pyproject.toml` — bulunmalıdır). `/bootstrap` komutu projenizi tanır, sizinle kısa bir röportaj yapar ve projenize özel workflow dosyalarını üretir.
+Mevcut bir projeye entegre edebilir veya sıfırdan yeni bir proje başlatabilirsiniz. `/bootstrap` komutu projenizi tanır (veya greenfield modunda stack bilgilerini sorar), sizinle kısa bir röportaj yapar ve projenize özel workflow dosyalarını üretir.
 
 ## Ne Sağlar?
 

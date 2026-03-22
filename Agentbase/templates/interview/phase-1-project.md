@@ -7,6 +7,9 @@
 
 ## Auto-Detection (Sorulardan Once Calistir)
 
+> **GREENFIELD_MODE = true ise:** Auto-detection tamamen atlanir (taranacak dosya yok).
+> Tum bilgiler roportajda kullanicidan alinir. S0 (stack secimi) sorusu ek olarak sorulur.
+
 Bootstrap bu phase'e baslamadan once asagidaki bilgileri codebase'den otomatik cikarir:
 
 | Field                        | Detection Source                                  | Manifest Path                     |
@@ -38,7 +41,7 @@ Bootstrap bu phase'e baslamadan once asagidaki bilgileri codebase'den otomatik c
   - `c)` Local + production
   - `d)` Local + staging + production
 - **Follow-up (if c or d):** `"Production URL/domain nedir?"`
-- **Skip condition:** No deploy config detected AND no Dockerfile AND no docker-compose
+- **Skip condition:** No deploy config detected AND no Dockerfile AND no docker-compose (GREENFIELD_MODE ise skip condition yok — her zaman sor)
 - **Maps to:** `manifest.environments[]`
 - **Downstream:** `PROJECT.md` environments table, `ARCHITECTURE.md` deployment section
 
@@ -51,7 +54,7 @@ Bootstrap bu phase'e baslamadan once asagidaki bilgileri codebase'den otomatik c
   - `c)` CI/CD pipeline (GitHub Actions/GitLab CI/diger)
   - `d)` Henuz deploy yok
 - **Follow-up (if b):** `"Hangi platform?"`
-- **Skip condition:** No Dockerfile AND no CI config AND no docker-compose
+- **Skip condition:** No Dockerfile AND no CI config AND no docker-compose (GREENFIELD_MODE ise skip condition yok — her zaman sor)
 - **Maps to:** `manifest.environments[].deploy_platform`, `manifest.environments[].deploy_trigger`
 - **Downstream:** `ARCHITECTURE.md` deploy pipeline section, CI/CD hook generation
 
