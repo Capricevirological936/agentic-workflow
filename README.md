@@ -152,7 +152,7 @@ Backlog'daki tüm açık görevleri 4 boyutlu skorlama ile önceliklendirir. Her
 
 ### /task-conductor
 
-Birden fazla görevi faz bazlı otonom olarak işler. task-master'in önceliklendirmesini kullanarak görevleri fazlara atar, her fazda sırayla veya paralel olarak implement eder, faz sonunda otomatik code review yapar. Manuel faz desteği vardır — bazı görevler insan müdahalesi gerektiğinde conductor durur ve bekler. State dosyası ile kesintiye uğradığında kaldığından devam eder.
+Birden fazla görevi faz bazlı otonom olarak işler. Görevleri kendi puanlama sistemiyle önceliklendirir ve fazlara atar, her fazda sırayla veya paralel olarak implement eder, faz sonunda özet ve bütünlük kontrolü yapar. Manuel faz desteği vardır — bazı görevler insan müdahalesi gerektiğinde conductor durur ve bekler. State dosyası ile kesintiye uğradığında kaldığından devam eder.
 
 ```
 /task-conductor top 5        # En yüksek öncelikli 5 görev
@@ -176,7 +176,9 @@ Bir isteği derinlemesine analiz ederek backlog görevi oluşturur. Codebase'i t
 Son değişiklikleri 3+1 agent ile review eder. Code Reviewer genel kod kalitesini, Silent Failure Hunter sessiz hataları ve hatalı hata yönetimini, Regression Analyzer değişikliğin mevcut işlevselliği kırma riskini değerlendirir. Güvenlik, auth, ödeme veya migration değişikliklerinde koşullu 4. agent (Devils Advocate) adversarial perspektiften kırılma noktalarını analiz eder. Bulgular karar ağacıyla değerlendirilir: düzeltilmesi gereken sorunlar raporlanır, önceden var olan sorunlar backlog'a kaydedilir — asla "scope dışı" olarak atlanmaz.
 
 ```
-/task-review
+/task-review                    # Son commit
+/task-review abc1234            # Belirli commit
+/task-review HEAD~3..HEAD       # Commit aralığı
 ```
 
 ### /auto-review
@@ -184,7 +186,9 @@ Son değişiklikleri 3+1 agent ile review eder. Code Reviewer genel kod kalitesi
 Diff-based, loop uyumlu ve idempotent review. Son commit'ten bu yana yapılan değişiklikleri hash kontrolüyle inceler — aynı diff'i iki kez review etmez. MINOR bulguları doğrudan düzeltir ve commit eder, MAJOR bulgular için backlog task açar. `/loop` skill'i ile periyodik çalıştırmaya uygundur. Kendi fix commit'lerini sonraki çalıştırmada tekrar review etmez.
 
 ```
-/auto-review
+/auto-review                    # Son commit
+/auto-review abc1234            # Belirli commit
+/auto-review HEAD~3..HEAD       # Commit aralığı
 ```
 
 ### /bug-hunter
@@ -201,7 +205,9 @@ Bug'in root cause'unu bulur ve düzeltir. Hata tanımını alır, codebase'de il
 Bug fix'ini 3 farklı perspektiften inceler. Code Reviewer fix'in kalitesini ve doğru root cause'u hedef alıp almadığını, Silent Failure Hunter fix'in yeni sessiz hatalar oluşturup oluşturamadığını, Regression Analyzer fix'in başka yerleri kırma riskini değerlendirir. Sonsuz döngü koruması vardır — maks 1 iterasyon.
 
 ```
-/bug-review
+/bug-review                     # Son commit
+/bug-review abc1234             # Belirli commit
+/bug-review HEAD~2..HEAD        # Commit aralığı
 ```
 
 ### /memorize
@@ -243,12 +249,14 @@ Bir domain modülünü (auth, profil, ödeme, mesaj vb.) tüm katmanlarda (API +
 
 Bu komutlar Bootstrap'in tespit ettiği modüllere göre üretilir — her projede bulunmaz:
 
-| Komut | Modül | Varyantlar | Ne Yapar |
-|-------|-------|------------|----------|
-| `/pre-deploy` | Deploy | Docker, Coolify, Vercel | Production push öncesi kontrol. Docker/Coolify: derleme, test, migration, env sync, Docker build. Vercel: TypeScript, build, env sync, edge-runtime. PASS/FAIL/WARN raporu. |
-| `/post-deploy` | Deploy | Docker, Coolify | Deploy sonrası doğrulama: health check, smoke test, rollback rehberi. Vercel serverless yapısı nedeniyle bu varyantı desteklemez. |
-| `/idor-scan` | Security | — | API endpoint'lerinde IDOR güvenlik açığı taraması — 5 nokta kontrol matrisi. |
-| `/review-module <ad>` | Monorepo | — | Bir modülü uçtan uca denetler — 4 paralel agent, cross-layer analiz. |
+Komut adları `/{varyant}-{komut}` formatında üretilir — çakışmayı önlemek için varyant adı prefix olarak eklenir:
+
+| Komut | Modül | Ne Yapar |
+|-------|-------|----------|
+| `/docker-pre-deploy`, `/coolify-pre-deploy`, `/vercel-pre-deploy` | Deploy | Production push öncesi kontrol. Docker/Coolify: derleme, test, migration, env sync, Docker build. Vercel: TypeScript, build, env sync, edge-runtime. PASS/FAIL/WARN raporu. |
+| `/docker-post-deploy`, `/coolify-post-deploy` | Deploy | Deploy sonrası doğrulama: health check, smoke test, rollback rehberi. Vercel serverless yapısı nedeniyle desteklenmez. |
+| `/security-idor-scan` | Security | API endpoint'lerinde IDOR güvenlik açığı taraması — 5 nokta kontrol matrisi. |
+| `/monorepo-review-module <ad>` | Monorepo | Bir modülü uçtan uca denetler — 4 paralel agent, cross-layer analiz. |
 
 ## Canlı Oturum İzleme
 
@@ -281,14 +289,22 @@ cd Agentbase && node bin/session-monitor.js
 
 ## Desteklenen Modül Aileleri
 
-Şablon sistemi modülerdir ve yalnızca tespit edilen aileler için içerik üretir:
+Şablon sistemi modülerdir ve yalnızca tespit edilen aileler için içerik üretir.
+
+### First-class Destek
+
+Bu stack'ler için framework-spesifik hook'lar, kurallar ve koruma mekanizmaları üretilir:
 
 - **ORM:** Prisma, Eloquent, Django ORM, TypeORM
 - **Deploy:** Docker, Coolify, Vercel
 - **Backend:** Express, Fastify, NestJS, Laravel, CodeIgniter 4, Django, FastAPI
 - **Frontend:** Next.js, React SPA, yalın HTML/CSS/JS
 - **Mobile:** Expo, React Native, Flutter
-- **Ek alanlar:** Monorepo, güvenlik taramaları, CI/CD, izleme, API dokümantasyonu
+- **Ek alanlar:** Monorepo, güvenlik taramaları, CI/CD (GitHub Actions, GitLab CI), izleme (Sentry, Datadog), API dokümantasyonu (OpenAPI, GraphQL)
+
+### Generic Bootstrap Desteği
+
+Go, Rust, Java/Kotlin, Ruby ve diğer stack'ler için bootstrap çalışır ve manifest üretilir. Ancak framework-spesifik hook/rule/agent şablonları yoktur — yalnızca çekirdek komutlar (task-hunter, task-review vb.) ve genel korumalar (secret tarama, lock dosyası koruması) üretilir.
 
 ## Üretimde Kanıtlanmış Desenler
 
