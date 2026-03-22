@@ -1,8 +1,8 @@
 ![Agentic Workflow banner](Docs/assets/agentic-workflow-banner.png)
 
-Mevcut bir yazılım projesine Claude Code odaklı ve Backlog.md ile entegre çalışan modüler bir ajan destekli geliştirme katmanı kurmak için hazırlanmış bir şablon deposudur.
+Yeni veya mevcut bir yazılım projesine Claude Code odaklı ve Backlog.md ile entegre çalışan modüler bir ajan destekli geliştirme katmanı kurmak için hazırlanmış bir şablon deposudur.
 
-Bu depo doğrudan bir uygulama değildir. Amaç, hedef projeyi analiz edip ona uygun komutları, ajanları, hook'ları, kuralları ve yardımcı dokümantasyonu üretmektir.
+Mevcut bir projeye entegre edilebildiği gibi, sıfırdan başlayan projelerde de kullanılabilir. Bootstrap röportajda projeyi tanımlar, workflow'u kurar ve ilk görevleri oluşturur — kodlamaya hemen başlanır.
 
 ## Ne Sağlar?
 
