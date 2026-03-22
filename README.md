@@ -308,8 +308,10 @@ Bu template'deki her kural bir production deneyiminden doğmuştur:
 
 ```bash
 cd Agentbase && npm test                                                    # Test suite
-cd Agentbase && node generate.js ../Docs/agentic/project-manifest.yaml --dry-run  # Kuru çalıştırma
 cd Agentbase && node bin/session-monitor.js                                 # Oturum izleme
+
+# Bootstrap sonrası — manifest üretildikten sonra çalışır:
+cd Agentbase && node generate.js ../Docs/agentic/project-manifest.yaml --dry-run  # Kuru çalıştırma
 ```
 
 ## Lisans

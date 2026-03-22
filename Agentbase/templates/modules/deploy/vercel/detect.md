@@ -16,5 +16,5 @@
 
 ## Affects Core
 
-- workflow-lifecycle: Vercel deploy akisi eklenir (pre-deploy → vercel deploy → post-deploy)
+- workflow-lifecycle: Vercel deploy akisi eklenir (pre-deploy → vercel deploy)
 - CLAUDE.md: Vercel deploy kurallari bolumu eklenir
