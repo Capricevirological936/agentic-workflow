@@ -214,12 +214,12 @@ Bir domain modülünü (auth, profil, ödeme, mesaj vb.) tüm katmanlarda (API +
 
 Bu komutlar Bootstrap'in tespit ettiği modüllere göre üretilir — her projede bulunmaz:
 
-| Komut | Modül | Ne Yapar |
-|-------|-------|----------|
-| `/pre-deploy` | Deploy | Production push öncesi kontrol: derleme, test, migration, env sync, Docker build. PASS/FAIL/WARN raporu. |
-| `/post-deploy` | Deploy | Deploy sonrası doğrulama: health check, smoke test, rollback rehberi. |
-| `/idor-scan` | Security | API endpoint'lerinde IDOR güvenlik açığı taraması — 5 nokta kontrol matrisi. |
-| `/review-module <ad>` | Monorepo | Bir modülü uçtan uca denetler — 4 paralel agent, cross-layer analiz. |
+| Komut | Modül | Varyantlar | Ne Yapar |
+|-------|-------|------------|----------|
+| `/pre-deploy` | Deploy | Docker, Coolify, Vercel | Production push öncesi kontrol: derleme, test, migration, env sync, Docker build. PASS/FAIL/WARN raporu. |
+| `/post-deploy` | Deploy | Docker, Coolify | Deploy sonrası doğrulama: health check, smoke test, rollback rehberi. Vercel serverless yapısı nedeniyle bu varyantı desteklemez. |
+| `/idor-scan` | Security | — | API endpoint'lerinde IDOR güvenlik açığı taraması — 5 nokta kontrol matrisi. |
+| `/review-module <ad>` | Monorepo | — | Bir modülü uçtan uca denetler — 4 paralel agent, cross-layer analiz. |
 
 ## Canlı Oturum İzleme
 
