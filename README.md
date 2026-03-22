@@ -1,38 +1,38 @@
 ![Agentic Workflow banner](Docs/assets/agentic-workflow-banner.png)
 
-Mevcut bir yazilim projesine Claude Code odakli ve Backlog.md ile entegre calisan moduler bir ajan destekli gelistirme katmani kurmak icin hazirlanmis bir sablon deposudur.
+Mevcut bir yazılım projesine Claude Code odaklı ve Backlog.md ile entegre çalışan modüler bir ajan destekli geliştirme katmanı kurmak için hazırlanmış bir şablon deposudur.
 
-Bu depo dogrudan bir uygulama degildir. Amac, hedef projeyi analiz edip ona uygun komutlari, ajanlari, hook'lari, kurallari ve yardimci dokumantasyonu uretmektir.
+Bu depo doğrudan bir uygulama değildir. Amaç, hedef projeyi analiz edip ona uygun komutları, ajanları, hook'ları, kuralları ve yardımcı dokümantasyonu üretmektir.
 
-## Ne Saglar?
+## Ne Sağlar?
 
-- Hedef projeyi otomatik analiz eder; proje tipi, alt projeler, teknoloji yigini ve aktif modul adaylarini cikarir.
-- Eksik kalan bilgileri kisa ve fazli bir roportajla toplar.
-- Projeye ozel bir manifest uretir ve bunu uretim icin tek kaynak olarak kullanir.
-- Ihtiyaca gore `.claude/commands`, `.claude/agents`, `.claude/hooks`, `.claude/rules` ve destek dokumanlarini olusturur.
-- Agentbase ve Codebase ayrimiyla yapilandirma katmanini uygulama kodundan izole eder.
+- Hedef projeyi otomatik analiz eder; proje tipi, alt projeler, teknoloji yığını ve aktif modül adaylarını çıkarır.
+- Eksik kalan bilgileri kısa ve fazlı bir röportajla toplar.
+- Projeye özel bir manifest üretir ve bunu üretim için tek kaynak olarak kullanır.
+- İhtiyaca göre `.claude/commands`, `.claude/agents`, `.claude/hooks`, `.claude/rules` ve destek dokümanlarını oluşturur.
+- Agentbase ve Codebase ayrımıyla yapılandırma katmanını uygulama kodundan izole eder.
 
-## Temel Yaklasim
+## Temel Yaklaşım
 
-Bu repo uc ana calisma alani uzerine kuruludur:
+Bu repo üç ana çalışma alanı üzerine kuruludur:
 
-| Yol | Amac |
+| Yol | Amaç |
 | --- | --- |
-| `Agentbase/` | Sablonlar, uretim mantigi, Claude komutlari ve yardimci araclar |
-| `Codebase/` | Uzerinde calisilacak gercek proje kodu |
-| `Docs/agentic/` | Bootstrap tarafindan uretilen manifest ve proje baglami |
+| `Agentbase/` | Şablonlar, üretim mantığı, Claude komutları ve yardımcı araçlar |
+| `Codebase/` | Üzerinde çalışılacak gerçek proje kodu |
+| `Docs/agentic/` | Bootstrap tarafından üretilen manifest ve proje bağlamı |
 
-Bu ayrimin iki onemli sonucu vardir:
+Bu ayrımın iki önemli sonucu vardır:
 
-- Git islemleri hedef proje tarafinda, yani `Codebase/` icinde yurur.
-- Bootstrap sureci `Codebase/` dizinine yazmaz; uretimi `Agentbase/` ve `Docs/agentic/` altinda yapar.
+- Git işlemleri hedef proje tarafında, yani `Codebase/` içinde yürür.
+- Bootstrap süreci `Codebase/` dizinine yazmaz; üretimi `Agentbase/` ve `Docs/agentic/` altında yapar.
 
-### Worktree Avantaji
+### Worktree Avantajı
 
-Agentbase/Codebase ayrimi git worktree ile paralel gelistirmeyi dogal olarak destekler:
+Agentbase/Codebase ayrımı git worktree ile paralel geliştirmeyi doğal olarak destekler:
 
 ```
-Agentbase/                  ← SABIT — tum worktree'ler ayni config'i kullanir
+Agentbase/                  ← SABIT — tüm worktree'ler aynı config'i kullanır
 │
 ├── .claude/commands/       ← Kurallar, hook'lar, agent'lar TEK yerde
 ├── .claude/hooks/
@@ -43,23 +43,23 @@ Codebase/ → wt-feat-auth    ← git worktree add (feature/auth branch)
 Codebase/ → wt-feat-pay     ← git worktree add (feature/payment branch)
 ```
 
-Geleneksel yapida `.claude/` proje kokunde yasadir — worktree olustururken her birinde ayri `.claude/` kopyasi olusur, config degisiklikleri senkronize olmaz. Agentbase ayrimi bu sorunu kokten cozer:
+Geleneksel yapıda `.claude/` proje kökünde yaşar; worktree oluştururken her birinde ayrı `.claude/` kopyası oluşur, config değişiklikleri senkronize olmaz. Agentbase ayrımı bu sorunu kökten çözer:
 
-- **Tek config, cok worktree** — Hook'lar, kurallar, agent'lar hep ayni
-- **Izole git tarihcesi** — Agentbase dosyalari proje commit'lerine karismaz
+- **Tek config, çok worktree** — Hook'lar, kurallar, agent'lar hep aynı
+- **İzole git tarihçesi** — Agentbase dosyaları proje commit'lerine karışmaz
 - **Paralel oturum** — 4 terminal, 4 worktree, 4 Claude Code oturumu, tek Agentbase
 
 ## Depoda Neler Var?
 
-Bu repoda bulunan ana bilesenler:
+Bu repoda bulunan ana bileşenler:
 
-- `Agentbase/.claude/commands/bootstrap.md` — Kurulum akisini baslatan ana komut
-- `Agentbase/templates/` — Cekirdek sablonlar ve modul bazli iskelet dosyalari
-- `Agentbase/generate.js` — Manifestten deterministik icerik ureten betik
-- `Agentbase/bin/session-monitor.js` — Oturum izleme araci
-- `Agentbase/tests/` — Uretim ve hook davranislarini dogrulayan testler
+- `Agentbase/.claude/commands/bootstrap.md` — Kurulum akışını başlatan ana komut
+- `Agentbase/templates/` — Çekirdek şablonlar ve modül bazlı iskelet dosyaları
+- `Agentbase/generate.js` — Manifestten deterministik içerik üreten betik
+- `Agentbase/bin/session-monitor.js` — Oturum izleme aracı
+- `Agentbase/tests/` — Üretim ve hook davranışlarını doğrulayan testler
 
-Not: Bu depodaki bazi komut dosyalari ornek veya cekirdek icerik olarak yer alir. Asil komut seti bootstrap sonrasinda hedef projenin yapisina gore uretilir.
+Not: Bu depodaki bazı komut dosyaları örnek veya çekirdek içerik olarak yer alır. Asıl komut seti bootstrap sonrasında hedef projenin yapısına göre üretilir.
 
 ## Gereksinimler
 
@@ -67,13 +67,13 @@ Not: Bu depodaki bazi komut dosyalari ornek veya cekirdek icerik olarak yer alir
 - [Backlog.md CLI](https://github.com/MrLesk/Backlog.md) — `npm i -g backlog.md`
 - Node.js ve npm
 
-## Hizli Baslangic
+## Hızlı Başlangıç
 
 ```bash
 git clone https://github.com/varienos/agentic-workflow
 cd agentic-workflow
 
-# Yer tutucu Codebase klasorunu hedef proje ile degistirin
+# Yer tutucu Codebase klasörünü hedef proje ile değiştirin
 rm -rf Codebase
 ln -s /path/to/your/project Codebase
 
@@ -82,40 +82,40 @@ npm install
 claude
 ```
 
-Claude Code icinde:
+Claude Code içinde:
 
 ```
 /bootstrap
 ```
 
-## Bootstrap Akisi
+## Bootstrap Akışı
 
-`/bootstrap` komutu yuksek seviyede su adimlarla calisir:
+`/bootstrap` komutu yüksek seviyede şu adımlarla çalışır:
 
-1. On kosullari dogrular. Backlog CLI, `Codebase/` erisimi ve varsa onceki manifest kontrol edilir.
-2. Hedef projeyi analiz eder. Proje tipi, dizin yapisi, alt projeler, paket yoneticisi, test araclari ve modul adaylari cikarilir.
-3. Eksik bilgileri fazli roportajla toplar. Proje, teknik tercih, gelistirici profili ve domain kurallari netlestirilir.
-4. `Docs/agentic/project-manifest.yaml` dosyasini uretir.
-5. Manifeste gore ilgili komutlari, ajanlari, hook'lari, kurallari ve yardimci dokumanlari olusturur.
-6. Yeniden calistirmalarda `overwrite`, `merge` ve `incremental` senaryolarini destekler.
+1. Ön koşulları doğrular. Backlog CLI, `Codebase/` erişimi ve varsa önceki manifest kontrol edilir.
+2. Hedef projeyi analiz eder. Proje tipi, dizin yapısı, alt projeler, paket yöneticisi, test araçları ve modül adayları çıkarılır.
+3. Eksik bilgileri fazlı röportajla toplar. Proje, teknik tercih, geliştirici profili ve domain kuralları netleştirilir.
+4. `Docs/agentic/project-manifest.yaml` dosyasını üretir.
+5. Manifeste göre ilgili komutları, ajanları, hook'ları, kuralları ve yardımcı dokümanları oluşturur.
+6. Yeniden çalıştırmalarda `overwrite`, `merge` ve `incremental` senaryolarını destekler.
 
 ## Komutlar
 
-Bootstrap tamamlandiktan sonra kullanilabilir hale gelen komutlar:
+Bootstrap tamamlandıktan sonra kullanılabilir hale gelen komutlar:
 
 ### /task-hunter
 
-Backlog'daki bir gorevi otonom olarak implement eder. Gorev dosyasini okur, etkilenen dosyalari kesfeder, implementation plani hazirlar, kodu yazar, testleri calistirir, commit eder ve gorevi kapatir. Karmasik gorevlerde teammate spawn ederek paralel calisma baslatabilir. Is bittiginde sicak baglam skorlamasiyla sonraki en uygun gorevi onerir — vibecode akisi icin context degisimini minimize eder.
+Backlog'daki bir görevi otonom olarak implement eder. Görev dosyasını okur, etkilenen dosyaları keşfeder, implementation planı hazırlar, kodu yazar, testleri çalıştırır, commit eder ve görevi kapatır. Karmaşık görevlerde teammate spawn ederek paralel çalışma başlatabilir. İş bittiğinde sıcak bağlam skorlamasıyla sonraki en uygun görevi önerir — vibecode akışı için context değişimini minimize eder.
 
 ```
-/task-hunter 42          # Tek gorev
-/task-hunter 42 43 44    # Sirayla birden fazla gorev
-/task-hunter auth        # Keyword ile gorev arama
+/task-hunter 42          # Tek görev
+/task-hunter 42 43 44    # Sırayla birden fazla görev
+/task-hunter auth        # Keyword ile görev arama
 ```
 
 ### /task-master
 
-Backlog'daki tum acik gorevleri 4 boyutlu skorlama ile onceliklendirir. Her gorev icin Impact (etki), Risk (risk), Dependency (bagimlilik) ve Complexity (karmasiklik — ters orantili) skorlari hesaplanir. Sonuc olarak faz bazli bir calisma plani cikarir: Faz 1 kritik gorevler, Faz 2 onemli gorevler, Faz 3 planlanmis gorevler, MANUEL fazda insan mudahalesi gereken gorevler.
+Backlog'daki tüm açık görevleri 4 boyutlu skorlama ile önceliklendirir. Her görev için Impact (etki), Risk (risk), Dependency (bağımlılık) ve Complexity (karmaşıklık — ters orantılı) skorları hesaplanır. Sonuç olarak faz bazlı bir çalışma planı çıkarır: Faz 1 kritik görevler, Faz 2 önemli görevler, Faz 3 planlanmış görevler, MANUEL fazda insan müdahalesi gereken görevler.
 
 ```
 /task-master
@@ -123,27 +123,27 @@ Backlog'daki tum acik gorevleri 4 boyutlu skorlama ile onceliklendirir. Her gore
 
 ### /task-conductor
 
-Birden fazla gorevi faz bazli otonom olarak isler. task-master'in onceliklendirmesini kullanarak gorevleri fazlara atar, her fazda sirayla veya paralel olarak implement eder, faz sonunda otomatik code review yapar. Manuel faz destegi vardir — bazi gorevler insan mudahalesi gerektiginde conductor durur ve bekler. State dosyasi ile kesintiye ugradiginda kaldigindan devam eder.
+Birden fazla görevi faz bazlı otonom olarak işler. task-master'in önceliklendirmesini kullanarak görevleri fazlara atar, her fazda sırayla veya paralel olarak implement eder, faz sonunda otomatik code review yapar. Manuel faz desteği vardır — bazı görevler insan müdahalesi gerektiğinde conductor durur ve bekler. State dosyası ile kesintiye uğradığında kaldığından devam eder.
 
 ```
-/task-conductor            # En yuksek oncelikli 5 gorev
-/task-conductor all        # Tum acik gorevler
-/task-conductor 42 43 44   # Belirli gorevler
-/task-conductor resume     # Kaldigi yerden devam et
+/task-conductor            # En yüksek öncelikli 5 görev
+/task-conductor all        # Tüm açık görevler
+/task-conductor 42 43 44   # Belirli görevler
+/task-conductor resume     # Kaldığı yerden devam et
 ```
 
 ### /task-plan
 
-Bir istegi derinlemesine analiz ederek backlog gorevi olusturur. Codebase'i tarar, etkilenen dosyalari tespit eder, karmasiklik skoru hesaplar, model onerisi yapar ve kabul kriterleriyle birlikte gorevi backlog'a yazar. Scope buyukse gorevi birden fazla task'a boler. Gorev olusturur ama kod YAZMAZ — implementasyon task-hunter'a birakilir.
+Bir isteği derinlemesine analiz ederek backlog görevi oluşturur. Codebase'i tarar, etkilenen dosyaları tespit eder, karmaşıklık skoru hesaplar, model önerisi yapar ve kabul kriterleriyle birlikte görevi backlog'a yazar. Scope büyükse görevi birden fazla task'a böler. Görev oluşturur ama kod YAZMAZ — implementasyon task-hunter'a bırakılır.
 
 ```
-/task-plan "Kullanici profil sayfasina avatar yukleme ozelligi ekle"
+/task-plan "Kullanıcı profil sayfasına avatar yükleme özelliği ekle"
 /task-plan "API rate limiting implement et"
 ```
 
 ### /task-review
 
-Son degisiklikleri 3 paralel agent ile review eder. Code Reviewer genel kod kalitesini, Silent Failure Hunter sessiz hatalari ve hatali hata yonetimini, Regression Analyzer degisikligin mevcut islevselligi kirma riskini degerlendirir. Bulgular MINOR (dogrudan duzelt) ve MAJOR (backlog task ac) olarak siniflandirilir. Pre-existing hatalar asla "scope disi" olarak atlanmaz — backlog'a kaydedilir.
+Son değişiklikleri 3 paralel agent ile review eder. Code Reviewer genel kod kalitesini, Silent Failure Hunter sessiz hataları ve hatalı hata yönetimini, Regression Analyzer değişikliğin mevcut işlevselliği kırma riskini değerlendirir. Bulgular MINOR (doğrudan düzelt) ve MAJOR (backlog task aç) olarak sınıflandırılır. Pre-existing hatalar asla "scope dışı" olarak atlanmaz — backlog'a kaydedilir.
 
 ```
 /task-review
@@ -151,7 +151,7 @@ Son degisiklikleri 3 paralel agent ile review eder. Code Reviewer genel kod kali
 
 ### /auto-review
 
-Diff-based, loop uyumlu ve idempotent review. Son commit'ten bu yana yapilan degisiklikleri hash kontroluyle inceler — ayni diff'i iki kez review etmez. MINOR bulgulari dogrudan duzeltir ve commit eder, MAJOR bulgular icin backlog task acar. `/loop` skill'i ile periyodik calistirmaya uygundur. Kendi fix commit'lerini sonraki calistirmada tekrar review etmez.
+Diff-based, loop uyumlu ve idempotent review. Son commit'ten bu yana yapılan değişiklikleri hash kontrolüyle inceler — aynı diff'i iki kez review etmez. MINOR bulguları doğrudan düzeltir ve commit eder, MAJOR bulgular için backlog task açar. `/loop` skill'i ile periyodik çalıştırmaya uygundur. Kendi fix commit'lerini sonraki çalıştırmada tekrar review etmez.
 
 ```
 /auto-review
@@ -159,16 +159,16 @@ Diff-based, loop uyumlu ve idempotent review. Son commit'ten bu yana yapilan deg
 
 ### /bug-hunter
 
-Bug'in root cause'unu bulur ve duzeltir. Hata taanimini alir, codebase'de ilgili dosyalari bulur, maks 3 hipotez uretir ve her birini test eder. Root cause bulundugunda minimal fix uygular, regresyon testi yazar, commit eder ve backlog gorevi olusturup kapatir. 3 hipotez siniri sonsuz derinlige dalmayi onler — 3 denemede bulunamazsa bulgulari raporlar ve durur.
+Bug'in root cause'unu bulur ve düzeltir. Hata tanımını alır, codebase'de ilgili dosyaları bulur, maks 3 hipotez üretir ve her birini test eder. Root cause bulunduğunda minimal fix uygular, regresyon testi yazar, commit eder ve backlog görevi oluşturup kapatır. 3 hipotez sınırı sonsuz derinliğe dalmayı önler — 3 denemede bulunamazsa bulguları raporlar ve durur.
 
 ```
-/bug-hunter "Kullanici giris yaptiktan sonra profil sayfasi 500 hatasi veriyor"
-/bug-hunter "Bildirimler sayfasi sonsuz donguye giriyor"
+/bug-hunter "Kullanıcı giriş yaptıktan sonra profil sayfası 500 hatası veriyor"
+/bug-hunter "Bildirimler sayfası sonsuz döngüye giriyor"
 ```
 
 ### /bug-review
 
-Bug fix'ini 3 farkli perspektiften inceler. Code Reviewer fix'in kalitesini ve dogru root cause'u hedef alip almadigini, Silent Failure Hunter fix'in yeni sessiz hatalar olusturup olusturamadigini, Regression Analyzer fix'in baska yerleri kirma riskini degerlendirir. Sonsuz dongu korumaasi vardir — maks 1 iterasyon.
+Bug fix'ini 3 farklı perspektiften inceler. Code Reviewer fix'in kalitesini ve doğru root cause'u hedef alıp almadığını, Silent Failure Hunter fix'in yeni sessiz hatalar oluşturup oluşturamadığını, Regression Analyzer fix'in başka yerleri kırma riskini değerlendirir. Sonsuz döngü koruması vardır — maks 1 iterasyon.
 
 ```
 /bug-review
@@ -176,7 +176,7 @@ Bug fix'ini 3 farkli perspektiften inceler. Code Reviewer fix'in kalitesini ve d
 
 ### /memorize
 
-Oturum icerisinde ogreniilen bilgileri kalici hafizaya kaydeder. Rutin islemleri degil, sadece tekrarlama riski olan yapisal bilgileri kaydeder: beklenmedik tuzaklar, kullanici tercihleri, mimari kararlar, surpriz kesfler, yeni tool/dependency notlari. Her kayit `Why` (neden onemli) ve `How to apply` (nasil uygulanacak) alanlariyla yapilir.
+Oturum içerisinde öğrenilen bilgileri kalıcı hafızaya kaydeder. Rutin işlemleri değil, sadece tekrarlama riski olan yapısal bilgileri kaydeder: beklenmedik tuzaklar, kullanıcı tercihleri, mimari kararlar, sürpriz keşifler, yeni tool/dependency notları. Her kayıt `Why` (neden önemli) ve `How to apply` (nasıl uygulanacak) alanlarıyla yapılır.
 
 ```
 /memorize
@@ -184,7 +184,7 @@ Oturum icerisinde ogreniilen bilgileri kalici hafizaya kaydeder. Rutin islemleri
 
 ### /session-status
 
-Tum aktif, bosta ve kapali Claude Code oturumlarini tablo formatinda gosterir. Her oturumun PID'i, uzerinde calistigi gorev, tool kullanim istatistikleri, hata sayisi ve teammate durumu gorunur. Canli dashboard icin `node bin/session-monitor.js` kullanilir.
+Tüm aktif, boşta ve kapalı Claude Code oturumlarını tablo formatında gösterir. Her oturumun PID'i, üzerinde çalıştığı görev, tool kullanım istatistikleri, hata sayısı ve teammate durumu görünür. Canlı dashboard için `node bin/session-monitor.js` kullanılır.
 
 ```
 /session-status
@@ -192,27 +192,27 @@ Tum aktif, bosta ve kapali Claude Code oturumlarini tablo formatinda gosterir. H
 
 ### /deadcode
 
-Projede kullanilmayan kodu tespit eder ve temizlik onerir. Cagrilmayan fonksiyonlar, import edilmeyen moduller, unreachable branch'ler taranir. Her bulgu confidence seviyesiyle siniflandirilir: HIGH (hicbir yerden referans yok), MEDIUM (sadece test'lerden referans), LOW (dinamik import/reflection ile kullaniyor olabilir). Yuksek confidence bulgulari icin otomatik temizlik onerilir.
+Projede kullanılmayan kodu tespit eder ve temizlik önerir. Çağrılmayan fonksiyonlar, import edilmeyen modüller, unreachable branch'ler taranır. Her bulgu confidence seviyesiyle sınıflandırılır: HIGH (hiçbir yerden referans yok), MEDIUM (sadece test'lerden referans), LOW (dinamik import/reflection ile kullanıyor olabilir). Yüksek confidence bulguları için otomatik temizlik önerilir.
 
 ```
 /deadcode
 /deadcode api/src/services/    # Belirli dizin
 ```
 
-### Moduler Komutlar
+### Modüler Komutlar
 
-Bu komutlar Bootstrap'in tespit ettigi modullere gore uretilir — her projede bulunmaz:
+Bu komutlar Bootstrap'in tespit ettiği modüllere göre üretilir — her projede bulunmaz:
 
-| Komut | Modul | Ne Yapar |
+| Komut | Modül | Ne Yapar |
 |-------|-------|----------|
-| `/pre-deploy` | Deploy | Production push oncesi kontrol: derleme, test, migration, env sync, Docker build. PASS/FAIL/WARN raporu. |
-| `/post-deploy` | Deploy | Deploy sonrasi dogrulama: health check, smoke test, rollback rehberi. |
-| `/idor-scan` | Security | API endpoint'lerinde IDOR guvenlik acigi taramasi — 5 nokta kontrol matrisi. |
-| `/review-module <ad>` | Monorepo | Bir modulu uctan uca denetler — 4 paralel agent, cross-layer analiz. |
+| `/pre-deploy` | Deploy | Production push öncesi kontrol: derleme, test, migration, env sync, Docker build. PASS/FAIL/WARN raporu. |
+| `/post-deploy` | Deploy | Deploy sonrası doğrulama: health check, smoke test, rollback rehberi. |
+| `/idor-scan` | Security | API endpoint'lerinde IDOR güvenlik açığı taraması — 5 nokta kontrol matrisi. |
+| `/review-module <ad>` | Monorepo | Bir modülü uçtan uca denetler — 4 paralel agent, cross-layer analiz. |
 
-## Canli Oturum Izleme
+## Canlı Oturum İzleme
 
-Birden fazla Claude Code oturumu paralel calisirken terminal dashboard ile takip edin:
+Birden fazla Claude Code oturumu paralel çalışırken terminal dashboard ile takip edin:
 
 ```bash
 cd Agentbase && node bin/session-monitor.js
@@ -220,59 +220,59 @@ cd Agentbase && node bin/session-monitor.js
 
 ```
 ┌──────────────────────────────────────────────────────────────────────────────┐
-│ AGENTIC WORKFLOW Timeline  [Timeline] [Agent Radar]  2 aktif 1 bosta 17:05 │
+│ AGENTIC WORKFLOW  [Timeline] [Agent Radar]  2 aktif 1 bosta 17:05            │
 ├──────────────────────────────────────────────────────────────────────────────┤
-│ › ● 45012  TASK-24 Merge conflict yonetimi  [implement]  42dk               │
-│   Aksiyon: Edited workflow-lifecycle.skeleton.md                            │
-│   Backlog: In Progress · high · AC 1/2  |  wait none  |  err 0  | mates 1  │
+│ › ● 45012  TASK-24 Merge conflict yonetimi  [uygulama]  42dk                 │
+│   Son islem: Edited workflow-lifecycle.skeleton.md                           │
+│   Backlog: In Progress · high · AC 1/2  |  bekleme yok  |  hata 0  |  ajan 1 │
 │                                                                              │
-│   ○ 45078  TASK-11 Auto-review loop  [waiting]  18dk                        │
-│   Aksiyon: Test failed: npm test                                            │
-│   Backlog: In Progress · medium · AC 2/5  |  wait test  |  err 1           │
+│   ○ 45078  TASK-11 Auto-review loop  [bekleme]  18dk                         │
+│   Son islem: Test failed: npm test                                           │
+│   Backlog: In Progress · medium · AC 2/5  |  bekleme test  |  hata 1         │
 ├──────────────────────────────────────────────────────────────────────────────┤
-│ Tab:Sekme  j/k:Sec  Enter:Detay  c:Kapali gizle  h:Yardim  q:Cikis         │
+│ Tab Sekme  j/k Sec  Enter Detay  c Kapali gizle  h Yardim  q Cikis           │
 └──────────────────────────────────────────────────────────────────────────────┘
 ```
 
-- Varsayilan `Timeline` gorunumu agent-first calisir: hangi agent hangi backlog task'inda, hangi fazda, neden bekliyor gorulur.
-- `Tab` ile `Agent Radar` gorunumune gecilir: yogun tablo + event stream.
-- Session state'i yerel `backlog/` dosyalariyla zenginlestirilir; task status, priority, dependency ve acceptance ilerlemesi gorunur.
-- Sifir dependency — saf Node.js + ANSI escape kodlari.
+- Varsayılan `Timeline` görünümü agent-first çalışır: hangi agent hangi backlog task'ında, hangi fazda, neden bekliyor görülür.
+- `Tab` ile `Agent Radar` görünümüne geçilir: yoğun tablo + event stream.
+- Session state'i yerel `backlog/` dosyalarıyla zenginleştirilir; task status, priority, dependency ve acceptance ilerlemesi görünür.
+- Sıfır dependency — saf Node.js + ANSI escape kodları.
 
-## Desteklenen Modul Aileleri
+## Desteklenen Modül Aileleri
 
-Sablon sistemi modulerdir ve yalnizca tespit edilen aileler icin icerik uretir:
+Şablon sistemi modülerdir ve yalnızca tespit edilen aileler için içerik üretir:
 
 - **ORM:** Prisma, Eloquent, Django ORM, TypeORM
 - **Deploy:** Docker, Coolify, Vercel
 - **Backend:** Express, Fastify, NestJS, Laravel, CodeIgniter 4, Django, FastAPI
-- **Frontend:** Next.js, React SPA, yalin HTML/CSS/JS
+- **Frontend:** Next.js, React SPA, yalın HTML/CSS/JS
 - **Mobile:** Expo, React Native, Flutter
-- **Ek alanlar:** Monorepo, guvenlik taramalari, CI/CD, izleme, API dokumantasyonu
+- **Ek alanlar:** Monorepo, güvenlik taramaları, CI/CD, izleme, API dokümantasyonu
 
-## Uretimde Kanitlanmis Desenler
+## Üretimde Kanıtlanmış Desenler
 
-Bu template'deki her kural bir production deneyiminden dogmustur:
+Bu template'deki her kural bir production deneyiminden doğmuştur:
 
 | Desen | Hikaye |
 |-------|--------|
-| `prisma db push` yasagi | 7 tablo + 3 sutun production'da kayboldu |
-| 3 hipotez siniri | Sonsuz root cause aramasinin onlenmesi |
-| 4D skorlama | Tutarli, tekrarlanabilir onceliklendirme |
-| 3-agent paralel review | Tek agent'in kacirdigi sessiz hatalarin yakalanmasi |
-| Faz bazli orkestrasyon | Kaotik paralel calisma yerine kontrollu islem |
-| Failure cascade tablosu | Ayni hatada 10+ retry dongusunun onlenmesi |
+| `prisma db push` yasağı | 7 tablo + 3 sütun production'da kayboldu |
+| 3 hipotez sınırı | Sonsuz root cause aramasının önlenmesi |
+| 4D skorlama | Tutarlı, tekrarlanabilir önceliklendirme |
+| 3-agent paralel review | Tek agent'in kaçırdığı sessiz hataların yakalanması |
+| Faz bazlı orkestrasyon | Kaotik paralel çalışma yerine kontrollü işlem |
+| Failure cascade tablosu | Aynı hatada 10+ retry döngüsünün önlenmesi |
 | Destructive migration tespiti | DROP TABLE'in production'a fark edilmeden gitmesi |
-| Pre-existing bulgu kurali | "Scope disi" diyerek guvenlik aciginin atlanmasi |
+| Pre-existing bulgu kuralı | "Scope dışı" diyerek güvenlik açığının atlanması |
 
-## Gelistirme ve Dogrulama
+## Geliştirme ve Doğrulama
 
 ```bash
 cd Agentbase && npm test                                                    # Test suite
-cd Agentbase && node generate.js ../Docs/agentic/project-manifest.yaml --dry-run  # Kuru calistirma
+cd Agentbase && node generate.js ../Docs/agentic/project-manifest.yaml --dry-run  # Kuru çalıştırma
 cd Agentbase && node bin/session-monitor.js                                 # Oturum izleme
 ```
 
 ## Lisans
 
-Bu proje [MIT](LICENSE) lisansi ile sunulmaktadir.
+Bu proje [MIT](LICENSE) lisansı ile sunulmaktadır.

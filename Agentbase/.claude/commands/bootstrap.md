@@ -1267,6 +1267,8 @@ Teammate'ler skeleton dosyalarini islerken hangi GENERATE bloklarinin hangi dosy
 | task-plan.skeleton.md | CODEBASE_CONTEXT, FILE_DETECTION_PATTERNS, AC_TEMPLATES |
 | bug-hunter.skeleton.md | CODEBASE_CONTEXT, VERIFICATION_COMMANDS, COMMIT_CONVENTION |
 | bug-review.skeleton.md | CODEBASE_CONTEXT, REVIEW_CHECKLIST, COMMIT_CONVENTION |
+| deep-audit.skeleton.md | CODEBASE_CONTEXT, MODULE_MAPPING, SUBPROJECT_LAYERS, REVIEW_AGENTS, VERIFICATION_COMMANDS, IDOR_CHECKLIST |
+| deadcode.skeleton.md | CODEBASE_CONTEXT, DEADCODE_TOOLS, COMMIT_CONVENTION |
 | memorize.skeleton.md | MEMORY_PATH |
 | code-review.skeleton.md (agent) | CODEBASE_CONTEXT, PROJECT_CHECKLIST |
 | regression-analyzer.skeleton.md (agent) | CODEBASE_CONTEXT, PROJECT_PATHS |

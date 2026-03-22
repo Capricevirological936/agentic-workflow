@@ -21,30 +21,32 @@ package-lock.json
 *.swo
 *~
 
-# Runtime tracking (oturum bazli — repo'ya girmemeli)
-Agentbase/.claude/tracking/sessions/session-*.json
-Agentbase/.claude/reports/deploys/deploy-*.md
+# ─────────────────────────────────────────────────────
+# BU PROJE'NIN KENDI GELISTIRME ORTAMI
+# (template'in parcasi degil, repo'ya girmez)
+# ─────────────────────────────────────────────────────
 
-# Test ortami (repo'ya girmemeli)
-test/
+# Root .claude/ — bu projeyi gelistirmek icin kullanilan CC config
+# (task-hunter.md, task-plan.md gibi proje-spesifik komutlar burada)
+/.claude/
 
-# Codebase symlink (her kullanici kendi projesini baglar)
-Codebase
+# Root CLAUDE.md — bu projenin kendi CC talimat dosyasi
+/CLAUDE.md
 
-# Claude Code hook state
-Agentbase/.claude/hooks/.test-reminder-state.json
+# Root backlog — bu projenin kendi gorev takibi (repo'da KALIR)
+# Insanlar hangi gorevler uzerinde calisildigini gorsun
+# /backlog/ → TRACKED
 
-# Backlog task dosyalari (proje-spesifik, template'e dahil degil)
-Agentbase/backlog/tasks/
-Agentbase/backlog/completed/
-Agentbase/backlog/drafts/
-Agentbase/backlog/archive/
-!Agentbase/backlog/config.yml
-# Bootstrap URETIMI — proje-spesifik, template'e dahil degil
-# Bu dosyalar /bootstrap calistirildiktan sonra olusur.
-# Template'in kendi dosyalari templates/ altinda zaten var.
+# Diger proje-spesifik root dosyalar
 AGENTS.md
 GEMINI.md
+
+# ─────────────────────────────────────────────────────
+# AGENTBASE ICINDEKI BOOTSTRAP URETIMI
+# (template'in parcasi degil, hedef proje icin uretilir)
+# ─────────────────────────────────────────────────────
+
+# Bootstrap ciktilari — /bootstrap calistirildiktan sonra olusur
 Agentbase/.claude/settings.local.json
 Agentbase/.claude/settings.json
 Agentbase/.claude/CLAUDE.md
@@ -54,11 +56,33 @@ Agentbase/.claude/rules/
 Agentbase/.claude/custom/
 Agentbase/.mcp.json
 Agentbase/.claude-ignore
+Agentbase/CLAUDE.md
 
-# NOT: Asagidakiler repo'da KALIR:
-# - Agentbase/.claude/commands/ → bootstrap.md, task-hunter.md, task-plan.md (template'in parçasi)
-# - Agentbase/templates/ → skeleton dosyalar (template'in ozu)
-# - Agentbase/*.md stub'lari → PROJECT, STACK, DEVELOPER, ARCHITECTURE, WORKFLOWS (Bootstrap dolduracak)
+# Runtime verisi (oturum bazli)
+Agentbase/.claude/tracking/sessions/session-*.json
+Agentbase/.claude/reports/deploys/deploy-*.md
+Agentbase/.claude/hooks/.test-reminder-state.json
+
+# Agentbase backlog (hedef proje icin bootstrap uretir)
+Agentbase/backlog/
+
+# ─────────────────────────────────────────────────────
+# REPO'DA KALAN DOSYALAR (asagidakiler TRACKED):
+#
+# Agentbase/.claude/commands/bootstrap.md  ← Template'in bootstrap komutu
+# Agentbase/templates/                     ← Skeleton dosyalar (template'in ozu)
+# Agentbase/generate.js                    ← Deterministik uretim betigi
+# Agentbase/bin/session-monitor.js         ← Oturum izleme araci
+# Agentbase/tests/                         ← Test suite
+# Agentbase/*.md stub'lari                 ← Bootstrap dolduracak
+# Docs/superpowers/                        ← Spec ve plan dokumanlari
+# ─────────────────────────────────────────────────────
+
+# Test ortami
+test/
+
+# Codebase symlink (her kullanici kendi projesini baglar)
+Codebase
 
 # Docs (Bootstrap uretir — proje-spesifik)
 Docs/agentic/project-manifest.yaml
