@@ -2,14 +2,14 @@
 
 Claude Code ile yazılım geliştirmenin tüm yaşam döngüsünü yöneten bir workflow sistemidir. Görev planlamadan code review'a, bug fix'ten deploy kontrolüne kadar her adımı yapılandırılmış komutlar, ajanlar ve otomatik koruma mekanizmalarıyla yönetir.
 
-Sıfırdan yeni bir proje başlatırken de, mevcut bir projeye entegre ederken de çalışır. `/bootstrap` komutu projenizi tanır, sizinle kısa bir röportaj yapar ve projenize özel workflow dosyalarını üretir.
+Mevcut bir projeye entegre ederken veya en azından başlangıç scaffold'u olan yeni bir projede çalışır (`Codebase/` dizininde en az bir dosya — örneğin `package.json`, `composer.json` veya `pyproject.toml` — bulunmalıdır). `/bootstrap` komutu projenizi tanır, sizinle kısa bir röportaj yapar ve projenize özel workflow dosyalarını üretir.
 
 ## Ne Sağlar?
 
 - **Otonom görev yönetimi** — Backlog'dan görev al, planla, implement et, test et, commit et, kapat. Tek komutla.
 - **Otomatik code review** — 3 paralel agent ile her değişikliği inceler: kod kalitesi, sessiz hatalar, regresyon riski.
 - **Akıllı bug fix** — Root cause analizi, maks 3 hipotez, minimal fix, regresyon testi. Sonsuz derinliğe dalmaz.
-- **Deploy güvenlik ağı** — Push öncesi 7 adımlı kontrol, deploy sonrası doğrulama, rollback rehberi.
+- **Deploy güvenlik ağı** — Push öncesi 7 adımlı kontrol, deploy sonrası doğrulama, rollback rehberi. Git hook'larının etkinleştirilmesini gerektirir (bkz. Bootstrap Akışı adım 7).
 - **Proje-spesifik kurallar** — Stack'inize göre hook'lar, framework kuralları ve koruma mekanizmaları otomatik üretilir.
 - **Canlı oturum izleme** — Birden fazla Claude Code oturumunu tek terminal ekranından takip edin.
 - **Worktree-dostu mimari** — Agentbase/Codebase ayrımı ile tek config, çok worktree, paralel geliştirme.
@@ -31,7 +31,7 @@ Bu ayrımın iki önemli sonucu vardır:
 
 ### Worktree Avantajı
 
-Agentbase/Codebase ayrımı git worktree ile paralel geliştirmeyi doğal olarak destekler:
+Agentbase/Codebase ayrımı git worktree ile paralel geliştirmeyi mimari olarak hedefler. Şu anda komutlar sabit `../Codebase` yolunu kullanır; farklı worktree'ler arası geçiş mekanizması henüz mevcut değildir:
 
 ```
 Agentbase/                  ← SABIT — tüm worktree'ler aynı config'i kullanır
@@ -68,6 +68,8 @@ Not: Bu depodaki bazı komut dosyaları örnek veya çekirdek içerik olarak yer
 - [Claude Code CLI](https://docs.anthropic.com/claude-code)
 - [Backlog.md CLI](https://github.com/MrLesk/Backlog.md) — `npm i -g backlog.md`
 - Node.js ve npm
+- [jq](https://jqlang.github.io/jq/) — JSON işlemci, hook kuralları için gerekli (`brew install jq` veya `apt install jq`)
+- Git 2.38+ — pre-push hook'undaki `git merge-tree --write-tree` desteği için gerekli
 
 ## Hızlı Başlangıç
 
@@ -100,6 +102,7 @@ Claude Code içinde:
 4. `Docs/agentic/project-manifest.yaml` dosyasını üretir.
 5. Manifeste göre ilgili komutları, ajanları, hook'ları, kuralları ve yardımcı dokümanları oluşturur.
 6. Yeniden çalıştırmalarda `overwrite`, `merge` ve `incremental` senaryolarını destekler.
+7. Git hook'larını etkinleştirir: `cd Codebase && git config core.hooksPath ../Agentbase/git-hooks/` — pre-commit ve pre-push korumalarını devreye alır.
 
 ## Komutlar
 
@@ -146,7 +149,7 @@ Bir isteği derinlemesine analiz ederek backlog görevi oluşturur. Codebase'i t
 
 ### /task-review
 
-Son değişiklikleri 3 paralel agent ile review eder. Code Reviewer genel kod kalitesini, Silent Failure Hunter sessiz hataları ve hatalı hata yönetimini, Regression Analyzer değişikliğin mevcut işlevselliği kırma riskini değerlendirir. Bulgular MINOR (doğrudan düzelt) ve MAJOR (backlog task aç) olarak sınıflandırılır. Pre-existing hatalar asla "scope dışı" olarak atlanmaz — backlog'a kaydedilir.
+Son değişiklikleri 3+1 agent ile review eder. Code Reviewer genel kod kalitesini, Silent Failure Hunter sessiz hataları ve hatalı hata yönetimini, Regression Analyzer değişikliğin mevcut işlevselliği kırma riskini değerlendirir. Güvenlik, auth, ödeme veya migration değişikliklerinde koşullu 4. agent (Devils Advocate) adversarial perspektiften kırılma noktalarını analiz eder. Bulgular karar ağacıyla değerlendirilir: düzeltilmesi gereken sorunlar raporlanır, önceden var olan sorunlar backlog'a kaydedilir — asla "scope dışı" olarak atlanmaz.
 
 ```
 /task-review
