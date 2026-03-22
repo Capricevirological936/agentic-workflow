@@ -68,7 +68,7 @@ Bootstrap bu phase'e baslamadan once asagidaki bilgileri codebase'den otomatik c
 ### Q5 — API Prefix
 - **Text:** `"API prefix yapisiniz nedir? (orn: /api/v1, /v1, prefix yok)"`
 - **Type:** short text
-- **Skip condition:** No API framework detected
+- **Skip condition:** No API framework detected (GREENFIELD_MODE ise S0'da backend stack secildiyse sor)
 - **Maps to:** `manifest.project.api_prefix`
 - **Downstream:** `ARCHITECTURE.md` API structure section, route rules
 

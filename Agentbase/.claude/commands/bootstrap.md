@@ -1879,14 +1879,20 @@ backlog task create "Ilk feature'i planla ve implement et" \
    🌱 Greenfield — Proje Scaffold Kurulumu:
       Stack'inize gore asagidaki komutu Codebase/ icinde calistirin:
 
-      Node.js:     cd ../Codebase && npm init -y
-      Next.js:     cd ../Codebase && npx create-next-app@latest .
-      Expo:        cd ../Codebase && npx create-expo-app@latest .
-      Python:      cd ../Codebase && python -m venv venv && pip init
-      Django:      cd ../Codebase && django-admin startproject myproject .
-      FastAPI:     cd ../Codebase && pip install fastapi uvicorn
-      Laravel:     cd ../Codebase && composer create-project laravel/laravel .
-      Go:          cd ../Codebase && go mod init [modul-adi]
+      Node.js:       cd ../Codebase && npm init -y
+      Express:       cd ../Codebase && npm init -y && npm install express
+      Fastify:       cd ../Codebase && npm init -y && npm install fastify
+      Next.js:       cd ../Codebase && npx create-next-app@latest .
+      Expo:          cd ../Codebase && npx create-expo-app@latest .
+      Python:        cd ../Codebase && python -m venv venv
+      Django:        cd ../Codebase && django-admin startproject myproject .
+      FastAPI:       cd ../Codebase && python -m venv venv && pip install fastapi uvicorn
+      Flask:         cd ../Codebase && python -m venv venv && pip install flask
+      Laravel:       cd ../Codebase && composer create-project laravel/laravel .
+      CodeIgniter:   cd ../Codebase && composer create-project codeigniter4/appstarter .
+      Go:            cd ../Codebase && go mod init [modul-adi]
+      Rust:          cd ../Codebase && cargo init .
+      Java/Kotlin:   https://start.spring.io adresinden proje indirin veya: gradle init
 
       Scaffold olustuktan sonra: /task-hunter 1
 
