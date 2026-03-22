@@ -1322,7 +1322,15 @@ function processSkeletonFile(filePath, manifest) {
   }
 
   const result = fillBlocks(content, fileType, manifest);
-  return { outputContent: result.content, filled: result.filled, marked: result.marked };
+
+  // Hook dosyalarindaki hardcoded CODEBASE_ROOT yolunu manifest ile degistir
+  const codebasePath = getCodebasePath(manifest);
+  let outputContent = result.content.replace(
+    /const CODEBASE_ROOT = path\.resolve\(__dirname, '\.\.\/\.\.\/\.\.\/Codebase'\);/,
+    `const CODEBASE_ROOT = path.resolve(__dirname, '../..', '${codebasePath}');`
+  );
+
+  return { outputContent, filled: result.filled, marked: result.marked };
 }
 
 /**

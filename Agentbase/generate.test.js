@@ -1272,6 +1272,29 @@ describe('scanSkeletonFiles — sabit dosya destegi', () => {
 });
 
 // ─────────────────────────────────────────────────────
+// processSkeletonFile — CODEBASE_ROOT YOL DESTEGI TESTLERI
+// ─────────────────────────────────────────────────────
+
+describe('processSkeletonFile — CODEBASE_ROOT yol destegi', () => {
+  it('varsayilan manifest ile ../Codebase yolunu kullaniyor', () => {
+    const hookPath = path.join(TEMPLATES_DIR, 'modules', 'orm', 'prisma', 'hooks', 'destructive-migration-check.js');
+    const { processSkeletonFile } = require('./generate.js');
+    const result = processSkeletonFile(hookPath, { project: {} });
+
+    assert.ok(result.outputContent.includes("'../Codebase'"), 'varsayilan ../Codebase olmali');
+    assert.ok(!result.outputContent.includes("'../../../Codebase'"), 'hardcoded 3-seviye yol olmamali');
+  });
+
+  it('ozel project.structure ile dogru yolu kullaniyor', () => {
+    const hookPath = path.join(TEMPLATES_DIR, 'modules', 'orm', 'prisma', 'hooks', 'destructive-migration-check.js');
+    const { processSkeletonFile } = require('./generate.js');
+    const result = processSkeletonFile(hookPath, { project: { structure: '../MyProject' } });
+
+    assert.ok(result.outputContent.includes("'../MyProject'"), 'ozel structure yansimali');
+  });
+});
+
+// ─────────────────────────────────────────────────────
 // findManifestArg — CLI ARGUMAN AYRISTIRMA TESTLERI
 // ─────────────────────────────────────────────────────
 
