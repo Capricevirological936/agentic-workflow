@@ -81,8 +81,10 @@ Agentbase/backlog/
 # Test ortami
 test/
 
-# Codebase symlink (her kullanici kendi projesini baglar)
-Codebase
+# Codebase icerigi (kullanici kendi projesini symlink eder)
+# Dizin ve .gitkeep tracked, icerik ignore
+Codebase/*
+!Codebase/.gitkeep
 
 # Docs (Bootstrap uretir — proje-spesifik)
 Docs/agentic/project-manifest.yaml
