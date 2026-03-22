@@ -48,6 +48,38 @@ describe('code-review-check hook', () => {
     assert.equal(result.stderr, '');
   });
 
+  it('.env dosyalarini secret taramasindan geciriyor', t => {
+    const projectRoot = createTempProject(t);
+    const hookPath = materializeHook(projectRoot, 'core/hooks/code-review-check.skeleton.js');
+    const filePath = writeCodebaseFile(
+      projectRoot,
+      '.env',
+      'DATABASE_URL="postgres://user:pass@host/db"\nAPI_KEY="sk-secretvalue"\n'
+    );
+    const input = makeHookInput(filePath);
+
+    const result = runHook(hookPath, input);
+
+    assert.equal(result.status, 0);
+    assert.equal(result.stdout.trim(), input);
+    assert.match(result.stderr, /CRITICAL/);
+  });
+
+  it('.env.local dosyalarini da tariyor', t => {
+    const projectRoot = createTempProject(t);
+    const hookPath = materializeHook(projectRoot, 'core/hooks/code-review-check.skeleton.js');
+    const filePath = writeCodebaseFile(
+      projectRoot,
+      '.env.local',
+      'SECRET_KEY="sk-anothersecret"\n'
+    );
+
+    const result = runHook(hookPath, makeHookInput(filePath));
+
+    assert.equal(result.status, 0);
+    assert.match(result.stderr, /CRITICAL/);
+  });
+
   it('handles long suspicious input without regex slowdowns', t => {
     const projectRoot = createTempProject(t);
     const hookPath = materializeHook(projectRoot, 'core/hooks/code-review-check.skeleton.js');

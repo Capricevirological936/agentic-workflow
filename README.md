@@ -22,7 +22,7 @@ Bu repo üç ana çalışma alanı üzerine kuruludur:
 | --- | --- |
 | `Agentbase/` | Şablonlar, üretim mantığı, Claude komutları ve yardımcı araçlar |
 | `Codebase/` | Üzerinde çalışılacak gerçek proje kodu |
-| `Docs/agentic/` | Bootstrap tarafından üretilen manifest ve proje bağlamı |
+| `Docs/agentic/` | Bootstrap tarafından üretilen manifest dosyası (`project-manifest.yaml`) |
 
 Bu ayrımın iki önemli sonucu vardır:
 
@@ -73,11 +73,13 @@ Not: Bu depodaki bazı komut dosyaları örnek veya çekirdek içerik olarak yer
 
 ## Hızlı Başlangıç
 
+### Mevcut projeye entegrasyon
+
 ```bash
 git clone https://github.com/varienos/agentic-workflow
 cd agentic-workflow
 
-# Yer tutucu Codebase klasörünü hedef proje ile değiştirin
+# Codebase klasörünü projenizle değiştirin
 rm -rf Codebase
 ln -s /path/to/your/project Codebase
 
@@ -91,6 +93,26 @@ Claude Code içinde:
 ```
 /bootstrap
 ```
+
+### Sıfırdan yeni proje (greenfield)
+
+```bash
+git clone https://github.com/varienos/agentic-workflow
+cd agentic-workflow
+
+# Codebase klasörünü boş bırakın — Bootstrap greenfield moduna geçer
+cd Agentbase
+npm install
+claude
+```
+
+Claude Code içinde:
+
+```
+/bootstrap
+```
+
+Bootstrap boş Codebase tespit ettiğinde greenfield moduna geçer: stack seçimini sorar, workflow dosyalarını üretir ve scaffold kurulum komutlarını gösterir.
 
 ## Bootstrap Akışı
 

@@ -104,9 +104,13 @@ async function main() {
         process.exit(0);
       }
 
-      // Dosya uzantisi kontrol listesinde degilse — gecir
+      // .env dosyalari her zaman taranir (extname bos veya yanlis doner)
+      const basename = path.basename(filePath);
+      const isEnvFile = basename === '.env' || basename.startsWith('.env.');
+
+      // Dosya uzantisi kontrol listesinde degilse ve .env degilse — gecir
       const ext = path.extname(filePath).toLowerCase();
-      if (FILE_EXTENSIONS.length > 0 && !FILE_EXTENSIONS.includes(ext)) {
+      if (!isEnvFile && FILE_EXTENSIONS.length > 0 && !FILE_EXTENSIONS.includes(ext)) {
         console.log(inputData);
         process.exit(0);
       }
