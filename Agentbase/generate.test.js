@@ -14,6 +14,7 @@ const {
   extractBlockNames,
   fillBlocks,
   processJsonGenerateKeys,
+  scanSkeletonFiles,
   toOutputName,
   detectFileType,
   getActiveModules,
@@ -21,6 +22,7 @@ const {
   getCodeExtensions,
   getMigrationCommands,
   SIMPLE_GENERATORS,
+  TEMPLATES_DIR,
 } = require('./generate.js');
 
 // ─────────────────────────────────────────────────────
@@ -67,7 +69,7 @@ const testManifest = {
   modules: {
     active: {
       orm: ['prisma'],
-      backend: ['express'],
+      backend: ['nodejs/express'],
       frontend: ['react'],
     },
   },
@@ -315,7 +317,7 @@ describe('getActiveModules', () => {
   it('kategorili formatı parse eder', () => {
     const modules = getActiveModules(testManifest);
     assert.ok(modules.has('prisma'));
-    assert.ok(modules.has('express'));
+    assert.ok(modules.has('nodejs/express'));
     assert.ok(modules.has('react'));
     assert.ok(!modules.has('django'));
   });
@@ -546,5 +548,81 @@ const FILE_EXTENSIONS = [
     // FILE_EXTENSIONS doldurulmali
     assert.ok(result.content.includes("'.ts'"));
     assert.strictEqual(result.filled.length, 2);
+  });
+});
+
+// ─────────────────────────────────────────────────────
+// scanSkeletonFiles — BACKEND LEAF VARYANT TESTLERI
+// ─────────────────────────────────────────────────────
+
+describe('scanSkeletonFiles — backend leaf varyant secimi', () => {
+  it('3-seviyeli modul yolunu (nodejs/express) dogru secer', () => {
+    const manifest = { modules: { active: { backend: ['nodejs/express'] } } };
+    const files = scanSkeletonFiles(manifest);
+    const relFiles = files.map(f => path.relative(TEMPLATES_DIR, f));
+
+    // Express skeleton dosyalari dahil olmali
+    assert.ok(
+      relFiles.some(f => f.includes('nodejs/express') || f.includes('nodejs\\express')),
+      'express skeleton dosyalari dahil olmali'
+    );
+    // Fastify dosyalari dahil OLMAMALI
+    assert.ok(
+      !relFiles.some(f => f.includes('nodejs/fastify') || f.includes('nodejs\\fastify')),
+      'fastify dosyalari dahil olmamali'
+    );
+    // Django dosyalari dahil OLMAMALI
+    assert.ok(
+      !relFiles.some(f => f.includes('python/django') || f.includes('python\\django')),
+      'django dosyalari dahil olmamali'
+    );
+  });
+
+  it('aile (family) skeleton dosyalarini da dahil eder', () => {
+    const manifest = { modules: { active: { backend: ['nodejs/express'] } } };
+    const files = scanSkeletonFiles(manifest);
+    const relFiles = files.map(f => path.relative(TEMPLATES_DIR, f));
+
+    // nodejs family skeleton dahil olmali (nodejs kuralları express icin de gecerli)
+    assert.ok(
+      relFiles.some(f =>
+        (f.includes('backend/nodejs/rules') || f.includes('backend\\nodejs\\rules')) &&
+        !f.includes('express') && !f.includes('fastify') && !f.includes('nestjs')
+      ),
+      'nodejs family skeleton dosyalari dahil olmali'
+    );
+  });
+
+  it('2-seviyeli moduller (deploy/vercel) hala calisiyor', () => {
+    const manifest = { modules: { active: { deploy: ['vercel'] } } };
+    const files = scanSkeletonFiles(manifest);
+    const relFiles = files.map(f => path.relative(TEMPLATES_DIR, f));
+
+    assert.ok(
+      relFiles.some(f => f.includes('deploy/vercel') || f.includes('deploy\\vercel')),
+      'vercel dosyalari dahil olmali'
+    );
+    assert.ok(
+      !relFiles.some(f => f.includes('deploy/docker') || f.includes('deploy\\docker')),
+      'docker dosyalari dahil olmamali'
+    );
+  });
+
+  it('tum backend varyantlarini dogru secer', () => {
+    const variants = [
+      'nodejs/express', 'nodejs/fastify', 'nodejs/nestjs',
+      'php/laravel', 'php/codeigniter4',
+      'python/django', 'python/fastapi',
+    ];
+    for (const variant of variants) {
+      const manifest = { modules: { active: { backend: [variant] } } };
+      const files = scanSkeletonFiles(manifest);
+      const relFiles = files.map(f => path.relative(TEMPLATES_DIR, f));
+      const normalizedVariant = variant.replace('/', path.sep);
+      assert.ok(
+        relFiles.some(f => f.includes(normalizedVariant)),
+        `${variant} skeleton dosyalari dahil olmali`
+      );
+    }
   });
 });

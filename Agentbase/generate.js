@@ -1259,11 +1259,32 @@ function scanSkeletonFiles(manifest) {
         // Modul dosyasi mi kontrol et
         const relPath = path.relative(TEMPLATES_DIR, fullPath);
         if (relPath.startsWith('modules/')) {
-          // modules/{kategori}/{varyant}/... formatinda
+          // modules/{kategori}/{aile?}/{varyant}/... formatinda
+          // 2-seviyeli: modules/deploy/vercel/commands/...
+          // 3-seviyeli: modules/backend/nodejs/express/rules/...
           const parts = relPath.split(path.sep);
           if (parts.length >= 3) {
-            const variant = parts[2]; // prisma, express, django, vb.
-            if (!activeModules.has(variant)) continue; // Aktif degil, atla
+            const CONTENT_DIRS = new Set(['rules', 'hooks', 'commands', 'agents']);
+            const moduleSegments = [];
+            for (let i = 2; i < parts.length; i++) {
+              if (CONTENT_DIRS.has(parts[i]) || parts[i].includes('.skeleton.') || parts[i].endsWith('.skeleton')) break;
+              moduleSegments.push(parts[i]);
+            }
+            if (moduleSegments.length > 0) {
+              const modulePath = moduleSegments.join('/');
+              // Tam esleme: "nodejs/express" === aktif modul
+              let matched = activeModules.has(modulePath);
+              // Parent esleme: "nodejs" family dosyalari, "nodejs/express" aktifse dahil
+              if (!matched) {
+                for (const active of activeModules) {
+                  if (active.startsWith(modulePath + '/')) {
+                    matched = true;
+                    break;
+                  }
+                }
+              }
+              if (!matched) continue;
+            }
           }
         }
         files.push(fullPath);
