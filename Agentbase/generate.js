@@ -277,11 +277,10 @@ function processConditionalBlock(block, activeModules, manifest) {
 function getActiveModules(manifest) {
   const modules = new Set();
   const active = manifest?.modules?.active;
-  if (!active) return modules;
 
   if (Array.isArray(active)) {
     active.forEach(m => modules.add(m));
-  } else if (typeof active === 'object') {
+  } else if (active && typeof active === 'object') {
     // Kategorili format: { orm: ["prisma"], backend: ["nodejs/express"], security: true, ... }
     for (const [key, values] of Object.entries(active)) {
       if (values === true) {
@@ -294,6 +293,13 @@ function getActiveModules(manifest) {
       }
     }
   }
+
+  // Standalone moduller: modules.standalone dizisi
+  const standalone = manifest?.modules?.standalone;
+  if (Array.isArray(standalone)) {
+    standalone.forEach(m => modules.add(m));
+  }
+
   return modules;
 }
 

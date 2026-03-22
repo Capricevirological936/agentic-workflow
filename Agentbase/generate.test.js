@@ -452,6 +452,34 @@ describe('getActiveModules', () => {
     assert.ok(modules.has('monorepo'));
     assert.ok(modules.has('prisma'));
   });
+
+  it('standalone dizisindeki modulleri parse eder', () => {
+    const manifest = {
+      modules: {
+        active: { orm: 'prisma', deploy: 'coolify' },
+        standalone: ['security', 'monorepo'],
+      },
+    };
+    const modules = getActiveModules(manifest);
+    assert.ok(modules.has('security'), 'standalone security dahil olmali');
+    assert.ok(modules.has('monorepo'), 'standalone monorepo dahil olmali');
+    assert.ok(modules.has('prisma'), 'active prisma hala dahil olmali');
+    assert.ok(modules.has('coolify'), 'active coolify hala dahil olmali');
+  });
+
+  it('standalone dizisi olmadan active hala calisiyor (regresyon)', () => {
+    const manifest = { modules: { active: { orm: ['prisma'] } } };
+    const modules = getActiveModules(manifest);
+    assert.ok(modules.has('prisma'));
+    assert.strictEqual(modules.size, 1);
+  });
+
+  it('active olmadan sadece standalone calisiyor', () => {
+    const manifest = { modules: { standalone: ['security'] } };
+    const modules = getActiveModules(manifest);
+    assert.ok(modules.has('security'));
+    assert.strictEqual(modules.size, 1);
+  });
 });
 
 describe('getFileExtensions', () => {
@@ -857,5 +885,63 @@ describe('scanSkeletonFiles — backend leaf varyant secimi', () => {
       !relFiles.some(f => f.includes('security')),
       'security dosyalari dahil olmamali'
     );
+  });
+});
+
+// ─────────────────────────────────────────────────────
+// scanSkeletonFiles — STANDALONE MODUL TESTLERI
+// ─────────────────────────────────────────────────────
+
+describe('scanSkeletonFiles — standalone modul destegi', () => {
+  it('standalone security modulu idor-scan skeleton seciliyor', () => {
+    const manifest = {
+      modules: {
+        active: { orm: 'prisma' },
+        standalone: ['security'],
+      },
+    };
+    const files = scanSkeletonFiles(manifest);
+    const relFiles = files.map(f => path.relative(TEMPLATES_DIR, f));
+
+    assert.ok(
+      relFiles.some(f => f.includes('security') && f.includes('idor-scan')),
+      'standalone security ile idor-scan skeleton dahil olmali'
+    );
+  });
+
+  it('standalone monorepo modulu review-module ve auto-format skeleton seciliyor', () => {
+    const manifest = {
+      modules: {
+        active: { orm: 'prisma' },
+        standalone: ['monorepo'],
+      },
+    };
+    const files = scanSkeletonFiles(manifest);
+    const relFiles = files.map(f => path.relative(TEMPLATES_DIR, f));
+
+    assert.ok(
+      relFiles.some(f => f.includes('monorepo') && f.includes('review-module')),
+      'standalone monorepo ile review-module skeleton dahil olmali'
+    );
+    assert.ok(
+      relFiles.some(f => f.includes('monorepo') && f.includes('auto-format')),
+      'standalone monorepo ile auto-format skeleton dahil olmali'
+    );
+  });
+
+  it('standalone + active birlikte calisiyor', () => {
+    const manifest = {
+      modules: {
+        active: { orm: 'prisma', deploy: 'coolify' },
+        standalone: ['security', 'monorepo'],
+      },
+    };
+    const files = scanSkeletonFiles(manifest);
+    const relFiles = files.map(f => path.relative(TEMPLATES_DIR, f));
+
+    assert.ok(relFiles.some(f => f.includes('security')), 'security dahil olmali');
+    assert.ok(relFiles.some(f => f.includes('monorepo')), 'monorepo dahil olmali');
+    assert.ok(relFiles.some(f => f.includes('orm')), 'orm dahil olmali');
+    assert.ok(relFiles.some(f => f.includes('deploy')), 'deploy dahil olmali');
   });
 });
