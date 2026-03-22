@@ -1,0 +1,127 @@
+{
+  "__doc__": "Bu skeleton dosyayi Bootstrap okur ve GENERATE bloklarini manifest verisine gore doldurur. __doc__ ve __GENERATE__ anahtarlari cikti dosyasina yazilmaz.",
+
+  "env": {
+    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
+  },
+  "includeCoAuthoredBy": false,
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "__doc__": "Lock dosyasi korumasi — her zaman aktif",
+            "type": "command",
+            "command": "jq -r 'if (.tool_input.file_path // \"\" | test(\"package-lock\\\\.json$|yarn\\\\.lock$\")) then {\"decision\":\"block\",\"reason\":\"Lock dosyasi elle duzenlenemez\"} else empty end'",
+            "timeout": 5
+          },
+          {
+            "__doc__": "Backlog dosya korumasi — her zaman aktif",
+            "type": "command",
+            "command": "jq -r 'if (.tool_input.file_path // \"\" | test(\"backlog/tasks/|backlog/completed/\")) then {\"decision\":\"block\",\"reason\":\"Backlog dosyalari elle duzenlenemez. backlog task edit kullanin.\"} else empty end'",
+            "timeout": 5
+          }
+        ],
+        "__GENERATE__PRETOOLUSE_EDITWRITE_HOOKS__": {
+          "prisma_active": {
+            "__doc__": "Prisma modulu aktifse: db push engelleme hook'u ekle",
+            "type": "command",
+            "command": "node .claude/hooks/prisma-db-push-guard.js",
+            "timeout": 10
+          },
+          "forbidden_commands": {
+            "__doc__": "Manifest rules.forbidden[] icindeki her komut icin jq block kurali ekle",
+            "template": {
+              "type": "command",
+              "command": "jq -r 'if (.tool_input.command // \"\" | test(\"{{FORBIDDEN_PATTERN}}\")) then {\"decision\":\"block\",\"reason\":\"{{FORBIDDEN_REASON}}\"} else empty end'",
+              "timeout": 5
+            }
+          }
+        }
+      },
+      {
+        "__GENERATE__PRETOOLUSE_BASH_HOOKS__": {
+          "__doc__": "Bash tool icin ek PreToolUse hook'lari. Aktif modullere gore eklenir.",
+          "matcher": "Bash",
+          "prisma_active": {
+            "__doc__": "Prisma aktifse: npx prisma db push komutunu engelle",
+            "type": "command",
+            "command": "jq -r 'if (.tool_input.command // \"\" | test(\"prisma db push|prisma.*db.*push\")) then {\"decision\":\"block\",\"reason\":\"db push yasak. prisma migrate dev kullanin.\"} else empty end'",
+            "timeout": 5
+          }
+        }
+      }
+    ],
+    "PostToolUse": [
+      {
+        "__doc__": "Session tracker — HER tool cagrisinda oturum durumunu kaydeder. Tum matcher'lardan once calisir.",
+        "matcher": ".*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .claude/hooks/session-tracker.js",
+            "timeout": 100
+          }
+        ]
+      },
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "__doc__": "Kod kalite kontrolu — her zaman aktif",
+            "type": "command",
+            "command": "node .claude/hooks/code-review-check.js"
+          },
+          {
+            "__doc__": "Test hatirlatici — her zaman aktif",
+            "type": "command",
+            "command": "node .claude/hooks/test-reminder.js"
+          },
+          {
+            "__doc__": "Auto test runner — edit birikimini takip eder, debounce ile test sinyali (erken geri bildirim, final verification yerine GECMEZ)",
+            "type": "command",
+            "command": "node .claude/hooks/auto-test-runner.js",
+            "timeout": 100
+          },
+          {
+            "__doc__": "Team trigger — teammate spawn onerisi (dosya sayisi, cross-layer, uzun oturum)",
+            "type": "command",
+            "command": "node .claude/hooks/team-trigger.js",
+            "timeout": 100
+          }
+        ],
+        "__GENERATE__POSTTOOLUSE_EDITWRITE_HOOKS__": {
+          "monorepo_formatter": {
+            "__doc__": "Monorepo + formatter aktifse: otomatik format hook'u ekle",
+            "type": "command",
+            "command": "node .claude/hooks/auto-format.js"
+          },
+          "prisma_active": {
+            "__doc__": "Prisma aktifse: migration kontrol hook'u ekle",
+            "type": "command",
+            "command": "node .claude/hooks/prisma-migration-check.js"
+          }
+        }
+      },
+      {
+        "__GENERATE__POSTTOOLUSE_BASH_HOOKS__": {
+          "__doc__": "Bash tool sonrasi PostToolUse hook'lari. Aktif modullere gore eklenir.",
+          "matcher": "Bash",
+          "prisma_active": {
+            "__doc__": "Prisma aktifse: yikici migration kontrolu",
+            "type": "command",
+            "command": "node .claude/hooks/prisma-migration-check.js"
+          }
+        }
+      }
+    ]
+  },
+
+  "__GENERATE__ENABLED_PLUGINS__": {
+    "__doc__": "Aktif modullere gore plugin'ler eklenir. Bu blok cikti JSON'inin root seviyesine merge edilir.",
+    "expo_active": {
+      "react-native-expo-complete@react-native-expo-skills": true
+    }
+  }
+}

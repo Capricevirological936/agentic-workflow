@@ -1,0 +1,123 @@
+#!/bin/bash
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# Pre-push Hook — Bootstrap tarafindan uretilmistir
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+#
+# Bu hook Codebase'de git push yapildiginda calisir.
+# Kurulum: cd ../Codebase && git config core.hooksPath ../Agentbase/git-hooks/
+#
+# Kontroller:
+#   1. Localhost leak taramasi (test dosyalari haric)
+#   2. ORM migration tutarliligi (schema vs migration)
+#   3. Env variable senkronizasyonu
+#   4. Destructive migration uyarisi (WARN — push devam eder)
+
+ERRORS=0
+WARNINGS=0
+CODEBASE_DIR="$(git rev-parse --show-toplevel)"
+
+# Push edilecek commit araligi stdin'den okunur
+while read local_ref local_sha remote_ref remote_sha; do
+  if [ "$local_sha" = "0000000000000000000000000000000000000000" ]; then
+    # Branch siliniyor, kontrol gereksiz
+    continue
+  fi
+
+  if [ "$remote_sha" = "0000000000000000000000000000000000000000" ]; then
+    # Yeni branch — default branch'ten ayrilma noktasindan itibaren kontrol et
+    DEFAULT_BRANCH=$(git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's@^refs/remotes/origin/@@' || echo "main")
+    MERGE_BASE=$(git merge-base "$local_sha" "origin/$DEFAULT_BRANCH" 2>/dev/null || true)
+    if [ -n "$MERGE_BASE" ]; then
+      RANGE="$MERGE_BASE..$local_sha"
+    else
+      # merge-base bulunamadiysa ilk commit'ten itibaren tara
+      RANGE="$(git rev-list --max-parents=0 "$local_sha" 2>/dev/null | tail -1)..$local_sha"
+    fi
+  else
+    RANGE="$remote_sha..$local_sha"
+  fi
+
+  echo ""
+  echo "━━━ Pre-push Kontrolleri ━━━"
+  echo "  Branch: $local_ref"
+  echo ""
+
+  # ─── LOCALHOST LEAK TARAMASI ───
+  # Push edilecek degisikliklerde localhost/127.0.0.1 referanslari arar
+  # Test dosyalari ve konfigürasyon dosyalari haric tutulur
+<!-- GENERATE: GIT_PREPUSH_LOCALHOST
+Localhost leak taramasi:
+- git diff uzerinde localhost, 127.0.0.1, 0.0.0.0 arar
+- Test dosyalari haric tutulur (*.test.*, *.spec.*, __tests__/)
+- Config dosyalari haric tutulur (docker-compose*, .env.example)
+- Tespit edilirse ERRORS=1
+-->
+
+  # ─── ORM MIGRATION TUTARLILIGI ───
+<!-- GENERATE: GIT_PREPUSH_MIGRATION
+ORM'e gore migration tutarliligi kontrol edilir:
+- Prisma: schema.prisma degisti ama prisma/migrations/ altinda yeni migration yoksa FAIL
+- TypeORM: entity dosyasi degisti ama src/migrations/ altinda yeni migration yoksa FAIL
+- Eloquent: Model degisti ama database/migrations/ altinda yeni migration yoksa WARN
+- Django: models.py degisti ama migrations/ altinda yeni migration yoksa FAIL
+-->
+
+  # ─── ENV VARIABLE SENKRONIZASYONU ───
+<!-- GENERATE: GIT_PREPUSH_ENV
+Env variable tutarliligi kontrol edilir:
+- .env.example varsa: icindeki key'ler ile kod tabanindaki process.env/os.environ referanslari karsilastirilir
+- Zod schema varsa (env.ts, env.mjs): schema key'leri ile .env.example karsilastirilir
+- docker-compose.yml varsa: environment section ile .env.example karsilastirilir
+- Tutarsizlik varsa WARN (push devam eder)
+-->
+
+  # ─── DESTRUCTIVE MIGRATION UYARISI ───
+<!-- GENERATE: GIT_PREPUSH_DESTRUCTIVE
+Destructive migration pattern'leri taranir:
+- DROP TABLE, DROP COLUMN, ALTER TABLE ... DROP
+- Prisma: migration.sql icinde DROP
+- Django: migrations/ icinde RemoveField, DeleteModel
+- Eloquent: dropColumn, dropTable
+- Tespit edilirse WARN (push devam eder, ama uyari verir)
+-->
+
+  # ─── TRIAL MERGE KONTROLU ───
+  # Main/master ile merge conflict olup olmadigini push oncesi kontrol eder
+  # Conflict varsa push engellenir — once rebase/merge yapilmali
+  DEFAULT_BRANCH=$(git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's@^refs/remotes/origin/@@' || echo "main")
+  CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+
+  if [ "$CURRENT_BRANCH" != "$DEFAULT_BRANCH" ]; then
+    git fetch origin "$DEFAULT_BRANCH" --quiet 2>/dev/null || true
+    # git merge-tree --write-tree (git >= 2.38) exit code ile conflict bildirir
+    # Eski git surumlerinde fallback olarak 3-tree formu + grep kullanilir
+    if git merge-tree --write-tree HEAD "origin/$DEFAULT_BRANCH" >/dev/null 2>&1; then
+      : # Conflict yok
+    else
+      MERGE_EXIT=$?
+      if [ "$MERGE_EXIT" -eq 1 ]; then
+        echo "❌ $DEFAULT_BRANCH ile merge conflict tespit edildi!"
+        echo "   Push oncesi rebase veya merge yapmaniz gerekiyor:"
+        echo "     git fetch origin $DEFAULT_BRANCH"
+        echo "     git rebase origin/$DEFAULT_BRANCH"
+        ERRORS=1
+      fi
+      # Exit code 128+ = git komutu desteklenmiyor veya baska hata — sessizce gec
+    fi
+  fi
+
+done
+
+# ─── SONUC ───
+echo ""
+if [ "$WARNINGS" -gt 0 ]; then
+  echo "⚠️  $WARNINGS uyari tespit edildi (push devam ediyor)"
+fi
+
+if [ "$ERRORS" -ne 0 ]; then
+  echo "━━━ Pre-push BASARISIZ ━━━"
+  exit 1
+fi
+
+echo "━━━ Pre-push OK ━━━"
+exit 0

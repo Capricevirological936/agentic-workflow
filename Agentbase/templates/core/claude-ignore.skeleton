@@ -1,0 +1,38 @@
+# Agentbase template dosyalari (uretim sonrasi gereksiz)
+templates/
+
+# Genel
+.DS_Store
+*.log
+.env
+.env.*
+!.env.example
+Thumbs.db
+
+# GENERATE: STACK_SPECIFIC_IGNORES
+# Node.js → node_modules/, dist/, build/, .next/, .nuxt/, .output/
+# Python → __pycache__/, *.pyc, .venv/, venv/, .mypy_cache/
+# Go → vendor/ (if not vendored)
+# PHP → vendor/
+# Rust → target/
+# Java → target/, *.class
+# General → coverage/, .nyc_output/, .turbo/, .cache/
+#
+# Bootstrap bu blogu tespit edilen stack'e gore doldurur.
+# Ornek (Node.js + Expo projesi icin):
+#
+# Node.js
+# node_modules/
+# dist/
+# build/
+# .next/
+#
+# Expo / React Native
+# .expo/
+# ios/Pods/
+# android/.gradle/
+# android/app/build/
+#
+# Test & Coverage
+# coverage/
+# .nyc_output/

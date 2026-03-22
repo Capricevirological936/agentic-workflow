@@ -1,0 +1,20 @@
+# GitLab CI Modul Tespiti
+
+## Checks
+
+- file_exists: .gitlab-ci.yml
+- file_pattern: .gitlab/ci/*.yml | .gitlab/ci/*.yaml
+- file_exists: .gitlab/ (directory)
+
+## Minimum Match
+
+2/3
+
+## Activates
+
+- rules/gitlab-ci-rules.md
+
+## Affects Core
+
+- workflow-lifecycle: GitLab CI pipeline entegrasyonu
+- CLAUDE.md: GitLab CI best practice kurallari

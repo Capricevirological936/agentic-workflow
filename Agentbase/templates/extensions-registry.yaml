@@ -1,0 +1,194 @@
+# Extensions Registry — Agentic Workflow
+#
+# Bootstrap proje analizinden sonra bu havuzu tarar ve uygun eklentileri onerir.
+# Bootstrap KURMAZ — sadece onerir.
+#
+# Yeni eklenti eklemek icin asagidaki formati kullan:
+#
+#   - name: "Eklenti Adi"
+#     repo: "github-kullanici/repo-adi"
+#     url: "https://github.com/..."
+#     agent: claude | gemini | codex | all
+#     category: security | workflow | multi-agent | memory | quality | devops | management
+#     install: "npm i -g paket-adi"  # veya baska kurulum komutu
+#     description: "Tek satirlik aciklama"
+#     triggers:                       # Bu eklentiyi hangi kosullarda oner
+#       - module: modul-adi           # Aktif modul eslesmesi
+#       - stack: [tech1, tech2]       # Stack eslesmesi (herhangi biri)
+#       - condition: "alan > deger"   # Manifest alan kontrolu
+#     conflicts:                      # Agentbase ozellikleriyle cakisma
+#       - feature: "ozellik-adi"
+#         note: "Cakisma aciklamasi"
+
+extensions:
+
+  # ─── SECURITY ───
+
+  - name: "Trail of Bits Security"
+    repo: "trailofbits/skills"
+    url: "https://github.com/trailofbits/skills"
+    agent: claude
+    category: security
+    install: "Repo'yu klonlayip CLAUDE.md'ye skill path ekleyin"
+    description: "Guvenlik arastirmasi ve zafiyet tespiti icin profesyonel skill koleksiyonu"
+    triggers:
+      - module: security
+      - stack: [express, django, laravel, fastapi, nestjs]
+      - condition: "project.security_level == high"
+      - condition: "project.security_level == critical"
+    conflicts: []
+
+  - name: "Security Scanner"
+    repo: "harish-garg/security-scanner-plugin"
+    url: "https://github.com/harish-garg/security-scanner-plugin"
+    agent: claude
+    category: security
+    install: "npm i -g @harish-garg/security-scanner-plugin"
+    description: "GitHub verilerini kullanarak guvenlik acigi tarama"
+    triggers:
+      - condition: "project.security_level == high"
+      - condition: "project.security_level == critical"
+    conflicts: []
+
+  - name: "Parry"
+    repo: "vaporif/parry"
+    url: "https://github.com/vaporif/parry"
+    agent: claude
+    category: security
+    install: "npm i -g parry"
+    description: "Prompt enjeksiyon tarayicisi, veri sizintisi algilama"
+    triggers:
+      - condition: "project.security_level == critical"
+    conflicts: []
+
+  # ─── MULTI-AGENT ───
+
+  - name: "Claude Squad"
+    repo: "smtg-ai/claude-squad"
+    url: "https://github.com/smtg-ai/claude-squad"
+    agent: claude
+    category: multi-agent
+    install: "npm i -g claude-squad"
+    description: "Birden fazla Claude Code ornegini tmux'ta yonetme"
+    triggers:
+      - module: monorepo
+      - condition: "project.subprojects.length >= 3"
+    conflicts: []
+
+  - name: "Parallel Code"
+    repo: "johannesjo/parallel-code"
+    url: "https://github.com/johannesjo/parallel-code"
+    agent: all
+    category: multi-agent
+    install: "npm i -g parallel-code"
+    description: "Claude, Codex, Gemini'yi ayri worktree'lerde yan yana calistirma"
+    triggers:
+      - module: monorepo
+      - condition: "project.subprojects.length >= 2"
+    conflicts: []
+
+  - name: "ccswarm"
+    repo: "nwiizo/ccswarm"
+    url: "https://github.com/nwiizo/ccswarm"
+    agent: claude
+    category: multi-agent
+    install: "npm i -g ccswarm"
+    description: "Git worktree izolasyonu ile coklu agent orkestrasyon"
+    triggers:
+      - module: monorepo
+    conflicts: []
+
+  # ─── MEMORY / CONTEXT ───
+
+  - name: "Context Mode"
+    repo: "mksglu/context-mode"
+    url: "https://github.com/mksglu/context-mode"
+    agent: claude
+    category: memory
+    install: "npm i -g context-mode"
+    description: "Tool ciktilarini sandbox'ta isleyip context'e sadece gerekli kismi gonderiyor — %98 context tasarrufu"
+    triggers:
+      - condition: "project.type == monorepo"
+      - condition: "project.subprojects.length >= 3"
+    conflicts: []
+
+  - name: "Memorix"
+    repo: "AVIDS2/memorix"
+    url: "https://github.com/AVIDS2/memorix"
+    agent: all
+    category: memory
+    install: "npm i -g memorix"
+    description: "Agent'lar arasi paylasimli hafiza — MCP tabanli"
+    triggers:
+      - condition: "project.team_size == large-team"
+    conflicts: []
+
+  # ─── WORKFLOW ───
+
+  - name: "Claude CodePro"
+    repo: "maxritter/claude-codepro"
+    url: "https://github.com/maxritter/claude-codepro"
+    agent: claude
+    category: workflow
+    install: "Repo'yu klonlayip CLAUDE.md'ye entegre edin"
+    description: "Spec-driven workflow ve TDD zorunlulugu"
+    triggers:
+      - condition: "workflows.test_strategy == tdd"
+    conflicts:
+      - feature: "task-hunter TDD/Red-Green modifier"
+        note: "Agentbase task-hunter zaten TDD modifier iceriyor. Cift zorunluluk gereksiz olabilir."
+
+  # ─── CODE QUALITY ───
+
+  - name: "cc-tools"
+    repo: "Veraticus/cc-tools"
+    url: "https://github.com/Veraticus/cc-tools"
+    agent: claude
+    category: quality
+    install: "go install github.com/Veraticus/cc-tools@latest"
+    description: "Go ile yazilmis yuksek performansli hook'lar"
+    triggers:
+      - stack: [go]
+    conflicts: []
+
+  - name: "Claude Code Action"
+    repo: "anthropics/claude-code-action"
+    url: "https://github.com/anthropics/claude-code-action"
+    agent: claude
+    category: quality
+    install: "GitHub Actions workflow dosyasina ekleyin"
+    description: "Resmi GitHub Action — PR review, guvenlik denetimi"
+    triggers:
+      - module: github-actions
+      - condition: "project.team_size == small-team"
+      - condition: "project.team_size == large-team"
+    conflicts: []
+
+  # ─── DEVOPS ───
+
+  - name: "Container Use"
+    repo: "dagger/container-use"
+    url: "https://github.com/dagger/container-use"
+    agent: all
+    category: devops
+    install: "npm i -g container-use"
+    description: "Guvenli konteyner gelistirme ortamlari"
+    triggers:
+      - module: docker
+    conflicts: []
+
+  # ─── PROJECT MANAGEMENT ───
+
+  - name: "CCPM"
+    repo: "automazeio/ccpm"
+    url: "https://github.com/automazeio/ccpm"
+    agent: claude
+    category: management
+    install: "npm i -g ccpm"
+    description: "GitHub Issues + worktree ile paralel agent yonetimi"
+    triggers:
+      - module: github-actions
+      - condition: "project.team_size == large-team"
+    conflicts:
+      - feature: "Backlog.md CLI"
+        note: "Agentbase zaten Backlog.md ile gorev yonetimi yapiyor. CCPM ayri bir gorev sistemi kullanir."

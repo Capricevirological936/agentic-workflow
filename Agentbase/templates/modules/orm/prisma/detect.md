@@ -1,0 +1,25 @@
+# Prisma Modul Tespiti
+
+## Checks
+
+- file_exists: prisma/schema.prisma | */prisma/schema.prisma
+- dependency: @prisma/client | prisma
+- env_var: DATABASE_URL
+
+## Minimum Match
+
+2/3
+
+## Activates
+
+- hooks/prisma-db-push-guard.js (PreToolUse Bash)
+- hooks/prisma-migration-check.js (PostToolUse Edit|Write)
+- hooks/destructive-migration-check.js (PostToolUse Bash)
+- rules/prisma-rules.md
+
+## Affects Core
+
+- task-hunter: VERIFICATION_COMMANDS'a `prisma validate` eklenir
+- workflow-lifecycle: Migration fail protokolu eklenir
+- CLAUDE.md: Prisma kurallari bolumu eklenir
+- settings.json: 3 hook tanimi eklenir

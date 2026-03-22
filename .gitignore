@@ -1,0 +1,64 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# Node
+node_modules/
+package-lock.json
+
+# Logs
+*.log
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Runtime tracking (oturum bazli — repo'ya girmemeli)
+Agentbase/.claude/tracking/sessions/session-*.json
+Agentbase/.claude/reports/deploys/deploy-*.md
+
+# Test ortami (repo'ya girmemeli)
+test/
+
+# Codebase symlink (her kullanici kendi projesini baglar)
+Codebase
+
+# Claude Code hook state
+Agentbase/.claude/hooks/.test-reminder-state.json
+
+# Backlog task dosyalari (proje-spesifik, template'e dahil degil)
+Agentbase/backlog/tasks/
+Agentbase/backlog/completed/
+Agentbase/backlog/drafts/
+Agentbase/backlog/archive/
+!Agentbase/backlog/config.yml
+# Bootstrap URETIMI — proje-spesifik, template'e dahil degil
+# Bu dosyalar /bootstrap calistirildiktan sonra olusur.
+# Template'in kendi dosyalari templates/ altinda zaten var.
+AGENTS.md
+GEMINI.md
+Agentbase/.claude/settings.local.json
+Agentbase/.claude/settings.json
+Agentbase/.claude/CLAUDE.md
+Agentbase/.claude/agents/
+Agentbase/.claude/hooks/
+Agentbase/.claude/rules/
+Agentbase/.claude/custom/
+Agentbase/.mcp.json
+Agentbase/.claude-ignore
+
+# NOT: Asagidakiler repo'da KALIR:
+# - Agentbase/.claude/commands/ → bootstrap.md, task-hunter.md, task-plan.md (template'in parçasi)
+# - Agentbase/templates/ → skeleton dosyalar (template'in ozu)
+# - Agentbase/*.md stub'lari → PROJECT, STACK, DEVELOPER, ARCHITECTURE, WORKFLOWS (Bootstrap dolduracak)
+
+# Docs (Bootstrap uretir — proje-spesifik)
+Docs/agentic/project-manifest.yaml

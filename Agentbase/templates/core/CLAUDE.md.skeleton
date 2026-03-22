@@ -1,0 +1,232 @@
+# {{ PROJECT_NAME }} — Claude Code Yapilandirmasi
+
+Bu proje agentic workflow kullanir. Tum yapilandirma Agentbase dizinindedir.
+
+---
+
+## Bolum 1: Backlog.md Referansi
+
+> Backlog CLI kullanim kurallari icin `BACKLOG.md` dosyasina bakin.
+> Gorev yonetiminde tek kaynak `backlog/` dizinidir; gorev dosyalarini elle duzenlemeyin, her zaman `backlog` CLI kullanin.
+
+---
+
+## Bolum 2: Proje Yapilandirmasi
+
+<!-- GENERATE: PROFESSIONAL_STANCE
+Bootstrap bunu developer.experience'a gore uretir:
+- senior: "Dalkavuklik yapma. Muhendis gibi dusun. Kisa ve oz. Begenme ifadeleri kullanma. Dogrudan cozum sun."
+- mid: "Net ve pragmatik ol. Karar noktalarinda 2-3 alternatif sun ve trade-off'lari acikla. Gereksiz detaydan kacin."
+- junior: "Detayli aciklama yap. Her kararin neden'ini anlat. Kod ornekleri ver. Adim adim rehberlik et."
+- new-to-stack: "Stack-spesifik kavramlari acikla. Idiomatic pattern'leri goster. Diger stack'lerle karsilastir."
+
+Ornek cikti (senior):
+## Profesyonel Durus
+
+Dalkavuklik yapma. "Harika soru!" veya "Guzel fikir!" gibi ifadeler kullanma.
+Muhendis gibi dusun — kisa, oz, teknik. Soru soruldugunda dogrudan cevapla.
+Oneri sunarken trade-off'lari belirt, karar gelisitirciye ait.
+-->
+
+<!-- GENERATE: PROJECT_DEFINITION
+Manifest'ten: project.name, project.description, project.type, subprojects[]
+Her subproject icin: isim, yol, rol, kisa stack tanimi
+
+Ornek cikti:
+## Proje Tanimi
+
+**MyApp** — E-ticaret B2C uygulamasi. Monorepo yapisi.
+
+| Alt Proje | Yol | Rol | Stack |
+|-----------|-----|-----|-------|
+| api | ../Codebase/api/ | Backend REST API | Node.js, Express, Prisma, TypeScript |
+| mobile | ../Codebase/mobile/ | Mobil uygulama | Expo, React Native, TypeScript |
+| web | ../Codebase/web/ | Landing page | Vite, React, Tailwind |
+-->
+
+<!-- GENERATE: TECH_STACK
+Manifest'ten: stack.* alanlari, subprojects[].stack
+Tablo formati ile tum stack bilgisini listele.
+
+Ornek cikti:
+## Teknoloji Yigini
+
+| Katman | Teknoloji |
+|--------|-----------|
+| Runtime | Node.js v18 |
+| Dil | TypeScript |
+| API | Express, Zod, Pino |
+| ORM | Prisma |
+| Veritabani | MySQL |
+| Mobile | Expo SDK 54, React Native 0.81 |
+| Test | Jest |
+| Lint | ESLint |
+| Format | Prettier |
+| Paket Yoneticisi | npm |
+-->
+
+<!-- GENERATE: ENVIRONMENTS
+Manifest'ten: environments[] dizisi
+Her ortam icin: isim, URL, deploy bilgisi
+
+Ornek cikti:
+## Ortamlar
+
+| Ortam | URL | Deploy |
+|-------|-----|--------|
+| Local | localhost:3000 | — |
+| Production | api.myapp.com | Coolify, main push |
+-->
+
+<!-- GENERATE: COMMANDS
+Manifest'ten: subprojects[].test_command, dev_command, build_command
+Her subproject icin komut bloklari olustur.
+Yollar ../Codebase/ goreceli olmali.
+
+Ornek cikti:
+## Gelistirme Komutlari
+
+### API (../Codebase/api/ dizininden)
+```bash
+cd ../Codebase/api && npm run dev      # Dev server
+cd ../Codebase/api && npm test         # Testler
+cd ../Codebase/api && npm run build    # Production build
+```
+
+### Mobile (../Codebase/mobile/ dizininden)
+```bash
+cd ../Codebase/mobile && npm start     # Expo dev server
+cd ../Codebase/mobile && npm test      # Jest testleri
+cd ../Codebase/mobile && npm run ios   # iOS simulator
+```
+-->
+
+<!-- GENERATE: ARCHITECTURE
+Manifest'ten: subprojects[], project.api_prefix, navigasyon yapisi
+Dizin haritasi ve katman sorumluluklari.
+
+Ornek cikti:
+## Mimari Ozet
+
+### Dizin Yapisi
+```
+../Codebase/
+├── api/src/
+│   ├── controllers/    # Route handler'lar
+│   ├── routes/         # Express route tanimlari
+│   ├── services/       # Is mantigi
+│   ├── middleware/      # Auth, error handler
+│   ├── validators/      # Zod semalari
+│   └── prisma/          # Schema ve migration'lar
+├── mobile/src/
+│   ├── screens/         # Uygulama ekranlari
+│   ├── components/      # Yeniden kullanilabilir bilesenler
+│   ├── services/        # API katmani
+│   └── navigation/      # React Navigation yapisi
+└── web/src/             # Landing page
+```
+
+### API Prefix
+Tum API endpoint'leri `/api/v1` prefix'i ile baslar.
+-->
+
+<!-- GENERATE: CONVENTIONS
+Manifest'ten: workflows.commit_convention, project.language, rules.domain[]
+Commit formati, isimlendirme kurallari, domain-spesifik kurallar.
+
+Ornek cikti:
+## Konvansiyonlar
+
+### Commit Formati
+Conventional Commits (Turkce):
+- `feat: Yeni ozellik aciklamasi`
+- `fix: Hata duzeltme aciklamasi`
+- `refactor: Yeniden yapilandirma aciklamasi`
+- `test: Test ekleme/guncelleme`
+- `docs: Dokumantasyon degisikligi`
+- `chore: Bakim islemi`
+- `style: Stil/format degisikligi`
+- `perf: Performans iyilestirmesi`
+- `ci: CI/CD degisikligi`
+
+### Dil
+Tum iletisim, commit mesajlari, yorumlar ve dokumantasyon Turkce yazilir.
+
+### Domain Kurallari
+- API response formati: `{ status: boolean, message?: string, data?: any }`
+- Componentlerde hardcoded renk yasak — tema sistemi kullan
+- Font: Roboto ailesi (global override)
+-->
+
+<!-- GENERATE: AVAILABLE_COMMANDS
+Bootstrap'in urettigi aktif slash command listesi.
+.claude/commands/ altindaki tum komutlari tara ve listele.
+
+Ornek cikti:
+## Kullanilabilir Komutlar
+
+| Komut | Aciklama |
+|-------|----------|
+| `/task-hunter <id>` | Backlog task'ini otonom implement et |
+| `/task-master` | Acik task'lari skorla ve onceliklendir |
+| `/task-conductor` | Coklu task'i faz bazli otonom isle |
+| `/task-review` | Son degisiklikleri 3 agent ile review et |
+| `/task-plan <istek>` | Istegi analiz edip backlog task olustur |
+| `/bug-hunter <tanim>` | Bug'i bul, duzelt, commit et |
+| `/bug-review` | Bug fix'i 3 perspektiften review et |
+| `/memorize` | Oturum icerisindeki ogrenmeleri kaydet |
+-->
+
+---
+
+## Bolum 3: Test ve Dogrulama Politikasi
+
+### Otomatik Test Sinyalleri (Hook Tabanli)
+
+Edit/Write sonrasi `auto-test-runner` hook'u degisen dosyanin katmanini tespit eder ve test komutu onerisi gonderir. Bu sinyal **erken geri bildirim** amaclidir — her sinyalde test calistirmak ZORUNLU degildir.
+
+**Kurallar:**
+- Hook sinyali geldiginde: duruma gore test calistir veya devam et
+- Ayni katmanda ardisik duzenlemelerde: son duzenleme bittikten sonra test calistir (her edit'te degil)
+- **Final verification ZORUNLU:** Task tamamlamadan once (Step 4) tum ilgili testler MUTLAKA calistirilmali
+- Hook sinyali final verification'in YERINI ALMAZ — sadece erken uyari saglar
+
+**Source of truth:** Test tetikleme mantigi `settings.json` + `.claude/hooks/auto-test-runner.js` tarafinda yasar. Bu dosya (CLAUDE.md) sadece davranis politikasini tanimlar.
+
+---
+
+> **Workflow kurallari:** `.claude/rules/workflow-lifecycle.md` dosyasina bakin.
+> **Memory protokolu:** `.claude/rules/memory-protocol.md` dosyasina bakin.
+
+### Calisma Dizinleri
+
+```
+Agentbase/        # Sen buradasin — tum agent yapilandirmasi
+../Codebase/      # Proje kaynak kodu — BURAYA ERISIRSIN
+../Docs/          # Proje dokumantasyonu ve manifest
+```
+
+### Temel Dosyalar
+
+| Dosya | Amac | Kullanim |
+|-------|------|----------|
+| `PROJECT.md` | Proje tanimi, ortamlar, kurallar | @ ile tum agent'lara enjekte edilir |
+| `STACK.md` | Teknoloji yigini detaylari | @ ile gerektiginde enjekte edilir |
+| `DEVELOPER.md` | Gelistirici profili ve tercihler | Agent davranisini belirler |
+| `ARCHITECTURE.md` | Mimari, dizin yapisi, veri akisi | Feature-dev ve planlama sirasinda |
+| `WORKFLOWS.md` | Git flow, deploy, review surecleri | Commit ve deploy sirasinda |
+| `BACKLOG.md` | Backlog CLI hizli referans | Gorev yonetimi sirasinda |
+
+### Yasakli Islemler
+
+<!-- GENERATE: FORBIDDEN_OPERATIONS
+Manifest'ten: rules.forbidden[]
+Her yasakli islem icin: komut, sebep, hook tipi
+
+Ornek cikti:
+| Komut | Sebep | Koruma |
+|-------|-------|--------|
+| `git push --force` | Takim gecmisini bozar | pre-push hook |
+| `DROP TABLE` | Veri kaybi | pre-commit hook |
+| `db push` | Production'da schema drift | PreToolUse hook |
+-->

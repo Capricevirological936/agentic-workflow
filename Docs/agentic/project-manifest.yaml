@@ -1,0 +1,164 @@
+manifest:
+  version: "1.0.0"
+  template_version: "1.0.0"
+  generated_at: "2026-03-22T15:30:00+03:00"
+  generation_mode: "fresh"
+  managed_files: []
+
+project:
+  name: "dev.aps"
+  description: "Kurye/kargo yönetim platformu — kuryelerin sipariş alıp teslim ettiği, müşterilerin sipariş takibi yaptığı, yöneticilerin operasyonu izlediği bir kurye/teslimat platformu"
+  type: "monorepo"
+  language: "TypeScript + PHP"
+  subprojects:
+    - name: "backend.aps.test"
+      path: "backend.aps.test"
+      role: "api"
+      stack: "PHP 8.2 + CodeIgniter 4 + PostgreSQL + Redis"
+      test_command: "cd backend.aps.test && php spark test"
+      build_command: "cd backend.aps.test && php spark test"
+      dev_command: "docker-compose -f deploy/docker-compose.yml up -d"
+      modules:
+        orm: null
+        backend: "php/codeigniter4"
+        frontend: null
+        mobile: null
+    - name: "kurye.aps"
+      path: "kurye.aps"
+      role: "mobile"
+      stack: "TypeScript + Expo 54 + React Native 0.81"
+      test_command: "cd kurye.aps && npx jest --config jest.config.js --runInBand"
+      build_command: "cd kurye.aps && npx tsc --noEmit"
+      dev_command: "cd kurye.aps && npx expo start"
+      modules:
+        orm: null
+        backend: null
+        frontend: null
+        mobile: "expo"
+    - name: "musteri.aps"
+      path: "musteri.aps"
+      role: "mobile"
+      stack: "TypeScript + Expo 54 + React Native 0.81"
+      test_command: "cd musteri.aps && npx jest --config jest.config.js --runInBand"
+      build_command: "cd musteri.aps && npx tsc --noEmit"
+      dev_command: "cd musteri.aps && npx expo start"
+      modules:
+        orm: null
+        backend: null
+        frontend: null
+        mobile: "expo"
+    - name: "web"
+      path: "web"
+      role: "web"
+      stack: "TypeScript + Next.js 14 + Tailwind CSS"
+      test_command: "cd web && npx next lint"
+      build_command: "cd web && npx next build"
+      dev_command: "cd web && npx next dev"
+      modules:
+        orm: null
+        backend: null
+        frontend: "nextjs"
+        mobile: null
+
+stack:
+  runtime: "node + php"
+  runtime_version: "PHP 8.2"
+  package_manager: "npm + composer"
+  typescript: true
+  test_framework: "jest + phpunit + newman"
+  formatter: "prettier"
+  linter: "eslint"
+  orm: null
+  database: "postgres + redis"
+
+environments:
+  - name: "local"
+    api_url: "http://localhost"
+  - name: "production"
+    api_url: null
+    deploy_platform: "Coolify"
+    deploy_trigger: "GitHub push to main"
+
+developer:
+  experience: "senior"
+  autonomy: "full-auto"
+
+workflows:
+  branch_model: "direct-push"
+  commit_convention: "conventional"
+  commit_prefix_map:
+    feat: "Yeni özellik"
+    fix: "Hata düzeltme"
+    refactor: "Yeniden yapılandırma"
+    docs: "Dokümantasyon"
+    test: "Test"
+    chore: "Bakım"
+    style: "Stil/format"
+    perf: "Performans"
+    ci: "CI/CD"
+  test_strategy: "tests-exist"
+  auto_format_hook: true
+  migration_strategy: null
+
+modules:
+  active:
+    orm: null
+    deploy: "coolify"
+    backend: "php/codeigniter4"
+    mobile: "expo"
+    frontend: "nextjs"
+    ci-cd: "github-actions"
+    monitoring: null
+    api-docs: null
+  standalone:
+    - "security"
+  skipped:
+    orm:
+      - "prisma"
+      - "eloquent"
+      - "django-orm"
+      - "typeorm"
+    deploy:
+      - "docker"
+      - "vercel"
+    backend:
+      - "nodejs/express"
+      - "nodejs/fastify"
+      - "nodejs/nestjs"
+      - "php/laravel"
+      - "python/django"
+      - "python/fastapi"
+    mobile:
+      - "react-native"
+      - "flutter"
+    frontend:
+      - "react"
+      - "html"
+    ci-cd:
+      - "gitlab-ci"
+    monitoring:
+      - "sentry"
+      - "datadog"
+    api-docs:
+      - "graphql"
+      - "openapi"
+
+rules:
+  forbidden:
+    - command: "git push --force"
+      reason: "Uzak depo geçmişini bozabilir"
+      hook_type: "pre-commit"
+    - command: "DROP TABLE"
+      reason: "Veritabanı tablosunu kalıcı olarak siler"
+      hook_type: "pre-commit"
+    - command: "rm -rf /"
+      reason: "Tüm dosya sistemini siler"
+      hook_type: "pre-commit"
+  domain:
+    - name: "API response formatı"
+      rule: "Tüm API yanıtları {status, message, data} formatında dönmeli"
+    - name: "Tema renkleri zorunlu"
+      rule: "Tüm UI componentleri tema renklerini kullanmalı, hardcoded renk yasak"
+    - name: "Türkçe yorum ve commit"
+      rule: "Kod yorumları ve commit mesajları Türkçe olmalı"
+  design_system: "Özel component kütüphanesi + Tailwind CSS"
