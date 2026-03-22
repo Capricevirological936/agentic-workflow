@@ -911,6 +911,16 @@ describe('SIMPLE_GENERATORS', () => {
     assert.ok(result.includes('/v1/status'), 'api_prefix yansimali');
   });
 
+  it('SMOKE_TEST_ENDPOINTS api_prefix basta slash olmadan da calisiyor', () => {
+    const manifest = {
+      project: { api_prefix: 'v2' },
+      environments: [{ name: 'production', url: 'https://api.example.com' }],
+    };
+    const result = SIMPLE_GENERATORS.SMOKE_TEST_ENDPOINTS(manifest);
+    assert.ok(result.includes('/v2/status'), 'slash olmadan da normalize edilmeli');
+    assert.ok(!result.includes('comv2'), 'URL kirilmamali');
+  });
+
   it('SUBPROJECT_CONFIGS Codebase-relative path uretiyor (../Codebase prefix yok)', () => {
     const result = SIMPLE_GENERATORS.SUBPROJECT_CONFIGS(testManifest, 'js');
     assert.ok(result.includes("path: 'api'"), 'api Codebase-relative olmali');

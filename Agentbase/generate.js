@@ -860,7 +860,8 @@ const SIMPLE_GENERATORS = {
     const prodEnv = envs.find(e => e.name === 'production' || e.name === 'prod');
     const url = prodEnv?.url || '<PROJE_URL>';
     const healthCheck = prodEnv?.health_check;
-    const apiPrefix = manifest?.project?.api_prefix || '';
+    const rawPrefix = manifest?.project?.api_prefix || '';
+    const apiPrefix = rawPrefix && !rawPrefix.startsWith('/') ? '/' + rawPrefix : rawPrefix;
 
     // health_check manifest te varsa oldugu gibi kullan, yoksa url + /health
     const healthUrl = healthCheck || `${url}/health`;
@@ -1327,7 +1328,7 @@ function processSkeletonFile(filePath, manifest) {
   const codebasePath = getCodebasePath(manifest);
   let outputContent = result.content.replace(
     /const CODEBASE_ROOT = path\.resolve\(__dirname, '\.\.\/\.\.\/\.\.\/Codebase'\);/,
-    `const CODEBASE_ROOT = path.resolve(__dirname, '../..', '${codebasePath}');`
+    () => `const CODEBASE_ROOT = path.resolve(__dirname, '../..', '${codebasePath}');`
   );
 
   return { outputContent, filled: result.filled, marked: result.marked };
