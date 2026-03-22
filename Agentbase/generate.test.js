@@ -512,9 +512,18 @@ describe('SIMPLE_GENERATORS', () => {
     assert.ok(result.includes("layer: 'web'"));
   });
 
-  it('HEALTH_CHECK_URL production URL\'ini kullanir', () => {
+  it('HEALTH_CHECK_URL health_check alani varsa oldugu gibi kullanir', () => {
     const result = SIMPLE_GENERATORS.HEALTH_CHECK_URL(testManifest, 'md');
-    assert.ok(result.includes('https://api.example.com'));
+    assert.ok(result.includes('`https://api.example.com`'));
+    assert.ok(!result.includes('/health'), 'health_check alani varsa /health eklenmemeli');
+  });
+
+  it('HEALTH_CHECK_URL health_check yoksa url + /health kullanir', () => {
+    const noHealthCheck = {
+      environments: [{ name: 'production', url: 'https://api.example.com' }],
+    };
+    const result = SIMPLE_GENERATORS.HEALTH_CHECK_URL(noHealthCheck, 'md');
+    assert.ok(result.includes('`https://api.example.com/health`'));
   });
 
   it('SMOKE_TEST_ENDPOINTS production endpoint\'lerini uretir', () => {

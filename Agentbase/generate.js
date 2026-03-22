@@ -178,9 +178,16 @@ function processJsonGenerateKeys(obj, manifest) {
 /**
  * Kosullu GENERATE bloklarini isler.
  * Her alt-anahtar bir kosul: "prisma_active" → prisma modulu aktifse dahil et.
+ *
+ * Uc entry tipi dondurur:
+ * - { _hookEntry: {...} }       — tekil hook (hooks array'ine eklenir)
+ * - { _hookGroupEntry: {...} }  — matcher + hooks grubu (array elemanina donusur)
+ * - { _mergeKey, _mergeValue }  — root-level merge (ENABLED_PLUGINS gibi)
  */
 function processConditionalBlock(block, activeModules, manifest) {
   const entries = [];
+  const wrapperFields = {}; // matcher gibi skaler wrapper alanlar
+
   for (const [condKey, value] of Object.entries(block)) {
     if (condKey === '__doc__') continue;
 
@@ -209,17 +216,44 @@ function processConditionalBlock(block, activeModules, manifest) {
       continue;
     }
 
-    // Normal entry (dogrudan hook olarak ekle)
+    // Wrapper alan: skaler deger, kosul degil (matcher: "Bash" gibi)
+    if (!modulMatch && (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean')) {
+      wrapperFields[condKey] = value;
+      continue;
+    }
+
+    // Normal entry
     if (value && typeof value === 'object') {
       const cleanEntry = {};
       for (const [k, v] of Object.entries(value)) {
         if (k !== '__doc__') cleanEntry[k] = v;
       }
       if (Object.keys(cleanEntry).length > 0) {
-        entries.push({ _hookEntry: cleanEntry });
+        if ('type' in cleanEntry) {
+          // Hook entry (type alani var → hook)
+          entries.push({ _hookEntry: cleanEntry });
+        } else {
+          // Root-level merge (type yok → her key-value ciftini ayri merge et)
+          for (const [mk, mv] of Object.entries(cleanEntry)) {
+            entries.push({ _mergeKey: mk, _mergeValue: mv });
+          }
+        }
       }
     }
   }
+
+  // Wrapper field + hook entry varsa → hook group olustur (matcher + hooks)
+  if (Object.keys(wrapperFields).length > 0) {
+    const hookEntries = entries.filter(e => e._hookEntry).map(e => e._hookEntry);
+    const otherEntries = entries.filter(e => !e._hookEntry);
+    if (hookEntries.length > 0) {
+      return [
+        { _hookGroupEntry: { ...wrapperFields, hooks: hookEntries } },
+        ...otherEntries,
+      ];
+    }
+  }
+
   return entries;
 }
 
