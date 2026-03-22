@@ -17,6 +17,7 @@ const {
   findManifestArg,
   hasTypeScript,
   processJsonGenerateKeys,
+  resolveOutputPath,
   scanSkeletonFiles,
   toOutputName,
   detectFileType,
@@ -627,6 +628,76 @@ describe('toOutputName', () => {
 
   it('skeleton olmayan dosya adini degistirmez', () => {
     assert.strictEqual(toOutputName('normal-file.md'), 'normal-file.md');
+  });
+});
+
+describe('resolveOutputPath', () => {
+  const outputDir = '/tmp/test-output';
+
+  it('settings.skeleton.json → .claude/settings.json', () => {
+    const skeleton = path.join(TEMPLATES_DIR, 'core', 'settings.skeleton.json');
+    const result = resolveOutputPath(skeleton, outputDir);
+    assert.strictEqual(result, path.join(outputDir, '.claude', 'settings.json'));
+  });
+
+  it('CLAUDE.md.skeleton → .claude/CLAUDE.md', () => {
+    const skeleton = path.join(TEMPLATES_DIR, 'core', 'CLAUDE.md.skeleton');
+    const result = resolveOutputPath(skeleton, outputDir);
+    assert.strictEqual(result, path.join(outputDir, '.claude', 'CLAUDE.md'));
+  });
+
+  it('claude-ignore.skeleton → .claude-ignore', () => {
+    const skeleton = path.join(TEMPLATES_DIR, 'core', 'claude-ignore.skeleton');
+    const result = resolveOutputPath(skeleton, outputDir);
+    assert.strictEqual(result, path.join(outputDir, '.claude-ignore'));
+  });
+
+  it('core/commands/task-hunter.skeleton.md → .claude/commands/task-hunter.md', () => {
+    const skeleton = path.join(TEMPLATES_DIR, 'core', 'commands', 'task-hunter.skeleton.md');
+    const result = resolveOutputPath(skeleton, outputDir);
+    assert.strictEqual(result, path.join(outputDir, '.claude', 'commands', 'task-hunter.md'));
+  });
+
+  it('core/agents/code-review.skeleton.md → .claude/agents/code-review.md', () => {
+    const skeleton = path.join(TEMPLATES_DIR, 'core', 'agents', 'code-review.skeleton.md');
+    const result = resolveOutputPath(skeleton, outputDir);
+    assert.strictEqual(result, path.join(outputDir, '.claude', 'agents', 'code-review.md'));
+  });
+
+  it('core/hooks/test-reminder.skeleton.js → .claude/hooks/test-reminder.js', () => {
+    const skeleton = path.join(TEMPLATES_DIR, 'core', 'hooks', 'test-reminder.skeleton.js');
+    const result = resolveOutputPath(skeleton, outputDir);
+    assert.strictEqual(result, path.join(outputDir, '.claude', 'hooks', 'test-reminder.js'));
+  });
+
+  it('core/git-hooks/pre-commit.skeleton → git-hooks/pre-commit', () => {
+    const skeleton = path.join(TEMPLATES_DIR, 'core', 'git-hooks', 'pre-commit.skeleton');
+    const result = resolveOutputPath(skeleton, outputDir);
+    assert.strictEqual(result, path.join(outputDir, 'git-hooks', 'pre-commit'));
+  });
+
+  it('modules/orm/prisma/rules/prisma-rules.skeleton.md → .claude/rules/prisma-rules.md', () => {
+    const skeleton = path.join(TEMPLATES_DIR, 'modules', 'orm', 'prisma', 'rules', 'prisma-rules.skeleton.md');
+    const result = resolveOutputPath(skeleton, outputDir);
+    assert.strictEqual(result, path.join(outputDir, '.claude', 'rules', 'prisma-rules.md'));
+  });
+
+  it('modules/deploy/docker/commands/pre-deploy.skeleton.md → .claude/commands/pre-deploy.md', () => {
+    const skeleton = path.join(TEMPLATES_DIR, 'modules', 'deploy', 'docker', 'commands', 'pre-deploy.skeleton.md');
+    const result = resolveOutputPath(skeleton, outputDir);
+    assert.strictEqual(result, path.join(outputDir, '.claude', 'commands', 'pre-deploy.md'));
+  });
+
+  it('modules/backend/nodejs/express/rules/express-rules.skeleton.md → .claude/rules/express-rules.md', () => {
+    const skeleton = path.join(TEMPLATES_DIR, 'modules', 'backend', 'nodejs', 'express', 'rules', 'express-rules.skeleton.md');
+    const result = resolveOutputPath(skeleton, outputDir);
+    assert.strictEqual(result, path.join(outputDir, '.claude', 'rules', 'express-rules.md'));
+  });
+
+  it('modules/deploy/docker/agents/devops.skeleton.md → .claude/agents/devops.md', () => {
+    const skeleton = path.join(TEMPLATES_DIR, 'modules', 'deploy', 'docker', 'agents', 'devops.skeleton.md');
+    const result = resolveOutputPath(skeleton, outputDir);
+    assert.strictEqual(result, path.join(outputDir, '.claude', 'agents', 'devops.md'));
   });
 });
 
