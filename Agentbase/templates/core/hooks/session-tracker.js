@@ -192,10 +192,10 @@ function detectToolType(input) {
   if (ti.command !== undefined) return 'Bash';
   if (ti.prompt !== undefined && ti.description !== undefined) return 'Agent';
   if (ti.old_string !== undefined) return 'Edit';
-  if (ti.content !== undefined && ti.file_path !== undefined) return 'Write';
+  if (ti.content !== undefined && (ti.file_path !== undefined || ti.path !== undefined)) return 'Write';
   if (ti.pattern !== undefined && (ti.output_mode !== undefined || ti.type !== undefined)) return 'Grep';
   if (ti.pattern !== undefined) return 'Glob';
-  if (ti.file_path !== undefined) return 'Read';
+  if (ti.file_path !== undefined || ti.path !== undefined) return 'Read';
   return 'Unknown';
 }
 
@@ -205,7 +205,7 @@ function getTarget(input, toolType) {
     case 'Read':
     case 'Edit':
     case 'Write':
-      return ti.file_path || null;
+      return ti.file_path || ti.path || null;
     case 'Bash':
       return (ti.command || '').substring(0, 120);
     case 'Grep':
@@ -496,7 +496,7 @@ async function main() {
       state.tools.last_tool = toolType;
       state.tools.last_tool_target = target;
 
-      const filePath = input.tool_input?.file_path;
+      const filePath = input.tool_input?.file_path || input.tool_input?.path;
       if (filePath) {
         if (toolType === 'Read') {
           state.files.read = addToFileList(state.files.read, filePath, MAX_FILE_ENTRIES);

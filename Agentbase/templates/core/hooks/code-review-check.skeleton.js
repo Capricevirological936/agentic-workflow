@@ -96,7 +96,7 @@ async function main() {
   process.stdin.on('end', () => {
     try {
       const input = JSON.parse(inputData);
-      const filePath = input.tool_input?.file_path;
+      const filePath = input.tool_input?.file_path || input.tool_input?.path;
 
       // file_path yoksa (baska bir tool input'u) — gecir
       if (!filePath) {

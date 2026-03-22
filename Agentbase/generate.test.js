@@ -682,22 +682,32 @@ describe('resolveOutputPath', () => {
     assert.strictEqual(result, path.join(outputDir, '.claude', 'rules', 'prisma-rules.md'));
   });
 
-  it('modules/deploy/docker/commands/pre-deploy.skeleton.md → .claude/commands/pre-deploy.md', () => {
+  it('modules/deploy/docker/commands/pre-deploy.skeleton.md → docker-pre-deploy.md (prefix eklenir)', () => {
     const skeleton = path.join(TEMPLATES_DIR, 'modules', 'deploy', 'docker', 'commands', 'pre-deploy.skeleton.md');
     const result = resolveOutputPath(skeleton, outputDir);
-    assert.strictEqual(result, path.join(outputDir, '.claude', 'commands', 'pre-deploy.md'));
+    assert.strictEqual(result, path.join(outputDir, '.claude', 'commands', 'docker-pre-deploy.md'));
   });
 
-  it('modules/backend/nodejs/express/rules/express-rules.skeleton.md → .claude/rules/express-rules.md', () => {
+  it('modules/backend/nodejs/express/rules/express-rules.skeleton.md → express-rules.md (prefix zaten var)', () => {
     const skeleton = path.join(TEMPLATES_DIR, 'modules', 'backend', 'nodejs', 'express', 'rules', 'express-rules.skeleton.md');
     const result = resolveOutputPath(skeleton, outputDir);
     assert.strictEqual(result, path.join(outputDir, '.claude', 'rules', 'express-rules.md'));
   });
 
-  it('modules/deploy/docker/agents/devops.skeleton.md → .claude/agents/devops.md', () => {
+  it('modules/deploy/docker/agents/devops.skeleton.md → docker-devops.md (prefix eklenir)', () => {
     const skeleton = path.join(TEMPLATES_DIR, 'modules', 'deploy', 'docker', 'agents', 'devops.skeleton.md');
     const result = resolveOutputPath(skeleton, outputDir);
-    assert.strictEqual(result, path.join(outputDir, '.claude', 'agents', 'devops.md'));
+    assert.strictEqual(result, path.join(outputDir, '.claude', 'agents', 'docker-devops.md'));
+  });
+
+  it('Docker ve Coolify ayni basename ile collision olmaz', () => {
+    const dockerSkeleton = path.join(TEMPLATES_DIR, 'modules', 'deploy', 'docker', 'commands', 'pre-deploy.skeleton.md');
+    const coolifySkeleton = path.join(TEMPLATES_DIR, 'modules', 'deploy', 'coolify', 'commands', 'pre-deploy.skeleton.md');
+    const dockerResult = resolveOutputPath(dockerSkeleton, outputDir);
+    const coolifyResult = resolveOutputPath(coolifySkeleton, outputDir);
+    assert.notStrictEqual(dockerResult, coolifyResult, 'farkli cikti yollari olmali');
+    assert.ok(dockerResult.includes('docker-pre-deploy'), 'docker prefix olmali');
+    assert.ok(coolifyResult.includes('coolify-pre-deploy'), 'coolify prefix olmali');
   });
 });
 
@@ -1291,7 +1301,7 @@ describe('processSkeletonFile — CODEBASE_ROOT yol destegi', () => {
     const { processSkeletonFile } = require('./generate.js');
     const result = processSkeletonFile(hookPath, { project: {} });
 
-    assert.ok(result.outputContent.includes("'../Codebase'"), 'varsayilan ../Codebase olmali');
+    assert.ok(result.outputContent.includes('../Codebase'), 'varsayilan ../Codebase olmali');
     assert.ok(!result.outputContent.includes("'../../../Codebase'"), 'hardcoded 3-seviye yol olmamali');
   });
 
@@ -1300,7 +1310,22 @@ describe('processSkeletonFile — CODEBASE_ROOT yol destegi', () => {
     const { processSkeletonFile } = require('./generate.js');
     const result = processSkeletonFile(hookPath, { project: { structure: '../MyProject' } });
 
-    assert.ok(result.outputContent.includes("'../MyProject'"), 'ozel structure yansimali');
+    assert.ok(result.outputContent.includes('../MyProject'), 'ozel structure yansimali');
+  });
+
+  it('apostrof iceren path ile syntax error vermiyor', () => {
+    const hookPath = path.join(TEMPLATES_DIR, 'modules', 'orm', 'prisma', 'hooks', 'destructive-migration-check.js');
+    const { processSkeletonFile } = require('./generate.js');
+    const result = processSkeletonFile(hookPath, { project: { structure: "../O'Brien-Project" } });
+
+    // JSON.stringify ile embed edilmeli — tek tirnak icinde apostrof syntax error yapmaz
+    assert.ok(result.outputContent.includes("O'Brien"), 'apostrof iceren path korunmali');
+    // Uretilen JS gecerli olmali
+    assert.doesNotThrow(() => {
+      // CODEBASE_ROOT satirini cikar ve eval et
+      const match = result.outputContent.match(/const CODEBASE_ROOT = (.+);/);
+      if (match) new Function('path', '__dirname', `return ${match[1]}`)({ resolve: (...a) => a.join('/') }, '/tmp');
+    }, 'uretilen JS syntax error vermemeli');
   });
 });
 

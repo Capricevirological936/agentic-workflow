@@ -159,7 +159,7 @@ async function main() {
     const filePath = parsed?.tool_input?.file_path || parsed?.tool_input?.path || '';
 
     // Dosya codebase icinde mi?
-    if (!filePath.includes('Codebase')) return;
+    if (!filePath.startsWith(CODEBASE_ROOT)) return;
 
     // Dosya formatlanabilir mi?
     if (!isFormattableFile(filePath)) return;

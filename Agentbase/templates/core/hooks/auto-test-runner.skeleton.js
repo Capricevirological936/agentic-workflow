@@ -136,7 +136,7 @@ async function main() {
       process.exit(0);
     }
 
-    const filePath = input?.tool_input?.file_path;
+    const filePath = input?.tool_input?.file_path || input?.tool_input?.path;
 
     // file_path yoksa veya bos — gecir
     if (!filePath || typeof filePath !== 'string') {

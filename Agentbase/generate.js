@@ -877,6 +877,102 @@ const SIMPLE_GENERATORS = {
     ].join('\n');
   },
 
+  // --- TEST DOSYASI ESLESTIRME ---
+
+  TEST_FILE_MAPPING(manifest, fileType) {
+    if (fileType !== 'js') return '';
+
+    const stack = (manifest?.stack?.primary || '').toLowerCase();
+    const detected = (manifest?.stack?.detected || []).map(s => s.toLowerCase());
+    const testFramework = manifest?.stack?.test_framework || 'jest';
+    const entries = [];
+
+    // Node.js / TypeScript pattern'leri
+    if (stack.includes('node') || detected.includes('typescript') || detected.includes('react')) {
+      const ext = detected.includes('typescript') ? 'ts' : 'js';
+      const dirs = ['controllers', 'services', 'utils', 'middleware', 'helpers', 'lib'];
+      for (const dir of dirs) {
+        entries.push(
+          `  { sourcePattern: /(.+)\\/${dir}\\/(.+)\\.(${ext}x?|[jt]sx?)$/, testPath: '$1/__tests__/${dir}/$2.test.$3', framework: '${testFramework}' }`
+        );
+      }
+      // React/RN component ve screen pattern'leri
+      if (detected.includes('react') || detected.includes('expo') || detected.includes('react native')) {
+        for (const dir of ['components', 'screens', 'hooks', 'context']) {
+          entries.push(
+            `  { sourcePattern: /(.+)\\/${dir}\\/(.+)\\.(tsx?|jsx?)$/, testPath: '$1/__tests__/${dir}/$2.test.$3', framework: '${testFramework}' }`
+          );
+        }
+      }
+    }
+
+    // Python pattern'leri
+    if (stack.includes('python') || detected.includes('django') || detected.includes('fastapi')) {
+      const dirs = ['views', 'models', 'serializers', 'services', 'utils'];
+      for (const dir of dirs) {
+        entries.push(
+          `  { sourcePattern: /(.+)\\/${dir}\\/(.+)\\.py$/, testPath: '$1/tests/test_$2.py', framework: '${testFramework}' }`
+        );
+      }
+    }
+
+    // PHP/Laravel pattern'leri
+    if (stack.includes('php') || detected.includes('laravel')) {
+      entries.push(
+        `  { sourcePattern: /(.+)\\/Http\\/Controllers\\/(.+)\\.php$/, testPath: '$1/../tests/Feature/$2Test.php', framework: '${testFramework}' }`,
+        `  { sourcePattern: /(.+)\\/Models\\/(.+)\\.php$/, testPath: '$1/../tests/Unit/$2Test.php', framework: '${testFramework}' }`,
+        `  { sourcePattern: /(.+)\\/Services\\/(.+)\\.php$/, testPath: '$1/../tests/Unit/$2Test.php', framework: '${testFramework}' }`
+      );
+    }
+
+    return entries.length > 0 ? entries.join(',\n') + ',' : '';
+  },
+
+  TEST_FILE_TABLE(manifest) {
+    const stack = (manifest?.stack?.primary || '').toLowerCase();
+    const detected = (manifest?.stack?.detected || []).map(s => s.toLowerCase());
+    const testFramework = manifest?.stack?.test_framework || 'jest';
+    const rows = [];
+
+    if (stack.includes('node') || detected.includes('typescript') || detected.includes('react')) {
+      const ext = detected.includes('typescript') ? 'ts' : 'js';
+      rows.push(
+        `| \`controllers/{name}.${ext}\` | \`__tests__/controllers/{name}.test.${ext}\` | ${testFramework} |`,
+        `| \`services/{name}.${ext}\` | \`__tests__/services/{name}.test.${ext}\` | ${testFramework} |`,
+        `| \`utils/{name}.${ext}\` | \`__tests__/utils/{name}.test.${ext}\` | ${testFramework} |`
+      );
+      if (detected.includes('react') || detected.includes('expo')) {
+        rows.push(
+          `| \`components/{name}.tsx\` | \`__tests__/components/{name}.test.tsx\` | ${testFramework} |`,
+          `| \`screens/{name}.tsx\` | \`__tests__/screens/{name}.test.tsx\` | ${testFramework} |`
+        );
+      }
+    }
+
+    if (stack.includes('python') || detected.includes('django')) {
+      rows.push(
+        `| \`views/{name}.py\` | \`tests/test_{name}.py\` | ${testFramework} |`,
+        `| \`models/{name}.py\` | \`tests/test_{name}.py\` | ${testFramework} |`,
+        `| \`serializers/{name}.py\` | \`tests/test_{name}.py\` | ${testFramework} |`
+      );
+    }
+
+    if (stack.includes('php') || detected.includes('laravel')) {
+      rows.push(
+        `| \`Http/Controllers/{name}.php\` | \`tests/Feature/{name}Test.php\` | ${testFramework} |`,
+        `| \`Models/{name}.php\` | \`tests/Unit/{name}Test.php\` | ${testFramework} |`
+      );
+    }
+
+    if (rows.length === 0) return '';
+
+    return [
+      '| Kaynak Pattern | Test Dosyasi | Framework |',
+      '|---|---|---|',
+      ...rows,
+    ].join('\n');
+  },
+
   // --- TASK ROUTING YAPILANDIRMASI ---
 
   TASK_ROUTING_CONFIG(manifest) {
@@ -1328,7 +1424,7 @@ function processSkeletonFile(filePath, manifest) {
   const codebasePath = getCodebasePath(manifest);
   let outputContent = result.content.replace(
     /const CODEBASE_ROOT = path\.resolve\(__dirname, '\.\.\/\.\.\/\.\.\/Codebase'\);/,
-    () => `const CODEBASE_ROOT = path.resolve(__dirname, '../..', '${codebasePath}');`
+    () => `const CODEBASE_ROOT = path.resolve(__dirname, '../..', ${JSON.stringify(codebasePath)});`
   );
 
   return { outputContent, filled: result.filled, marked: result.marked };
@@ -1360,10 +1456,19 @@ function resolveOutputPath(skeletonPath, outputDir) {
 
   // modules/* mapping
   if (parts[0] === 'modules') {
-    // modules/{kategori}/{varyant}/{tip}/dosya
+    // modules/{kategori}/{...}/{varyant}/{tip}/dosya
     const tip = parts[parts.length - 2]; // commands, agents, hooks, rules
+    const leafVariant = parts[parts.length - 3]; // docker, prisma, express, monorepo
     const targetDir = `.claude/${tip}`;
-    return path.join(outputDir, targetDir, filename);
+
+    // Collision onleme: dosya adi zaten modul adini icermiyorsa prefix ekle
+    // docker/commands/pre-deploy → docker-pre-deploy (collision onlendi)
+    // prisma/rules/prisma-rules → prisma-rules (prefix zaten var, dokunma)
+    const prefixedFilename = filename.toLowerCase().startsWith(leafVariant.toLowerCase())
+      ? filename
+      : `${leafVariant}-${filename}`;
+
+    return path.join(outputDir, targetDir, prefixedFilename);
   }
 
   return path.join(outputDir, filename);
