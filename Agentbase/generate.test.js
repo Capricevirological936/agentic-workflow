@@ -659,6 +659,26 @@ describe('SIMPLE_GENERATORS', () => {
     assert.ok(result.includes("layer: 'web'"));
   });
 
+  it('LAYER_TESTS stack-spesifik dizin pattern leri ekler', () => {
+    const result = SIMPLE_GENERATORS.LAYER_TESTS(testManifest, 'js');
+    // testManifest stack.orm = 'prisma' → prisma/ pattern'i olmali
+    assert.ok(result.includes('/prisma\\/'), 'prisma dizin pattern i olmali');
+    // testManifest stack.detected = ['React'] → routes/app/pages olmamali
+    assert.ok(!result.includes('/routes\\/'), 'express yoksa routes olmamali');
+  });
+
+  it('LAYER_TESTS Next.js icin app/ ve pages/ ekler', () => {
+    const nextManifest = {
+      project: {
+        subprojects: [{ name: 'web', path: '../Codebase/web', test_command: 'npm test' }],
+      },
+      stack: { detected: ['Next.js'] },
+    };
+    const result = SIMPLE_GENERATORS.LAYER_TESTS(nextManifest, 'js');
+    assert.ok(result.includes('/app\\/'), 'Next.js app/ pattern i olmali');
+    assert.ok(result.includes('/pages\\/'), 'Next.js pages/ pattern i olmali');
+  });
+
   it('LAYER_TESTS cd iceren test_command da ek cd eklemez', () => {
     const cdManifest = {
       project: {

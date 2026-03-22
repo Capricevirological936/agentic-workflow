@@ -772,15 +772,29 @@ const SIMPLE_GENERATORS = {
 
     if (fileType !== 'js') return '';
 
+    // Stack-spesifik ek dizinler (src/ disinda test hatirlatmasi tetikleyecek dizinler)
+    const extraDirs = [];
+    const orm = (manifest?.stack?.orm || '').toLowerCase();
+    const detected = (manifest?.stack?.detected || []).map(s => s.toLowerCase());
+
+    if (orm === 'prisma') extraDirs.push('prisma');
+    if (orm === 'eloquent' || detected.includes('laravel')) extraDirs.push('database');
+    if (detected.includes('laravel')) extraDirs.push('app', 'routes');
+    if (detected.includes('next.js') || detected.includes('nextjs')) extraDirs.push('app', 'pages');
+    if (detected.includes('express')) extraDirs.push('routes');
+
     const entries = [];
     for (const sp of subprojects) {
       const spPath = (sp.path || sp.name).replace(/\.\.\//g, '').replace(/\//g, '\\/');
       const cmd = sp.test_command || testCommands[sp.name] || 'npm test';
       const fullCmd = cmd.startsWith('cd ') ? cmd : `cd "${sp.path || '../Codebase/' + sp.name}" && ${cmd}`;
 
-      entries.push(
-        `  { pattern: /${spPath}\\/src\\//, layer: '${sp.name}', command: '${fullCmd}', extra: null }`
-      );
+      const dirs = [...new Set(['src', ...extraDirs])];
+      for (const dir of dirs) {
+        entries.push(
+          `  { pattern: /${spPath}\\/${dir}\\//, layer: '${sp.name}', command: '${fullCmd}', extra: null }`
+        );
+      }
     }
 
     return entries.length > 0 ? entries.join(',\n') + ',' : '';
