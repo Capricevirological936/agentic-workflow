@@ -295,3 +295,230 @@ describe('openapi-sync-check hook', () => {
     assert.equal(result.stderr, '');
   });
 });
+
+// ─────────────────────────────────────────────────────
+// TEAM-TRIGGER HOOK TESTLERI
+// ─────────────────────────────────────────────────────
+
+describe('team-trigger hook', () => {
+  const hookRelPath = 'core/hooks/team-trigger.skeleton.js';
+  const teamTriggerPath = path.join(
+    __dirname, '..', 'templates', 'core', 'hooks', 'team-trigger.skeleton.js'
+  );
+
+  function loadTriggerFunctions(patternElements) {
+    return loadModuleExports(teamTriggerPath, {
+      exports: ['checkFileCount', 'checkCrossLayer', 'checkLongSession', 'isOnCooldown'],
+      replacements: [
+        {
+          find: /const SUBPROJECT_PATTERNS = \[[\s\S]*?\];/,
+          replace: `const SUBPROJECT_PATTERNS = [${patternElements ? patternElements.join(', ') : ''}];`,
+        },
+      ],
+    });
+  }
+
+  it('4 dosya → tetiklenmez, 5 dosya → tetiklenir', () => {
+    const { checkFileCount } = loadTriggerFunctions();
+
+    const under = checkFileCount({ files: { written: ['a.ts', 'b.ts', 'c.ts', 'd.ts'] } });
+    assert.equal(under, null, '4 dosya tetiklememeli');
+
+    const over = checkFileCount({ files: { written: ['a.ts', 'b.ts', 'c.ts', 'd.ts', 'e.ts'] } });
+    assert.ok(over, '5 dosya tetiklemeli');
+    assert.equal(over.type, 'file_count');
+  });
+
+  it('tek katman → tetiklenmez, iki katman → tetiklenir', () => {
+    const patterns = [
+      "{ pattern: /api\\/src\\//, layer: 'API' }",
+      "{ pattern: /web\\/src\\//, layer: 'Web' }",
+    ];
+    const { checkCrossLayer } = loadTriggerFunctions(patterns);
+
+    const single = checkCrossLayer({ files: { written: ['api/src/a.ts', 'api/src/b.ts'] } });
+    assert.equal(single, null, 'tek katman tetiklememeli');
+
+    const cross = checkCrossLayer({ files: { written: ['api/src/a.ts', 'web/src/b.ts'] } });
+    assert.ok(cross, 'iki katman tetiklemeli');
+    assert.equal(cross.type, 'cross_layer');
+  });
+
+  it('29dk → tetiklenmez, 31dk + 50 tool → tetiklenir', () => {
+    const { checkLongSession } = loadTriggerFunctions();
+
+    const short = checkLongSession({
+      started_at: new Date(Date.now() - 29 * 60 * 1000).toISOString(),
+      tools: { total_calls: 60 },
+    });
+    assert.equal(short, null, '29dk tetiklememeli');
+
+    const longButFewTools = checkLongSession({
+      started_at: new Date(Date.now() - 31 * 60 * 1000).toISOString(),
+      tools: { total_calls: 30 },
+    });
+    assert.equal(longButFewTools, null, '31dk ama 30 tool tetiklememeli');
+
+    const triggered = checkLongSession({
+      started_at: new Date(Date.now() - 31 * 60 * 1000).toISOString(),
+      tools: { total_calls: 50 },
+    });
+    assert.ok(triggered, '31dk + 50 tool tetiklemeli');
+    assert.equal(triggered.type, 'long_session');
+  });
+
+  it('cooldown icinde tekrar tetiklenmez', () => {
+    const { isOnCooldown } = loadTriggerFunctions();
+
+    const fresh = isOnCooldown('file_count', { lastNotified: {} });
+    assert.equal(fresh, false, 'ilk kez cooldown olmamali');
+
+    const recent = isOnCooldown('file_count', {
+      lastNotified: { file_count: Date.now() - 5 * 60 * 1000 },
+    });
+    assert.equal(recent, true, '5dk once bildirilmis → cooldown');
+
+    const expired = isOnCooldown('file_count', {
+      lastNotified: { file_count: Date.now() - 11 * 60 * 1000 },
+    });
+    assert.equal(expired, false, '11dk once → cooldown bitmis');
+  });
+
+  it('session state yoksa sessizce gecir', t => {
+    const projectRoot = createTempProject(t);
+    const hookPath = materializeHook(projectRoot, hookRelPath, {
+      arrayReplacements: [{ name: 'SUBPROJECT_PATTERNS', elements: [] }],
+    });
+    const input = makeHookInput('/tmp/test.ts');
+
+    const result = runHook(hookPath, input);
+
+    assert.equal(result.status, 0);
+    assert.equal(result.stdout.trim(), input);
+  });
+});
+
+// ─────────────────────────────────────────────────────
+// AUTO-TEST-RUNNER HOOK TESTLERI
+// ─────────────────────────────────────────────────────
+
+describe('auto-test-runner hook', () => {
+  const autoTestPath = path.join(
+    __dirname, '..', 'templates', 'core', 'hooks', 'auto-test-runner.skeleton.js'
+  );
+
+  function loadAutoTestFunctions() {
+    return loadModuleExports(autoTestPath, {
+      exports: ['loadState', 'isCodeFile', 'detectLayer'],
+      replacements: [
+        {
+          find: /const LAYER_TESTS = \[[\s\S]*?\];/,
+          replace: "const LAYER_TESTS = [{ pattern: /api\\/src\\//, layer: 'API', command: 'npm test', extra: null }];",
+        },
+        {
+          find: /const CODE_EXTENSIONS = \[[\s\S]*?\];/,
+          replace: "const CODE_EXTENSIONS = ['.ts', '.tsx', '.js'];",
+        },
+      ],
+    });
+  }
+
+  it('non-code dosya (md) pass-through — isCodeFile false doner', () => {
+    const { isCodeFile } = loadAutoTestFunctions();
+
+    assert.equal(isCodeFile('/tmp/README.md'), false, '.md kod dosyasi degil');
+    assert.equal(isCodeFile('/tmp/config.json'), false, '.json kod dosyasi degil');
+    assert.equal(isCodeFile('/tmp/service.ts'), true, '.ts kod dosyasi');
+    assert.equal(isCodeFile('/tmp/app.js'), true, '.js kod dosyasi');
+  });
+
+  it('ilk edit sinyal uretir (debounce fresh)', t => {
+    const projectRoot = createTempProject(t);
+    const hookPath = materializeHook(projectRoot, 'core/hooks/auto-test-runner.skeleton.js', {
+      arrayReplacements: [
+        { name: 'LAYER_TESTS', elements: ["{ pattern: /api\\/src\\//, layer: 'API', command: 'npm test', extra: null }"] },
+        { name: 'CODE_EXTENSIONS', elements: ["'.ts'", "'.js'"] },
+      ],
+    });
+    const filePath = writeCodebaseFile(projectRoot, 'api/src/service.ts', 'export {};\n');
+
+    const result = runHook(hookPath, makeHookInput(filePath));
+
+    assert.equal(result.status, 0);
+    const output = JSON.parse(result.stdout);
+    assert.ok(output.systemMessage, 'ilk edit sinyal vermeli');
+    assert.ok(output.systemMessage.includes('API'), 'katman adi icermeli');
+  });
+
+  it('debounce icinde tekrar edit → pass-through', t => {
+    const projectRoot = createTempProject(t);
+    const hookPath = materializeHook(projectRoot, 'core/hooks/auto-test-runner.skeleton.js', {
+      arrayReplacements: [
+        { name: 'LAYER_TESTS', elements: ["{ pattern: /api\\/src\\//, layer: 'API', command: 'npm test', extra: null }"] },
+        { name: 'CODE_EXTENSIONS', elements: ["'.ts'"] },
+      ],
+    });
+    const filePath = writeCodebaseFile(projectRoot, 'api/src/service.ts', 'export {};\n');
+    const input = makeHookInput(filePath);
+
+    // Ilk calistirma — sinyal uretir
+    runHook(hookPath, input);
+
+    // Ikinci calistirma — debounce icinde, pass-through
+    const second = runHook(hookPath, input);
+    assert.equal(second.status, 0);
+    assert.equal(second.stdout.trim(), input, 'debounce icinde pass-through olmali');
+  });
+
+  it('threshold asimi guclendirilmis mesaj (3+ edit)', t => {
+    const projectRoot = createTempProject(t);
+    const hookPath = materializeHook(projectRoot, 'core/hooks/auto-test-runner.skeleton.js', {
+      arrayReplacements: [
+        { name: 'LAYER_TESTS', elements: ["{ pattern: /api\\/src\\//, layer: 'API', command: 'npm test', extra: null }"] },
+        { name: 'CODE_EXTENSIONS', elements: ["'.ts'"] },
+      ],
+      textReplacements: [
+        // Debounce'u 0'a dusur — her calistirmada sinyal uretsin
+        { find: /const DEBOUNCE_MS = .*?;/, replace: 'const DEBOUNCE_MS = 0;' },
+      ],
+    });
+    const filePath = writeCodebaseFile(projectRoot, 'api/src/service.ts', 'export {};\n');
+    const input = makeHookInput(filePath);
+
+    // 3 kez calistir — son sinyal "3 duzenleme" icermeli
+    runHook(hookPath, input);
+    runHook(hookPath, input);
+    const third = runHook(hookPath, input);
+
+    const output = JSON.parse(third.stdout);
+    assert.ok(output.systemMessage, 'ucuncu edit sinyal vermeli');
+  });
+
+  it('stale state (1 saat) sifirlanir', () => {
+    const { loadState } = loadAutoTestFunctions();
+
+    // Mevcut state dosyasi olmadan cagrilirsa bos state doner
+    const state = loadState();
+    assert.ok(state.layers, 'layers alani olmali');
+    assert.equal(Object.keys(state.layers).length, 0, 'bos layers');
+  });
+
+  it('bozuk state dosyasi sessizce gecilir', t => {
+    const projectRoot = createTempProject(t);
+    const hookPath = materializeHook(projectRoot, 'core/hooks/auto-test-runner.skeleton.js', {
+      arrayReplacements: [
+        { name: 'LAYER_TESTS', elements: ["{ pattern: /api\\/src\\//, layer: 'API', command: 'npm test', extra: null }"] },
+        { name: 'CODE_EXTENSIONS', elements: ["'.ts'"] },
+      ],
+    });
+
+    // Bozuk state dosyasi yaz
+    const stateFile = path.join(path.dirname(hookPath), '.auto-test-state.json');
+    fs.writeFileSync(stateFile, '{BOZUK JSON!!!', 'utf8');
+
+    const filePath = writeCodebaseFile(projectRoot, 'api/src/service.ts', 'export {};\n');
+    const result = runHook(hookPath, makeHookInput(filePath));
+
+    assert.equal(result.status, 0, 'bozuk state ile crash olmamali');
+  });
+});
