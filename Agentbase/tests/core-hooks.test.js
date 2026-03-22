@@ -93,43 +93,131 @@ describe('code-review-check hook', () => {
   });
 });
 
-describe('test-reminder hook', () => {
-  it('detectLayer matches configured subproject patterns', () => {
-    const hookPath = path.join(
-      __dirname,
-      '..',
-      'templates',
-      'core',
-      'hooks',
-      'test-reminder.skeleton.js'
-    );
-    const { detectLayer } = loadModuleExports(hookPath, {
-      exports: ['detectLayer'],
+describe('test-enforcer hook', () => {
+  const enforcerPath = path.join(
+    __dirname, '..', 'templates', 'core', 'hooks', 'test-enforcer.skeleton.js'
+  );
+
+  function loadEnforcerFunctions(opts = {}) {
+    return loadModuleExports(enforcerPath, {
+      exports: opts.exports || ['detectLayer', 'isTestFile', 'isCodeFile', 'resolveTestPath'],
       replacements: [
         {
           find: /const LAYER_TESTS = \[[\s\S]*?\];/,
-          replace:
-            "const LAYER_TESTS = [{ pattern: /apps\\/api\\/src\\//, layer: 'API', command: 'npm test', extra: null }];",
+          replace: "const LAYER_TESTS = [{ pattern: /api\\/src\\//, layer: 'API', command: 'npm test', extra: null }];",
         },
+        {
+          find: /const TEST_FILE_MAPPING = \[[\s\S]*?\];/,
+          replace: opts.mappingReplace ||
+            "const TEST_FILE_MAPPING = [{ sourcePattern: /(.+)\\/services\\/(.+)\\.(ts|js)$/, testPath: '$1/__tests__/services/$2.test.$3', framework: 'jest' }];",
+        },
+        {
+          find: /const CODE_EXTENSIONS = \[[\s\S]*?\];/,
+          replace: "const CODE_EXTENSIONS = ['.ts', '.tsx', '.js'];",
+        },
+        ...(opts.replacements || []),
       ],
     });
+  }
 
-    const layerInfo = detectLayer('/tmp/example/Codebase/apps/api/src/user.service.ts');
-    assert.equal(layerInfo.layer, 'API');
+  it('detectLayer katman eslestirmesi calisiyor', () => {
+    const { detectLayer } = loadEnforcerFunctions();
+    const result = detectLayer('/tmp/Codebase/api/src/user.service.ts');
+    assert.equal(result.layer, 'API');
+    assert.equal(detectLayer('/tmp/other/readme.md'), null);
   });
 
-  it('emits a reminder only once per layer via state tracking', t => {
+  it('isTestFile test dosyalarini dogru tespit ediyor', () => {
+    const { isTestFile } = loadEnforcerFunctions();
+    assert.ok(isTestFile('src/services/user.test.ts'));
+    assert.ok(isTestFile('__tests__/services/user.test.ts'));
+    assert.ok(isTestFile('tests/test_user.py'));
+    assert.ok(!isTestFile('src/services/user.ts'));
+    assert.ok(!isTestFile('src/controllers/auth.js'));
+  });
+
+  it('resolveTestPath kaynak → test eslestirmesi calisiyor', () => {
+    const { resolveTestPath } = loadEnforcerFunctions();
+    const result = resolveTestPath('/tmp/api/services/user.ts');
+    assert.ok(result, 'eslestirme bulmali');
+    assert.ok(result.testPath.includes('__tests__/services/user.test.ts'));
+    assert.equal(result.framework, 'jest');
+  });
+
+  it('test dosyasi yoksa EKSIK systemMessage uretir', t => {
     const projectRoot = createTempProject(t);
-    const hookPath = materializeHook(projectRoot, 'core/hooks/test-reminder.skeleton.js');
-    const filePath = writeCodebaseFile(projectRoot, 'apps/api/src/service.ts', 'export const ok = true;\n');
+    const hookPath = materializeHook(projectRoot, 'core/hooks/test-enforcer.skeleton.js', {
+      arrayReplacements: [
+        { name: 'LAYER_TESTS', elements: ["{ pattern: /api\\/src\\//, layer: 'API', command: 'npm test', extra: null }"] },
+        { name: 'TEST_FILE_MAPPING', elements: ["{ sourcePattern: /(.+)\\/services\\/(.+)\\.(ts|js)$/, testPath: '$1/__tests__/services/$2.test.$3', framework: 'jest' }"] },
+        { name: 'CODE_EXTENSIONS', elements: ["'.ts'", "'.js'"] },
+      ],
+    });
+    const filePath = writeCodebaseFile(projectRoot, 'api/src/services/user.ts', 'export class UserService {}\n');
+    const result = runHook(hookPath, makeHookInput(filePath));
+
+    assert.equal(result.status, 0);
+    const output = JSON.parse(result.stdout);
+    assert.ok(output.systemMessage, 'systemMessage olmali');
+    assert.ok(output.systemMessage.includes('TEST EKSIK'), 'EKSIK mesaji olmali');
+  });
+
+  it('test dosyasi varsa GUNCELLE systemMessage uretir', t => {
+    const projectRoot = createTempProject(t);
+    const hookPath = materializeHook(projectRoot, 'core/hooks/test-enforcer.skeleton.js', {
+      arrayReplacements: [
+        { name: 'LAYER_TESTS', elements: ["{ pattern: /api\\/src\\//, layer: 'API', command: 'npm test', extra: null }"] },
+        { name: 'TEST_FILE_MAPPING', elements: ["{ sourcePattern: /(.+)\\/services\\/(.+)\\.(ts|js)$/, testPath: '$1/__tests__/services/$2.test.$3', framework: 'jest' }"] },
+        { name: 'CODE_EXTENSIONS', elements: ["'.ts'"] },
+      ],
+    });
+    const filePath = writeCodebaseFile(projectRoot, 'api/src/services/user.ts', 'export class UserService {}\n');
+    // Test dosyasini da olustur
+    writeCodebaseFile(projectRoot, 'api/src/__tests__/services/user.test.ts', 'test("ok", () => {})\n');
+    const result = runHook(hookPath, makeHookInput(filePath));
+
+    assert.equal(result.status, 0);
+    const output = JSON.parse(result.stdout);
+    assert.ok(output.systemMessage, 'systemMessage olmali');
+    assert.ok(output.systemMessage.includes('Test guncelle'), 'GUNCELLE mesaji olmali');
+  });
+
+  it('test dosyasi icin talimat VERMIYOR', t => {
+    const projectRoot = createTempProject(t);
+    const hookPath = materializeHook(projectRoot, 'core/hooks/test-enforcer.skeleton.js', {
+      arrayReplacements: [
+        { name: 'LAYER_TESTS', elements: [] },
+        { name: 'TEST_FILE_MAPPING', elements: [] },
+        { name: 'CODE_EXTENSIONS', elements: ["'.ts'"] },
+      ],
+    });
+    const filePath = writeCodebaseFile(projectRoot, 'api/src/__tests__/user.test.ts', 'test("ok", () => {})\n');
+    const input = makeHookInput(filePath);
+    const result = runHook(hookPath, input);
+
+    assert.equal(result.status, 0);
+    assert.equal(result.stdout.trim(), input, 'test dosyasi icin pass-through olmali');
+  });
+
+  it('debounce icinde tekrar talimat vermiyor', t => {
+    const projectRoot = createTempProject(t);
+    const hookPath = materializeHook(projectRoot, 'core/hooks/test-enforcer.skeleton.js', {
+      arrayReplacements: [
+        { name: 'LAYER_TESTS', elements: ["{ pattern: /api\\/src\\//, layer: 'API', command: 'npm test', extra: null }"] },
+        { name: 'TEST_FILE_MAPPING', elements: ["{ sourcePattern: /(.+)\\/services\\/(.+)\\.(ts|js)$/, testPath: '$1/__tests__/services/$2.test.$3', framework: 'jest' }"] },
+        { name: 'CODE_EXTENSIONS', elements: ["'.ts'"] },
+      ],
+    });
+    const filePath = writeCodebaseFile(projectRoot, 'api/src/services/user.ts', 'export class UserService {}\n');
     const input = makeHookInput(filePath);
 
-    const firstRun = runHook(hookPath, input);
-    const secondRun = runHook(hookPath, input);
+    // Ilk calistirma — talimat verir
+    const first = runHook(hookPath, input);
+    assert.ok(JSON.parse(first.stdout).systemMessage, 'ilk calistirma talimat vermeli');
 
-    assert.match(firstRun.stderr, /Test Hatirlatma/);
-    assert.match(firstRun.stderr, /api/);
-    assert.equal(secondRun.stderr, '');
+    // Ikinci calistirma — debounce icinde, pass-through
+    const second = runHook(hookPath, input);
+    assert.equal(second.stdout.trim(), input, 'debounce icinde pass-through olmali');
   });
 });
 

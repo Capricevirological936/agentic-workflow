@@ -74,9 +74,9 @@
             "command": "node .claude/hooks/code-review-check.js"
           },
           {
-            "__doc__": "Test hatirlatici — her zaman aktif",
+            "__doc__": "Test enforcer — kaynak dosya icin test talimati (systemMessage)",
             "type": "command",
-            "command": "node .claude/hooks/test-reminder.js"
+            "command": "node .claude/hooks/test-enforcer.js"
           },
           {
             "__doc__": "Auto test runner — edit birikimini takip eder, debounce ile test sinyali (erken geri bildirim, final verification yerine GECMEZ)",

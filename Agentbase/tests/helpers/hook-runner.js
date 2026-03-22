@@ -14,7 +14,9 @@ const AGENTBASE_DIR = path.resolve(__dirname, '..', '..');
 const TEMPLATES_DIR = path.join(AGENTBASE_DIR, 'templates');
 
 function createTempProject(t) {
-  const rootDir = fs.mkdtempSync(path.join(os.tmpdir(), 'agentbase-hooks-'));
+  // realpathSync: macOS'ta /var/folders → /private/var/folders symlink'ini cozer
+  // Node.js __dirname gercek yolu kullanir, bu normalize olmadan startsWith basarisiz olur
+  const rootDir = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'agentbase-hooks-')));
   fs.mkdirSync(path.join(rootDir, 'Agentbase', '.claude', 'hooks'), { recursive: true });
   fs.mkdirSync(path.join(rootDir, 'Codebase'), { recursive: true });
 
