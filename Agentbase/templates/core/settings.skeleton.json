@@ -92,8 +92,8 @@
           }
         ],
         "__GENERATE__POSTTOOLUSE_EDITWRITE_HOOKS__": {
-          "monorepo_formatter": {
-            "__doc__": "Monorepo + formatter aktifse: otomatik format hook'u ekle",
+          "monorepo_active": {
+            "__doc__": "Monorepo aktifse: otomatik format hook'u ekle",
             "type": "command",
             "command": "node .claude/hooks/auto-format.js"
           },
@@ -111,7 +111,7 @@
           "prisma_active": {
             "__doc__": "Prisma aktifse: yikici migration kontrolu",
             "type": "command",
-            "command": "node .claude/hooks/prisma-migration-check.js"
+            "command": "node .claude/hooks/destructive-migration-check.js"
           }
         }
       }

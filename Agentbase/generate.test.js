@@ -15,6 +15,7 @@ const {
   extractBlockNames,
   fillBlocks,
   findManifestArg,
+  hasTypeScript,
   processJsonGenerateKeys,
   scanSkeletonFiles,
   toOutputName,
@@ -1091,5 +1092,66 @@ describe('escapeForJqShell', () => {
     assert.ok(cmd.includes("'\\''"), 'shell single-quote escape icermeli');
     // Reason daki apostrof de escape edilmis olmali
     assert.ok(cmd.includes("Don'\\''t"), 'reason apostrofu escape edilmeli');
+  });
+});
+
+// ─────────────────────────────────────────────────────
+// hasTypeScript — TYPESCRIPT TESPIT TESTLERI
+// ─────────────────────────────────────────────────────
+
+describe('hasTypeScript', () => {
+  it('stack.typescript: true ile calisiyor', () => {
+    assert.ok(hasTypeScript({ stack: { typescript: true } }));
+  });
+
+  it('stack.detected icinde TypeScript varsa true', () => {
+    assert.ok(hasTypeScript({ stack: { detected: ['TypeScript', 'React'] } }));
+  });
+
+  it('stack.detected icinde kucuk harfle typescript varsa true', () => {
+    assert.ok(hasTypeScript({ stack: { detected: ['typescript'] } }));
+  });
+
+  it('TypeScript yoksa false', () => {
+    assert.ok(!hasTypeScript({ stack: { detected: ['React', 'Prisma'] } }));
+  });
+
+  it('bos manifest icin false', () => {
+    assert.ok(!hasTypeScript({}));
+  });
+
+  it('GIT_PRECOMMIT_COMPILE detected TypeScript ile derleme kontrolu uretiyor', () => {
+    const manifest = { stack: { detected: ['TypeScript', 'React'] } };
+    const result = SIMPLE_GENERATORS.GIT_PRECOMMIT_COMPILE(manifest);
+    assert.ok(result.includes('tsc --noEmit'), 'detected TypeScript ile tsc komutu uretilmeli');
+  });
+});
+
+// ─────────────────────────────────────────────────────
+// settings.skeleton.json — KOSUL ADI TESTLERI
+// ─────────────────────────────────────────────────────
+
+describe('settings.skeleton.json kosul adlari', () => {
+  it('monorepo_active kosul adi _active formatinda', () => {
+    const settingsPath = path.join(TEMPLATES_DIR, 'core', 'settings.skeleton.json');
+    const content = require(settingsPath);
+    const postEditWrite = content.hooks.PostToolUse[1].__GENERATE__POSTTOOLUSE_EDITWRITE_HOOKS__;
+    // monorepo_formatter yerine monorepo_active olmali
+    assert.ok(!postEditWrite.monorepo_formatter, 'monorepo_formatter olmamali');
+    assert.ok(postEditWrite.monorepo_active, 'monorepo_active olmali');
+  });
+
+  it('PostToolUse Bash Prisma blogu destructive-migration-check.js cagiriyor', () => {
+    const settingsPath = path.join(TEMPLATES_DIR, 'core', 'settings.skeleton.json');
+    const content = require(settingsPath);
+    const bashBlock = content.hooks.PostToolUse[2].__GENERATE__POSTTOOLUSE_BASH_HOOKS__;
+    assert.ok(
+      bashBlock.prisma_active.command.includes('destructive-migration-check.js'),
+      'Bash Prisma hook destructive-migration-check.js olmali'
+    );
+    assert.ok(
+      !bashBlock.prisma_active.command.includes('prisma-migration-check.js'),
+      'prisma-migration-check.js olmamali'
+    );
   });
 });

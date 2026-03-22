@@ -403,6 +403,17 @@ function getCodebasePath(manifest) {
 }
 
 /**
+ * Manifest'te TypeScript aktif mi kontrol eder.
+ * stack.typescript boolean VEYA stack.detected dizisinde "TypeScript" varsa true.
+ */
+function hasTypeScript(manifest) {
+  const stack = manifest?.stack || {};
+  if (stack.typescript === true) return true;
+  const detected = stack.detected || [];
+  return detected.some(s => s.toLowerCase().includes('typescript'));
+}
+
+/**
  * ORM tipine gore migration komutlarini uretir.
  */
 function getMigrationCommands(manifest, ormType) {
@@ -863,7 +874,7 @@ const SIMPLE_GENERATORS = {
     const codebasePath = getCodebasePath(manifest);
     const lines = [];
 
-    if (stack.typescript) {
+    if (hasTypeScript(manifest)) {
       lines.push(
         'echo "→ TypeScript derleme kontrolu..."',
         `cd "$CODEBASE_DIR" && npx tsc --noEmit 2>&1 || {`,
@@ -1157,7 +1168,7 @@ const SIMPLE_GENERATORS = {
       '    EXAMPLE_KEYS=$(grep -E "^[A-Z_]+=" "$CODEBASE_DIR/.env.example" 2>/dev/null | cut -d= -f1 | sort || true)',
     );
 
-    if (runtime === 'node' || stack.typescript) {
+    if (runtime === 'node' || hasTypeScript(manifest)) {
       lines.push(
         '    # process.env referanslarini tara',
         '    CODE_KEYS=$(grep -rhoE "process\\.env\\.([A-Z_]+)" "$CODEBASE_DIR/src/" 2>/dev/null | sed "s/process\\.env\\.//" | sort -u || true)',
@@ -1540,6 +1551,7 @@ module.exports = {
   extractBlockNames,
   fillBlocks,
   findManifestArg,
+  hasTypeScript,
   processJsonGenerateKeys,
   processSkeletonFile,
   resolveOutputPath,
