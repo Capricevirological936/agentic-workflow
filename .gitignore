@@ -33,9 +33,9 @@ package-lock.json
 # Root CLAUDE.md — bu projenin kendi CC talimat dosyasi
 /CLAUDE.md
 
-# Root backlog — bu projenin kendi gorev takibi (repo'da KALIR)
-# Insanlar hangi gorevler uzerinde calisildigini gorsun
-# /backlog/ → TRACKED
+# Root backlog — bu projenin kendi gorev takibi (IGNORE — repoya GIRMEZ)
+# Proje-spesifik gorev takibi
+/backlog/
 
 # Diger proje-spesifik root dosyalar
 AGENTS.md
