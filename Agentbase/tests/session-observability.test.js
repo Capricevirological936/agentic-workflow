@@ -112,6 +112,91 @@ describe('session-tracker observability', () => {
     assert.equal(state.teammates[0].status, 'completed');
     assert.match(state.recent_events.at(-1).label, /review-agent/i);
   });
+
+  it('backlog task done komutu tasks_completed ve phase=done gunceller', t => {
+    const projectRoot = createTempProject(t);
+    const hookPath = materializeHook(projectRoot, 'core/hooks/session-tracker.js');
+
+    // Once task'i baslat
+    runHook(hookPath, makeToolPayload({ command: 'backlog task edit 42 -s "In Progress"' }));
+    // Sonra tamamla
+    runHook(hookPath, makeToolPayload({ command: 'backlog task edit 42 -s "Done"' }));
+
+    const state = readSessionState(projectRoot);
+    assert.ok(state.backlog_activity.tasks_completed.includes('TASK-42'));
+    assert.equal(state.current_focus.status, 'Done');
+    assert.equal(state.phase, 'done');
+    assert.match(state.last_meaningful_action, /tamamlandi/i);
+  });
+
+  it('backlog task create komutu tasks_created listesini gunceller', t => {
+    const projectRoot = createTempProject(t);
+    const hookPath = materializeHook(projectRoot, 'core/hooks/session-tracker.js');
+
+    runHook(hookPath, makeToolPayload({ command: 'backlog task create "Yeni ozellik ekle"' }));
+
+    const state = readSessionState(projectRoot);
+    assert.ok(state.backlog_activity.tasks_created.some(t => t.includes('Yeni ozellik')));
+    assert.match(state.last_meaningful_action, /olusturuldu/i);
+    assert.equal(state.recent_events.at(-1).kind, 'backlog');
+  });
+
+  it('git commit komutu commits sayacini arttirir', t => {
+    const projectRoot = createTempProject(t);
+    const hookPath = materializeHook(projectRoot, 'core/hooks/session-tracker.js');
+
+    runHook(hookPath, makeToolPayload({ command: 'git commit -m "fix: hata duzeltme"' }));
+
+    const state = readSessionState(projectRoot);
+    assert.equal(state.git_activity.commits, 1);
+    assert.match(state.last_meaningful_action, /commit/i);
+    assert.equal(state.recent_events.at(-1).kind, 'git');
+  });
+
+  it('git checkout -b komutu branches_created listesine ekler', t => {
+    const projectRoot = createTempProject(t);
+    const hookPath = materializeHook(projectRoot, 'core/hooks/session-tracker.js');
+
+    runHook(hookPath, makeToolPayload({ command: 'git checkout -b feat/yeni-ozellik' }));
+
+    const state = readSessionState(projectRoot);
+    assert.ok(state.git_activity.branches_created.includes('feat/yeni-ozellik'));
+    assert.match(state.last_meaningful_action, /feat\/yeni-ozellik/);
+    assert.equal(state.recent_events.at(-1).kind, 'git');
+  });
+
+  it('basarili test komutu phase=testing ve waiting_on=none set eder', t => {
+    const projectRoot = createTempProject(t);
+    const hookPath = materializeHook(projectRoot, 'core/hooks/session-tracker.js');
+
+    runHook(hookPath, makeToolPayload(
+      { command: 'npm test' },
+      { exit_code: 0, stdout: '5 passing' }
+    ));
+
+    const state = readSessionState(projectRoot);
+    assert.equal(state.phase, 'testing');
+    assert.equal(state.waiting_on, 'none');
+    assert.equal(state.errors.count, 0);
+    assert.match(state.recent_events.at(-1).label, /test calisti/i);
+  });
+
+  it('Write tool event phase=implementing ve dosya yazildi mesaji uretir', t => {
+    const projectRoot = createTempProject(t);
+    const hookPath = materializeHook(projectRoot, 'core/hooks/session-tracker.js');
+
+    runHook(hookPath, makeToolPayload(
+      { content: 'yeni icerik', file_path: '/tmp/proje/src/utils.js' },
+      'File written successfully'
+    ));
+
+    const state = readSessionState(projectRoot);
+    assert.equal(state.phase, 'implementing');
+    assert.equal(state.waiting_on, 'none');
+    assert.match(state.last_meaningful_action, /yazildi/i);
+    assert.equal(state.recent_events.at(-1).kind, 'write');
+    assert.ok(state.files.written.some(f => f.includes('utils.js')));
+  });
 });
 
 describe('session-monitor backlog enrichment', () => {
