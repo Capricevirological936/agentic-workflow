@@ -93,7 +93,7 @@ const testManifest = {
     ],
   },
   environments: [
-    { name: 'production', url: 'https://api.example.com', health_check: 'https://api.example.com' },
+    { name: 'production', url: 'https://api.example.com', health_check: 'https://api.example.com/readyz' },
     { name: 'staging', url: 'https://staging.example.com' },
   ],
 };
@@ -422,6 +422,42 @@ describe('processJsonGenerateKeys', () => {
     assert.strictEqual(preToolUse.length, 1, 'bos obje filtrelenmeli');
     assert.strictEqual(preToolUse[0].matcher, 'Edit');
   });
+
+  it('monorepo aktif degilken auto-format hook ciktiya eklenmiyor', () => {
+    const noMonorepoManifest = { modules: { active: { orm: ['prisma'] } } };
+    const obj = {
+      hooks: {
+        PostToolUse: [
+          {
+            matcher: 'Edit|Write',
+            hooks: [
+              { type: 'command', command: 'node .claude/hooks/code-review-check.js' },
+            ],
+            __GENERATE__POSTTOOLUSE_EDITWRITE_HOOKS__: {
+              monorepo_active: {
+                __doc__: 'Monorepo auto-format',
+                type: 'command',
+                command: 'node .claude/hooks/auto-format.js',
+              },
+              prisma_active: {
+                __doc__: 'Prisma migration check',
+                type: 'command',
+                command: 'node .claude/hooks/prisma-migration-check.js',
+              },
+            },
+          },
+        ],
+      },
+    };
+
+    const result = processJsonGenerateKeys(obj, noMonorepoManifest);
+    const editGroup = result.obj.hooks.PostToolUse.find(g => g.matcher === 'Edit|Write');
+    assert.ok(editGroup, 'Edit|Write matcher grubu olmali');
+    const commands = editGroup.hooks.map(h => h.command);
+    assert.ok(commands.includes('node .claude/hooks/prisma-migration-check.js'), 'prisma hook dahil olmali');
+    assert.ok(!commands.includes('node .claude/hooks/auto-format.js'), 'monorepo auto-format dahil olmamali');
+    assert.ok(commands.includes('node .claude/hooks/code-review-check.js'), 'sabit hook korunmali');
+  });
 });
 
 // ─────────────────────────────────────────────────────
@@ -745,8 +781,8 @@ describe('SIMPLE_GENERATORS', () => {
 
   it('HEALTH_CHECK_URL health_check alani varsa oldugu gibi kullanir', () => {
     const result = SIMPLE_GENERATORS.HEALTH_CHECK_URL(testManifest, 'md');
-    assert.ok(result.includes('`https://api.example.com`'));
-    assert.ok(!result.includes('/health'), 'health_check alani varsa /health eklenmemeli');
+    assert.ok(result.includes('`https://api.example.com/readyz`'), 'health_check URL oldugu gibi kullanilmali');
+    assert.ok(!result.includes('/readyz/health'), 'health_check alani varsa /health eklenmemeli');
   });
 
   it('HEALTH_CHECK_URL health_check yoksa url + /health kullanir', () => {
@@ -755,6 +791,19 @@ describe('SIMPLE_GENERATORS', () => {
     };
     const result = SIMPLE_GENERATORS.HEALTH_CHECK_URL(noHealthCheck, 'md');
     assert.ok(result.includes('`https://api.example.com/health`'));
+  });
+
+  it('HEALTH_CHECK_URL prod kisaltmasini destekler', () => {
+    const prodShort = {
+      environments: [{ name: 'prod', url: 'https://api.example.com' }],
+    };
+    const result = SIMPLE_GENERATORS.HEALTH_CHECK_URL(prodShort, 'md');
+    assert.ok(result.includes('`https://api.example.com/health`'));
+  });
+
+  it('HEALTH_CHECK_URL environment yoksa placeholder doner', () => {
+    const result = SIMPLE_GENERATORS.HEALTH_CHECK_URL({}, 'md');
+    assert.ok(result.includes('<PROJE_URL>/health'));
   });
 
   it('SMOKE_TEST_ENDPOINTS production endpoint\'lerini uretir', () => {
@@ -1162,6 +1211,22 @@ describe('hasTypeScript', () => {
     const result = SIMPLE_GENERATORS.GIT_PRECOMMIT_FORMAT(prettierManifest);
     assert.ok(result.includes('xargs -0'), 'xargs -0 kullanilmali');
     assert.ok(!result.includes('| xargs npx'), 'duz xargs olmamali');
+  });
+
+  it('null manifest icin false (optional chaining)', () => {
+    assert.ok(!hasTypeScript(null));
+    assert.ok(!hasTypeScript(undefined));
+  });
+
+  it('stack.typescript string "true" ile false (strict equality)', () => {
+    assert.ok(!hasTypeScript({ stack: { typescript: 'true' } }));
+  });
+
+  it('GIT_PREPUSH_ENV detected TypeScript ile process.env taramasi uretiyor', () => {
+    const manifest = { stack: { runtime: 'python', detected: ['TypeScript', 'React'] } };
+    const result = SIMPLE_GENERATORS.GIT_PREPUSH_ENV(manifest);
+    assert.ok(result.includes('process.env'), 'detected TypeScript ile process.env taramasi uretilmeli');
+    assert.ok(!result.includes('os.environ'), 'runtime python olsa da TypeScript oncelikli olmali');
   });
 });
 
