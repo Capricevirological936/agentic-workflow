@@ -617,3 +617,95 @@ describe('session-monitor bugfixes', () => {
     assert.match(mediumOutput, /\x1b\[\d+mmedium\x1b\[0m/, 'priority "medium" kendi ANSI renk koduyla sarili olmali');
   });
 });
+
+// ─────────────────────────────────────────────────────
+// SESSION-MONITOR EDGE CASE TESTLERI
+// ─────────────────────────────────────────────────────
+
+describe('session-monitor edge cases', () => {
+  const monitorPath = path.join(__dirname, '..', 'bin', 'session-monitor.js');
+
+  it('TASK-119: sessions dizini yoksa loadSessions bos doner', () => {
+    const { loadSessions } = loadModuleExports(monitorPath, {
+      exports: ['loadSessions'],
+      replacements: [
+        {
+          find: /const SESSIONS_DIR = .*?;/,
+          replace: `const SESSIONS_DIR = '/nonexistent/path/sessions';`,
+        },
+      ],
+    });
+
+    const result = loadSessions();
+    assert.ok(Array.isArray(result.sessions), 'sessions dizi olmali');
+    assert.equal(result.sessions.length, 0, 'bos dizi olmali');
+    assert.equal(result.meta.sessionsDirExists, false, 'sessionsDirExists false olmali');
+  });
+
+  it('TASK-120: bos sessions dizininde loadSessions bos doner', () => {
+    const tmpDir = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'sessions-empty-')));
+    const sessionsDir = path.join(tmpDir, 'sessions');
+    fs.mkdirSync(sessionsDir, { recursive: true });
+
+    const { loadSessions } = loadModuleExports(monitorPath, {
+      exports: ['loadSessions'],
+      replacements: [
+        {
+          find: /const SESSIONS_DIR = .*?;/,
+          replace: `const SESSIONS_DIR = ${JSON.stringify(sessionsDir)};`,
+        },
+      ],
+    });
+
+    const result = loadSessions();
+    assert.equal(result.sessions.length, 0, 'bos sessions dizininde bos dizi');
+    assert.equal(result.meta.sessionFileCount, 0, 'dosya sayisi 0');
+    fs.rmSync(tmpDir, { recursive: true, force: true });
+  });
+
+  it('TASK-121: bozuk session JSON dosyasi parseErrors artiriyor, crash etmiyor', () => {
+    const tmpDir = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'sessions-corrupt-')));
+    const sessionsDir = path.join(tmpDir, 'sessions');
+    fs.mkdirSync(sessionsDir, { recursive: true });
+
+    // Gecerli session
+    fs.writeFileSync(path.join(sessionsDir, 'session-100-2026-03-23.json'), JSON.stringify({
+      session_id: '100-2026-03-23',
+      last_activity: new Date().toISOString(),
+    }));
+    // Bozuk session
+    fs.writeFileSync(path.join(sessionsDir, 'session-200-2026-03-23.json'), '{BOZUK JSON!!!');
+
+    const { loadSessions } = loadModuleExports(monitorPath, {
+      exports: ['loadSessions'],
+      replacements: [
+        {
+          find: /const SESSIONS_DIR = .*?;/,
+          replace: `const SESSIONS_DIR = ${JSON.stringify(sessionsDir)};`,
+        },
+      ],
+    });
+
+    const result = loadSessions();
+    assert.equal(result.sessions.length, 1, 'gecerli session yuklenmeli');
+    assert.equal(result.meta.parseErrors, 1, 'bozuk dosya parseErrors olarak sayilmali');
+    fs.rmSync(tmpDir, { recursive: true, force: true });
+  });
+
+  it('TASK-122: session var olmayan task ID referans ediyorsa backlog_sync.missing true', () => {
+    const { enrichSession } = loadModuleExports(monitorPath, {
+      exports: ['enrichSession'],
+    });
+
+    const session = {
+      session_id: '100-2026-03-23',
+      last_activity: new Date().toISOString(),
+      current_focus: { task_id: 'TASK-999', title: 'Var olmayan gorev' },
+    };
+
+    // Bos backlog index — TASK-999 yok
+    const enriched = enrichSession(session, {});
+    assert.equal(enriched.backlog_sync.missing, true, 'missing true olmali');
+    assert.equal(enriched.backlog_sync.task_id, 'TASK-999', 'task_id korunmali');
+  });
+});

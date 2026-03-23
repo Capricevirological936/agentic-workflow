@@ -123,6 +123,29 @@ npm test          # Tum testler
 
 Yeni eklenen her JS dosyasi icin test dosyasi ZORUNLUDUR.
 
+### Test Dosyasi Yerlesimi
+
+| Test Dosyasi | Ne Test Eder |
+|---|---|
+| `generate.test.js` | generate.js fonksiyonlari, SIMPLE_GENERATORS, CLI arguman parse |
+| `tests/core-hooks.test.js` | Core hook'lar (code-review, test-enforcer, team-trigger, auto-test-runner, auto-format, openapi-sync) |
+| `tests/prisma-hooks.test.js` | Prisma-spesifik hook'lar (db-push-guard, migration-check, destructive-migration) |
+| `tests/guard-hooks.test.js` | Framework guard hook'lari (artisan, spark, django, manage-py) |
+| `tests/git-hooks.test.js` | Git pre-commit/pre-push hook'lari (E2E: temp git repo ile) |
+| `tests/session-observability.test.js` | Session-tracker ve session-monitor testleri |
+| `tests/generate-regressions.test.js` | generate.js regresyon ve CLI entegrasyon testleri |
+
+### Hook Test Yardimcilari
+
+`tests/helpers/` altindaki iki yardimci:
+
+- **`hook-runner.js`** — `createTempProject`, `materializeHook`, `runHook`, `writeCodebaseFile`, `makeHookInput` fonksiyonlari. Hook'lari temp dizinde materyalize edip `spawnSync` ile calistirir.
+- **`module-loader.js`** — `loadModuleExports` fonksiyonu. Skeleton JS dosyalarindan pure fonksiyonlari `vm.runInNewContext` ile cikarip test etmeye yarar. `replacements` ile GENERATE bloklarini doldurup `exports` ile fonksiyon listesi belirtilir.
+
+### Eklenti Referanslari
+
+`Agentbase/templates/extensions-registry.md` 3. parti eklenti referanslarini icerir. Bootstrap sirasinda Opus bu listeden proje ihtiyacina uygun eklentileri onerir. Bu dosya generate.js tarafindan ISLENMEZ — bootstrap komutunun baglam olarak okudugu bir referanstir. Yeni eklenti eklemek icin dosyadaki tablo formatini takip edin.
+
 ## Iletisim
 
 Sorulariniz icin: hello@varien.software
