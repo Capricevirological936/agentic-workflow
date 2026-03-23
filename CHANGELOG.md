@@ -3,6 +3,22 @@
 Tüm önemli değişiklikler bu dosyada belgelenir.
 Format [Keep a Changelog](https://keepachangelog.com/tr/1.1.0/) standardını takip eder.
 
+## [Yayınlanmamış] - 2026-03-23
+
+### Düzeltilen
+
+- **session:** addToFileList kok dizin yolu (/) bos string eklemiyor (`10de9d1`)
+- **deep-audit:** session modulu — ensureDir atomik, saveState 0o600, backlog_sync.path, lazy regex, shortenPath tutarliligi, skeleton icon duzeltmesi + 12 yeni test (`6bdd075`)
+- bootstrap ve generator enforcement driftini kapat (`290f418`)
+
+### Yeniden Düzenlenen
+
+- isTestCommand shared-patterns.js, backlog_sync.missing strateji, MAX_TEAMMATES siniri (`c8c1011`)
+
+### Dokümantasyon
+
+- CHANGELOG otomatik güncellendi [skip ci] (`b32f7cd`)
+
 ## [1.0.1] - 2026-03-23
 
 ### Düzeltilen
