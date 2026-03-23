@@ -7,6 +7,8 @@ const { execSync } = require('child_process');
 const assert = require('node:assert/strict');
 const { describe, it } = require('node:test');
 
+const { processSkeletonFile } = require('../generate.js');
+
 const HOOKS_DIR = path.join(__dirname, '..', 'templates', 'core', 'git-hooks');
 
 function createTempGitRepo(t) {
@@ -226,5 +228,64 @@ exit 0
     const output = result.toString();
     assert.ok(output.includes('uyari'), 'uyari mesaji olmali');
     assert.ok(output.includes('Pre-push OK'), 'push devam etmeli');
+  });
+});
+
+// ─────────────────────────────────────────────────────
+// E2E: GENERATE BLOKLARI DOLDURULMUS PRE-COMMIT
+// ─────────────────────────────────────────────────────
+
+const E2E_MANIFEST = {
+  stack: {
+    primary: 'Node.js',
+    detected: ['TypeScript'],
+    test_framework: 'jest',
+    linter: 'eslint',
+    formatter: 'prettier',
+    test_commands: { api: 'npm test' },
+  },
+  project: {
+    subprojects: [{ name: 'api', path: '.', test_command: 'npm test' }],
+  },
+};
+
+function installProcessedHook(repoDir, hookName, manifest) {
+  const hookSrc = path.join(HOOKS_DIR, `${hookName}.skeleton`);
+  const hookDst = path.join(repoDir, '.git', 'hooks', hookName);
+  const { outputContent } = processSkeletonFile(hookSrc, manifest || E2E_MANIFEST);
+  fs.writeFileSync(hookDst, outputContent, { mode: 0o755 });
+  return hookDst;
+}
+
+describe('pre-commit E2E (GENERATE bloklari doldurulmus)', () => {
+  it('TypeScript derleme kontrolu GENERATE blogundan uretiliyor', t => {
+    const repo = createTempGitRepo(t);
+    const hookPath = installProcessedHook(repo, 'pre-commit');
+    const content = fs.readFileSync(hookPath, 'utf8');
+
+    assert.ok(content.includes('tsc --noEmit'), 'TypeScript derleme kontrolu uretilmeli');
+    assert.ok(!content.includes('GENERATE:'), 'GENERATE bloklari kaldirilmis olmali');
+  });
+
+  it('TESTS_VERIFIED=1 ile doldurulmus hook da bypass calisiyor', t => {
+    const repo = createTempGitRepo(t);
+    installProcessedHook(repo, 'pre-commit');
+
+    fs.writeFileSync(path.join(repo, '.env'), 'SECRET=abc');
+    execSync('git add .env', { cwd: repo, stdio: 'pipe' });
+
+    const result = tryCommitWithFiles(repo, { TESTS_VERIFIED: '1' });
+    assert.equal(result.status, 0, 'TESTS_VERIFIED bypass calismali');
+  });
+
+  it('.env dosyasi doldurulmus hook ta da engelleniyor', t => {
+    const repo = createTempGitRepo(t);
+    installProcessedHook(repo, 'pre-commit');
+
+    fs.writeFileSync(path.join(repo, '.env'), 'DB_PASSWORD=secret');
+    execSync('git add .env', { cwd: repo, stdio: 'pipe' });
+
+    const result = tryCommitWithFiles(repo);
+    assert.notEqual(result.status, 0, '.env engellenmeli');
   });
 });

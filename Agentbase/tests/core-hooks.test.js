@@ -484,6 +484,71 @@ describe('team-trigger hook', () => {
     assert.equal(result.status, 0);
     assert.equal(result.stdout.trim(), input);
   });
+
+  // --- E2E: gercek stdin JSON + systemMessage ciktisi ---
+
+  it('E2E: 5+ dosya senaryosunda systemMessage ciktisi uretiyor', t => {
+    const projectRoot = createTempProject(t);
+    const hookPath = materializeHook(projectRoot, hookRelPath, {
+      arrayReplacements: [{ name: 'SUBPROJECT_PATTERNS', elements: [] }],
+    });
+
+    // Session state dosyasi olustur — 5 farkli dosya
+    const hookDir = path.dirname(hookPath);
+    const trackingDir = path.join(hookDir, '..', 'tracking', 'sessions');
+    fs.mkdirSync(trackingDir, { recursive: true });
+
+    // Hook icindeki SESSION_ID: ${process.ppid}-${date}
+    // spawnSync ile calistiginda ppid = test runner PID
+    const today = new Date().toISOString().slice(0, 10);
+    const sessionFile = path.join(trackingDir, `session-${process.pid}-${today}.json`);
+    fs.writeFileSync(sessionFile, JSON.stringify({
+      started_at: new Date().toISOString(),
+      files: { written: ['a.ts', 'b.ts', 'c.ts', 'd.ts', 'e.ts'] },
+      tools: { total_calls: 10 },
+    }));
+
+    const input = makeHookInput('/tmp/test.ts');
+    const result = runHook(hookPath, input);
+
+    assert.equal(result.status, 0);
+    const output = JSON.parse(result.stdout);
+    assert.ok(output.systemMessage, 'systemMessage olmali');
+    assert.ok(output.systemMessage.includes('5'), '5 dosya sayisi icermeli');
+  });
+
+  it('E2E: cooldown state dosyasi yaziliyor ve tekrar tetiklenmiyor', t => {
+    const projectRoot = createTempProject(t);
+    const hookPath = materializeHook(projectRoot, hookRelPath, {
+      arrayReplacements: [{ name: 'SUBPROJECT_PATTERNS', elements: [] }],
+    });
+
+    const hookDir = path.dirname(hookPath);
+    const trackingDir = path.join(hookDir, '..', 'tracking', 'sessions');
+    fs.mkdirSync(trackingDir, { recursive: true });
+
+    const today = new Date().toISOString().slice(0, 10);
+    const sessionFile = path.join(trackingDir, `session-${process.pid}-${today}.json`);
+    fs.writeFileSync(sessionFile, JSON.stringify({
+      started_at: new Date().toISOString(),
+      files: { written: ['a.ts', 'b.ts', 'c.ts', 'd.ts', 'e.ts', 'f.ts'] },
+      tools: { total_calls: 10 },
+    }));
+
+    const input = makeHookInput('/tmp/test.ts');
+
+    // Ilk calistirma — trigger + state dosyasi yazilir
+    const first = runHook(hookPath, input);
+    assert.ok(JSON.parse(first.stdout).systemMessage, 'ilk calistirma tetiklemeli');
+
+    // Cooldown state dosyasi yazildi mi?
+    const stateFile = path.join(hookDir, '.team-trigger-state.json');
+    assert.ok(fs.existsSync(stateFile), 'cooldown state dosyasi yazilmis olmali');
+
+    // Ikinci calistirma — cooldown icinde, pass-through
+    const second = runHook(hookPath, input);
+    assert.equal(second.stdout.trim(), input, 'cooldown icinde pass-through olmali');
+  });
 });
 
 // ─────────────────────────────────────────────────────
