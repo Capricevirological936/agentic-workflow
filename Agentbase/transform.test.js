@@ -524,7 +524,10 @@ describe('formatAgent', () => {
 
 describe('mergePathMaps', () => {
   it('manifestPathMaps tanimsizsa varsayilan PATH_MAPS doner', () => {
-    assert.deepEqual(mergePathMaps(undefined), PATH_MAPS);
+    const result = mergePathMaps(undefined);
+    assert.deepEqual(result, PATH_MAPS);
+    // Ayni referans olmamali — mutasyon korumasi
+    assert.notStrictEqual(result, PATH_MAPS);
     assert.deepEqual(mergePathMaps(null), PATH_MAPS);
     assert.deepEqual(mergePathMaps({}), PATH_MAPS);
   });

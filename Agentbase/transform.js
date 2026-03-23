@@ -197,7 +197,10 @@ let SKIP_PATHS = ['.claude/hooks/', '.claude/tracking/', '.claude/reports/', '.c
  * @returns {Object} Birleştirilmiş path map
  */
 function mergePathMaps(manifestPathMaps) {
-  if (!manifestPathMaps || typeof manifestPathMaps !== 'object') return PATH_MAPS;
+  if (!manifestPathMaps || typeof manifestPathMaps !== 'object') {
+    // Shallow copy — aynı referansı döndürmemek için (mutasyon koruması)
+    return Object.fromEntries(Object.entries(PATH_MAPS).map(([k, v]) => [k, { ...v }]));
+  }
 
   const merged = {};
   for (const cli of Object.keys(PATH_MAPS)) {
@@ -570,7 +573,10 @@ function main() {
       const fileCount = Object.keys(fileMap).length;
 
       if (!flags.dryRun) {
-        writeTarget(AGENTBASE_DIR, target, fileMap);
+        const writeErrors = writeTarget(AGENTBASE_DIR, target, fileMap);
+        if (writeErrors && writeErrors.length > 0) {
+          report.errors.push(...writeErrors.map(e => `${target}: ${e}`));
+        }
       }
 
       report.targets.push({ name: target, files: fileCount });
