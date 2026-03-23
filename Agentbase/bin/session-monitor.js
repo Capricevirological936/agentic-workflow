@@ -52,6 +52,7 @@ let showHelp = false;
 let detailView = false;
 let viewMode = 'timeline';
 let selectedIndex = 0;
+let selectedId = null; // Secimi session_id ile tut — siralama degistiginde kaybolmasin
 let renderTimeout = null;
 let lastRender = 0;
 let watcher = null;
@@ -449,8 +450,14 @@ function loadBacklogIndex(backlogDir = findBacklogDir()) {
 
     for (const file of fs.readdirSync(fullDir)) {
       if (!file.endsWith('.md')) continue;
-      const task = parseBacklogTaskFile(path.join(fullDir, file));
-      if (task.id) index[task.id] = task;
+      const filePath = path.join(fullDir, file);
+      try {
+        if (!fs.statSync(filePath).isFile()) continue; // dizin olan girdiyi atla
+        const task = parseBacklogTaskFile(filePath);
+        if (task.id) index[task.id] = task;
+      } catch {
+        // bozuk/okunamayan dosyayi atla — digerleriyle devam et
+      }
     }
   }
 
@@ -642,10 +649,17 @@ function getFilteredSessions() {
   const filtered = showClosed ? sessions : sessions.filter(session => sessionStatus(session).label !== 'kapali');
   if (filtered.length === 0) {
     selectedIndex = 0;
+    selectedId = null;
     return filtered;
   }
 
+  // selectedId ile indeksi bul — siralama degisse bile ayni oturumda kal
+  if (selectedId) {
+    const foundIdx = filtered.findIndex(s => s.session_id === selectedId);
+    selectedIndex = foundIdx >= 0 ? foundIdx : 0;
+  }
   selectedIndex = Math.max(0, Math.min(selectedIndex, filtered.length - 1));
+  selectedId = filtered[selectedIndex]?.session_id || null;
   return filtered;
 }
 
@@ -653,6 +667,7 @@ function selectDelta(delta) {
   const filtered = getFilteredSessions();
   if (filtered.length === 0) return;
   selectedIndex = Math.max(0, Math.min(selectedIndex + delta, filtered.length - 1));
+  selectedId = filtered[selectedIndex]?.session_id || null;
   render();
 }
 
@@ -681,7 +696,7 @@ function summarizeBacklog(session) {
   const parts = [];
   if (session.backlog_sync?.status) parts.push(session.backlog_sync.status);
   if (session.backlog_sync?.priority) {
-    parts.push(`${stripAnsi(priorityColor(session.backlog_sync.priority))}${session.backlog_sync.priority}`);
+    parts.push(`${priorityColor(session.backlog_sync.priority)}${session.backlog_sync.priority}${C.reset}`);
   }
   const acceptance = session.backlog_sync?.acceptance || { completed: 0, total: 0 };
   if (acceptance.total > 0) {
@@ -819,7 +834,8 @@ function renderTimeline() {
 }
 
 function collectEventStream(limit = 8) {
-  return sessions
+  const source = showClosed ? sessions : sessions.filter(s => sessionStatus(s).label !== 'kapali');
+  return source
     .flatMap(session =>
       (session.recent_events || []).map(event => ({
         ...event,

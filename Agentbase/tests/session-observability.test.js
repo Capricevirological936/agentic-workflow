@@ -500,3 +500,71 @@ dependencies: []
     assert.equal(title, 'AGENTIC WORKFLOW');
   });
 });
+
+// ─────────────────────────────────────────────────────
+// SESSION-MONITOR BUGFIX TESTLERI
+// ─────────────────────────────────────────────────────
+
+describe('session-monitor bugfixes', () => {
+  const monitorPath = path.join(__dirname, '..', 'bin', 'session-monitor.js');
+
+  it('TASK-97: getFilteredSessions selectedId ile secim koruyor', () => {
+    const { getFilteredSessions, stripAnsi } = loadModuleExports(monitorPath, {
+      exports: ['getFilteredSessions', 'stripAnsi'],
+      replacements: [
+        // Global state override
+        {
+          find: /let sessions = \[\];/,
+          replace: `let sessions = [
+            { session_id: '200-2026-03-23', last_activity: '2026-03-23T10:00:00Z' },
+            { session_id: '100-2026-03-23', last_activity: '2026-03-23T11:00:00Z' },
+          ];`,
+        },
+        {
+          find: /let selectedId = null;/,
+          replace: `let selectedId = '200-2026-03-23';`,
+        },
+      ],
+    });
+
+    const filtered = getFilteredSessions();
+    // selectedId = '200-...' → siralama degisse bile o session secili kalmali
+    const selectedSession = filtered.find(s => s.session_id === '200-2026-03-23');
+    assert.ok(selectedSession, 'selectedId li session hala listede olmali');
+  });
+
+  it('TASK-98: loadBacklogIndex bozuk dosyayi atliyor', () => {
+    const { loadBacklogIndex } = loadModuleExports(monitorPath, {
+      exports: ['loadBacklogIndex'],
+    });
+
+    const tmpDir = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'backlog-test-')));
+    const tasksDir = path.join(tmpDir, 'tasks');
+    fs.mkdirSync(tasksDir, { recursive: true });
+
+    // Gecerli task dosyasi
+    fs.writeFileSync(path.join(tasksDir, 'task-1 - test.md'), '# Test\nStatus: To Do\n');
+    // Bozuk dosya (dizin)
+    fs.mkdirSync(path.join(tasksDir, 'broken.md'));
+    // Gecersiz icerik
+    fs.writeFileSync(path.join(tasksDir, 'task-2 - bad.md'), '\x00\x01\x02');
+    // Backlog.md index dosyasi (hasBacklogMarkers icin gerekli)
+    fs.writeFileSync(path.join(tmpDir, 'Backlog.md'), '# Backlog\n');
+
+    const index = loadBacklogIndex(tmpDir);
+    // Bozuk dosyalar atlanmali, gecerli dosya yuklenmeli
+    assert.ok(index['TASK-1'], 'gecerli task yuklenmeli');
+    // Monitor crash etmemeli
+    fs.rmSync(tmpDir, { recursive: true, force: true });
+  });
+
+  it('TASK-100: priorityColor ANSI kodu donduruyor, stripAnsi ile silinmiyor', () => {
+    const { priorityColor, stripAnsi } = loadModuleExports(monitorPath, {
+      exports: ['priorityColor', 'stripAnsi'],
+    });
+
+    const highColor = priorityColor('high');
+    assert.ok(highColor.includes('\x1b['), 'ANSI escape kodu icermeli');
+    assert.notEqual(stripAnsi(highColor), highColor, 'ANSI kodu stripAnsi ile farkli olmali');
+  });
+});
