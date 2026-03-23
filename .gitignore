@@ -41,6 +41,7 @@ package-lock.json
 AGENTS.md
 GEMINI.md
 .copilot/
+.github/copilot-instructions.md
 
 # ─────────────────────────────────────────────────────
 # AGENTBASE ICINDEKI BOOTSTRAP URETIMI
