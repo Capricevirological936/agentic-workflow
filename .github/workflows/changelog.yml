@@ -1,0 +1,44 @@
+name: CHANGELOG Güncelle
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  changelog:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: CHANGELOG üret
+        working-directory: Agentbase
+        run: |
+          npm install --production
+          node bin/changelog.js --all
+
+      - name: Değişiklik var mı kontrol et
+        id: check
+        run: |
+          if git diff --quiet CHANGELOG.md 2>/dev/null; then
+            echo "changed=false" >> $GITHUB_OUTPUT
+          else
+            echo "changed=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: CHANGELOG commit ve push
+        if: steps.check.outputs.changed == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add CHANGELOG.md
+          git commit -m "docs: CHANGELOG otomatik güncellendi [skip ci]"
+          git push
