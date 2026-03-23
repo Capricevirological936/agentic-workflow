@@ -7,7 +7,11 @@ Format [Keep a Changelog](https://keepachangelog.com/tr/1.1.0/) standardını ta
 
 ### Eklenen
 
-- release.js GitHub Release olusturma destegi (`9d13b92`)
+- release.js GitHub Release olusturma destegi (`6d8833b`)
+
+### Dokümantasyon
+
+- CHANGELOG otomatik güncellendi [skip ci] (`6040309`)
 
 ## [1.0.1] - 2026-03-23
 
