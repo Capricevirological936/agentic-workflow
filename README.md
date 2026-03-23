@@ -313,7 +313,13 @@ Bu stack'ler için framework-spesifik hook'lar, kurallar ve koruma mekanizmalar�
 
 ### Generic Bootstrap Desteği
 
-Go, Rust, Java/Kotlin ve diğer stack'ler için bootstrap çalışır ve manifest üretilir. Ancak framework-spesifik hook/rule/agent şablonları yoktur — yalnızca çekirdek komutlar (task-hunter, task-review vb.) ve genel korumalar (secret tarama, lock dosyası koruması) üretilir. Ruby dahil olmak üzere bootstrap tespit listesinde yer almayan stack'ler manuel manifest yapılandırması gerektirir.
+Aşağıdaki stack'ler bootstrap tarafından algılanır ve manifest'e yazılır, ancak framework-spesifik hook/rule/agent şablonları yoktur — yalnızca çekirdek komutlar (task-hunter, task-review vb.) ve genel korumalar (secret tarama, lock dosyası koruması) üretilir:
+
+- **Frontend:** Vue, Svelte
+- **Backend:** Flask
+- **ORM:** Sequelize, Drizzle
+
+Go, Rust, Java/Kotlin ve diğer stack'ler de aynı şekilde desteklenir. Bootstrap tespit listesinde yer almayan stack'ler manuel manifest yapılandırması gerektirir.
 
 ## Üretimde Kanıtlanmış Desenler
 
