@@ -47,13 +47,95 @@ const CLI_CAPABILITIES = {
 };
 
 // ─────────────────────────────────────────────────────
+// CLI CAPABILITIES VALIDASYON
+// ─────────────────────────────────────────────────────
+
+function validateCliCapabilities(name, cap) {
+  const errors = [];
+
+  if (!cap || typeof cap !== 'object') {
+    return [`${name}: capabilities objesi gerekli`];
+  }
+
+  // invoke zorunlu
+  if (!cap.invoke || typeof cap.invoke.prefix !== 'string' || typeof cap.invoke.separator !== 'string') {
+    errors.push(`${name}: invoke.prefix (string) ve invoke.separator (string) zorunlu`);
+  }
+
+  // commands veya skills en az birisi olmali
+  if (!cap.commands && !cap.skills) {
+    errors.push(`${name}: commands veya skills tanimlarindan en az biri gerekli`);
+  }
+
+  // commands varsa format ve dir olmali
+  if (cap.commands && (!cap.commands.format || !cap.commands.dir)) {
+    errors.push(`${name}: commands.format ve commands.dir zorunlu`);
+  }
+
+  // skills varsa format ve dir olmali
+  if (cap.skills && (!cap.skills.format || !cap.skills.dir)) {
+    errors.push(`${name}: skills.format ve skills.dir zorunlu`);
+  }
+
+  // agents varsa format ve dir olmali
+  if (cap.agents && (!cap.agents.format || !cap.agents.dir)) {
+    errors.push(`${name}: agents.format ve agents.dir zorunlu`);
+  }
+
+  // context zorunlu
+  if (!cap.context) {
+    errors.push(`${name}: context tanimi zorunlu`);
+  }
+
+  return errors;
+}
+
+function loadExternalCapabilities(configPath) {
+  const merged = { ...CLI_CAPABILITIES };
+
+  if (!configPath || !fs.existsSync(configPath)) return merged;
+
+  const ext = path.extname(configPath).toLowerCase();
+  let external;
+  try {
+    const raw = fs.readFileSync(configPath, 'utf8');
+    external = ext === '.json' ? JSON.parse(raw) : yaml.load(raw);
+  } catch (err) {
+    const location = err.mark ? ` (satir ${err.mark.line + 1})` : '';
+    throw new Error(`CLI config parse hatasi${location}: ${err.message}`);
+  }
+
+  if (!external || typeof external !== 'object') return merged;
+
+  const allErrors = [];
+  for (const [name, cap] of Object.entries(external)) {
+    const errors = validateCliCapabilities(name, cap);
+    if (errors.length > 0) {
+      allErrors.push(...errors);
+    } else {
+      merged[name] = cap;
+    }
+  }
+
+  if (allErrors.length > 0) {
+    throw new Error(`CLI config validasyon hatalari:\n  ${allErrors.join('\n  ')}`);
+  }
+
+  return merged;
+}
+
+// ─────────────────────────────────────────────────────
 // DESCRIPTION CIKARMA
 // ─────────────────────────────────────────────────────
 
 function extractDescription(content) {
-  // "# Task Master — Backlog Oncelik Siralayici" veya "# Task Master - Aciklama"
-  const titleMatch = content.match(/^#\s+.+?\s*[—\-]\s*(.+)$/m);
+  // "# Task Master — Aciklama", "# Task Master - Aciklama", "# Task Master: Aciklama"
+  const titleMatch = content.match(/^#\s+.+?\s*[—\-:]\s*(.+)$/m);
   if (titleMatch) return titleMatch[1].trim();
+
+  // "# Task Master (Aciklama)"
+  const parenMatch = content.match(/^#\s+.+?\((.+?)\)\s*$/m);
+  if (parenMatch) return parenMatch[1].trim();
 
   const quoteMatch = content.match(/^>\s*(.+)$/m);
   if (quoteMatch) return quoteMatch[1].trim();
@@ -105,9 +187,32 @@ const PATH_MAPS = {
   },
 };
 
-const SKIP_PATHS = ['.claude/hooks/', '.claude/tracking/', '.claude/reports/', '.claude/rules/'];
+// Manifest transform.skip_paths ile override edilebilir
+let SKIP_PATHS = ['.claude/hooks/', '.claude/tracking/', '.claude/reports/', '.claude/rules/'];
 
-function adaptPathReferences(content, targetCli) {
+/**
+ * Varsayılan PATH_MAPS ile manifest'ten gelen özel path eşlemelerini birleştirir.
+ * Manifest tanımı aynı CLI için varsayılan eşlemeleri ezer.
+ * @param {Object|undefined} manifestPathMaps - manifest.path_maps alanı
+ * @returns {Object} Birleştirilmiş path map
+ */
+function mergePathMaps(manifestPathMaps) {
+  if (!manifestPathMaps || typeof manifestPathMaps !== 'object') return PATH_MAPS;
+
+  const merged = {};
+  for (const cli of Object.keys(PATH_MAPS)) {
+    merged[cli] = { ...PATH_MAPS[cli], ...(manifestPathMaps[cli] || {}) };
+  }
+  // Manifest'te PATH_MAPS'te olmayan yeni CLI tanımları da desteklenir
+  for (const cli of Object.keys(manifestPathMaps)) {
+    if (!merged[cli]) {
+      merged[cli] = { ...manifestPathMaps[cli] };
+    }
+  }
+  return merged;
+}
+
+function adaptPathReferences(content, targetCli, pathMaps = PATH_MAPS) {
   let result = content;
 
   for (const skipPath of SKIP_PATHS) {
@@ -115,7 +220,7 @@ function adaptPathReferences(content, targetCli) {
   }
   result = result.replace(/\n{3,}/g, '\n\n');
 
-  const maps = PATH_MAPS[targetCli];
+  const maps = pathMaps[targetCli];
   if (maps) {
     for (const [from, to] of Object.entries(maps)) {
       result = result.replace(new RegExp(escapeRegex(from), 'g'), to);
@@ -162,12 +267,12 @@ function inlineRules(content, rules) {
 // ADAPT CONTENT WRAPPER
 // ─────────────────────────────────────────────────────
 
-function adaptContent(content, targetCli, rules) {
+function adaptContent(content, targetCli, rules, pathMaps = PATH_MAPS) {
   let result = stripClaudeOnlySections(content);
   if (rules && rules.length > 0) {
     result = inlineRules(result, rules);
   }
-  result = adaptPathReferences(result, targetCli);
+  result = adaptPathReferences(result, targetCli, pathMaps);
   result = adaptInvokeSyntax(result, targetCli);
   return result;
 }
@@ -264,72 +369,79 @@ function parseClaudeOutput(claudeDir) {
 }
 
 // ─────────────────────────────────────────────────────
+// FORMAT HELPERS
+// ─────────────────────────────────────────────────────
+
+/**
+ * Bir komut dosyasını hedef CLI formatına dönüştürür.
+ * @returns {Object} { outputPath: content } çiftleri
+ */
+function formatCommand(name, desc, adapted, cap) {
+  if (cap.commands) {
+    return { [`${cap.commands.dir}/${name}.toml`]: toToml(desc, adapted) };
+  }
+  if (cap.skills) {
+    return { [`${cap.skills.dir}/${name}/SKILL.md`]: toSkillMd(name, desc, adapted) };
+  }
+  return {};
+}
+
+/**
+ * Bir agent dosyasını hedef CLI formatına dönüştürür.
+ * @returns {Object} { outputPath: content } çiftleri (Kimi için birden fazla dosya üretebilir)
+ */
+function formatAgent(name, desc, adapted, cap, targetCli) {
+  // CLI'ın agents dizini yoksa, skills dizinine fallback (örn. Codex)
+  if (!cap.agents && cap.skills) {
+    return { [`${cap.skills.dir}/${name}/SKILL.md`]: toSkillMd(name, desc, adapted) };
+  }
+  if (!cap.agents) return {};
+
+  if (cap.agents.format === 'yaml') {
+    // Kimi: ayrı YAML tanım + prompt dosyası
+    return {
+      [`${cap.agents.dir}/${name}.yaml`]: toKimiAgentYaml(name, `./${name}-prompt.md`),
+      [`${cap.agents.dir}/${name}-prompt.md`]: adapted,
+    };
+  }
+  if (cap.agents.format === 'md' && targetCli === 'opencode') {
+    return { [`${cap.agents.dir}/${name}.md`]: toOpenCodeAgent(name, desc, adapted) };
+  }
+  // Varsayılan: saf Markdown (örn. Gemini)
+  return { [`${cap.agents.dir}/${name}.md`]: adapted };
+}
+
+// ─────────────────────────────────────────────────────
 // PIPELINE ORKESTRASYONU
 // ─────────────────────────────────────────────────────
 
-function transformForTarget(source, targetCli) {
+function transformForTarget(source, targetCli, pathMaps = PATH_MAPS) {
   const cap = CLI_CAPABILITIES[targetCli];
   if (!cap) return {};
 
   const fileMap = {};
 
-  // Commands → commands (Gemini) veya skills (diger)
   for (const cmd of source.commands) {
-    const adapted = adaptContent(cmd.content, targetCli);
+    const adapted = adaptContent(cmd.content, targetCli, undefined, pathMaps);
     const desc = extractDescription(cmd.content);
-
-    if (cap.commands) {
-      const key = `${cap.commands.dir}/${cmd.name}.toml`;
-      fileMap[key] = toToml(desc, adapted);
-    } else if (cap.skills) {
-      const key = `${cap.skills.dir}/${cmd.name}/SKILL.md`;
-      fileMap[key] = toSkillMd(cmd.name, desc, adapted);
-    }
+    Object.assign(fileMap, formatCommand(cmd.name, desc, adapted, cap));
   }
 
-  // Agents
-  if (cap.agents) {
-    for (const agent of source.agents) {
-      const adapted = adaptContent(agent.content, targetCli);
-      const desc = extractDescription(agent.content);
-
-      if (cap.agents.format === 'yaml') {
-        // Kimi
-        const yamlKey = `${cap.agents.dir}/${agent.name}.yaml`;
-        const promptKey = `${cap.agents.dir}/${agent.name}-prompt.md`;
-        fileMap[yamlKey] = toKimiAgentYaml(agent.name, `./${agent.name}-prompt.md`);
-        fileMap[promptKey] = adapted;
-      } else if (cap.agents.format === 'md' && targetCli === 'opencode') {
-        const key = `${cap.agents.dir}/${agent.name}.md`;
-        fileMap[key] = toOpenCodeAgent(agent.name, desc, adapted);
-      } else {
-        // Gemini — saf markdown
-        const key = `${cap.agents.dir}/${agent.name}.md`;
-        fileMap[key] = adapted;
-      }
-    }
+  for (const agent of source.agents) {
+    const adapted = adaptContent(agent.content, targetCli, undefined, pathMaps);
+    const desc = extractDescription(agent.content);
+    Object.assign(fileMap, formatAgent(agent.name, desc, adapted, cap, targetCli));
   }
 
-  // Codex: agents → skills
-  if (!cap.agents && cap.skills) {
-    for (const agent of source.agents) {
-      const adapted = adaptContent(agent.content, targetCli);
-      const desc = extractDescription(agent.content);
-      const key = `${cap.skills.dir}/${agent.name}/SKILL.md`;
-      fileMap[key] = toSkillMd(agent.name, desc, adapted);
-    }
-  }
-
-  // Context
   if (cap.context.file) {
-    const contextContent = adaptContent(source.context, targetCli, source.rules);
+    const contextContent = adaptContent(source.context, targetCli, source.rules, pathMaps);
     const loc = cap.context.location === 'root'
       ? cap.context.file
       : `${cap.context.location}/${cap.context.file}`;
     fileMap[loc] = contextContent;
   } else if (cap.context.strategy === 'agent-yaml-prompt') {
     // Kimi default agent
-    const contextContent = adaptContent(source.context, targetCli, source.rules);
+    const contextContent = adaptContent(source.context, targetCli, source.rules, pathMaps);
     fileMap[`${cap.agents.dir}/default.yaml`] = toKimiAgentYaml('default', './default-prompt.md');
     fileMap[`${cap.agents.dir}/default-prompt.md`] = contextContent;
   }
@@ -384,13 +496,16 @@ function resolveTargets(manifest, targetsFlag) {
     targets = manifestTargets;
   }
 
-  return targets.filter(t => {
+  const invalid = [];
+  const validTargets = targets.filter(t => {
     if (!VALID_TARGETS.has(t)) {
-      console.warn(`  Uyari: Bilinmeyen target "${t}" atlaniyor.`);
+      invalid.push({ name: t, reason: `bilinmeyen CLI — gecerli degerler: ${[...VALID_TARGETS].join(', ')}` });
       return false;
     }
     return true;
   });
+
+  return { targets: validTargets, invalid };
 }
 
 function main() {
@@ -425,7 +540,13 @@ function main() {
   }
 
   const manifest = yaml.load(fs.readFileSync(resolvedPath, 'utf8'));
-  const targets = resolveTargets(manifest, flags.targets);
+  const { targets, invalid } = resolveTargets(manifest, flags.targets);
+
+  if (invalid.length > 0) {
+    console.error(`Hata: ${invalid.length} gecersiz transform target'i:`);
+    invalid.forEach(({ name, reason }) => console.error(`  ! "${name}": ${reason}`));
+    process.exit(1);
+  }
 
   if (targets.length === 0) {
     console.log('Transform hedefi yok — sadece Claude aktif.');
@@ -434,12 +555,13 @@ function main() {
 
   const claudeDir = path.join(AGENTBASE_DIR, '.claude');
   const source = parseClaudeOutput(claudeDir);
+  const effectivePathMaps = mergePathMaps(manifest.path_maps);
 
   const report = { targets: [], totalFiles: 0, errors: [] };
 
   for (const target of targets) {
     try {
-      const fileMap = transformForTarget(source, target);
+      const fileMap = transformForTarget(source, target, effectivePathMaps);
       const fileCount = Object.keys(fileMap).length;
 
       if (!flags.dryRun) {
@@ -499,10 +621,16 @@ module.exports = {
   toOpenCodeAgent,
   stripFrontmatter,
   parseClaudeOutput,
+  formatCommand,
+  formatAgent,
   transformForTarget,
   writeTarget,
   resolveTargets,
+  mergePathMaps,
+  validateCliCapabilities,
+  loadExternalCapabilities,
   escapeRegex,
   CLI_CAPABILITIES,
+  PATH_MAPS,
   AGENTBASE_DIR,
 };

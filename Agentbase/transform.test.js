@@ -7,7 +7,7 @@ const fs = require('fs');
 const path = require('path');
 const os = require('os');
 
-const { extractDescription, adaptInvokeSyntax, adaptPathReferences, stripClaudeOnlySections, inlineRules, adaptContent, toToml, toSkillMd, toKimiAgentYaml, toOpenCodeAgent, stripFrontmatter, parseClaudeOutput, transformForTarget, writeTarget, resolveTargets } = require('./transform.js');
+const { extractDescription, adaptInvokeSyntax, adaptPathReferences, stripClaudeOnlySections, inlineRules, adaptContent, toToml, toSkillMd, toKimiAgentYaml, toOpenCodeAgent, stripFrontmatter, parseClaudeOutput, formatCommand, formatAgent, transformForTarget, writeTarget, resolveTargets, mergePathMaps, validateCliCapabilities, loadExternalCapabilities, CLI_CAPABILITIES, PATH_MAPS } = require('./transform.js');
 const yaml = require('js-yaml');
 
 describe('extractDescription', () => {
@@ -394,39 +394,148 @@ describe('writeTarget', () => {
 describe('resolveTargets', () => {
   it('manifest targets listesinden claude haric donusturur', () => {
     const manifest = { targets: ['claude', 'gemini', 'codex'] };
-    assert.deepEqual(resolveTargets(manifest, null), ['gemini', 'codex']);
+    const { targets, invalid } = resolveTargets(manifest, null);
+    assert.deepEqual(targets, ['gemini', 'codex']);
+    assert.deepEqual(invalid, []);
   });
 
   it('--targets flag manifest listesini filtreler', () => {
     const manifest = { targets: ['claude', 'gemini', 'codex', 'kimi'] };
-    assert.deepEqual(resolveTargets(manifest, 'gemini,kimi'), ['gemini', 'kimi']);
+    const { targets } = resolveTargets(manifest, 'gemini,kimi');
+    assert.deepEqual(targets, ['gemini', 'kimi']);
   });
 
   it('manifest disindaki target sessizce atlanir', () => {
     const manifest = { targets: ['claude', 'gemini'] };
-    assert.deepEqual(resolveTargets(manifest, 'gemini,kimi'), ['gemini']);
+    const { targets } = resolveTargets(manifest, 'gemini,kimi');
+    assert.deepEqual(targets, ['gemini']);
   });
 
   it('targets tanimsizsa bos dizi doner', () => {
-    assert.deepEqual(resolveTargets({}, null), []);
+    const { targets } = resolveTargets({}, null);
+    assert.deepEqual(targets, []);
   });
 
-  it('bilinmeyen CLI uyari ile atlanir', () => {
+  it('bilinmeyen CLI invalid listesinde rapor edilir', () => {
     const manifest = { targets: ['claude', 'unknown-cli'] };
-    assert.deepEqual(resolveTargets(manifest, null), []);
+    const { targets, invalid } = resolveTargets(manifest, null);
+    assert.deepEqual(targets, []);
+    assert.equal(invalid.length, 1);
+    assert.equal(invalid[0].name, 'unknown-cli');
+    assert.match(invalid[0].reason, /bilinmeyen/i);
   });
 
   it('manifest targets yoksa --targets dogrudan hedef listesi olur', () => {
     const manifest = {};
-    assert.deepEqual(resolveTargets(manifest, 'gemini,codex'), ['gemini', 'codex']);
+    const { targets } = resolveTargets(manifest, 'gemini,codex');
+    assert.deepEqual(targets, ['gemini', 'codex']);
   });
 
   it('manifest targets yoksa --targets bilinmeyen CLI filtreler', () => {
     const manifest = {};
-    assert.deepEqual(resolveTargets(manifest, 'gemini,unknown'), ['gemini']);
+    const { targets, invalid } = resolveTargets(manifest, 'gemini,unknown');
+    assert.deepEqual(targets, ['gemini']);
+    assert.equal(invalid.length, 1);
+    assert.equal(invalid[0].name, 'unknown');
   });
 
   it('manifest targets yoksa ve --targets yoksa bos doner', () => {
-    assert.deepEqual(resolveTargets({}, null), []);
+    const { targets } = resolveTargets({}, null);
+    assert.deepEqual(targets, []);
+  });
+});
+
+describe('formatCommand', () => {
+  const cap = CLI_CAPABILITIES;
+
+  it('Gemini: TOML dosyasi uretir', () => {
+    const result = formatCommand('task-master', 'Backlog siralayici', '# Icerik', cap.gemini);
+    assert.ok('.gemini/commands/task-master.toml' in result);
+    assert.ok(result['.gemini/commands/task-master.toml'].includes('description = "Backlog siralayici"'));
+  });
+
+  it('Codex: SKILL.md dosyasi uretir', () => {
+    const result = formatCommand('task-master', 'Backlog siralayici', '# Icerik', cap.codex);
+    assert.ok('.codex/skills/task-master/SKILL.md' in result);
+    assert.ok(result['.codex/skills/task-master/SKILL.md'].includes('name: task-master'));
+  });
+
+  it('Kimi: SKILL.md dosyasi uretir', () => {
+    const result = formatCommand('test', 'Test komutu', '# Icerik', cap.kimi);
+    assert.ok('.kimi/skills/test/SKILL.md' in result);
+  });
+
+  it('ne commands ne skills yoksa bos nesne doner', () => {
+    const emptyCap = { commands: null, skills: null };
+    const result = formatCommand('test', 'desc', 'icerik', emptyCap);
+    assert.deepEqual(result, {});
+  });
+});
+
+describe('formatAgent', () => {
+  const cap = CLI_CAPABILITIES;
+
+  it('Gemini: saf markdown dosyasi uretir', () => {
+    const result = formatAgent('code-review', 'Kod inceleme', '# Icerik', cap.gemini, 'gemini');
+    assert.ok('.gemini/agents/code-review.md' in result);
+    assert.equal(result['.gemini/agents/code-review.md'], '# Icerik');
+  });
+
+  it('Kimi: yaml + prompt md cifti uretir', () => {
+    const result = formatAgent('reviewer', 'Inceleme', '# Icerik', cap.kimi, 'kimi');
+    assert.ok('.kimi/agents/reviewer.yaml' in result);
+    assert.ok('.kimi/agents/reviewer-prompt.md' in result);
+    assert.ok(result['.kimi/agents/reviewer.yaml'].includes('name: reviewer'));
+  });
+
+  it('OpenCode: subagent frontmatter ile md uretir', () => {
+    const result = formatAgent('reviewer', 'Inceleme', '# Icerik', cap.opencode, 'opencode');
+    assert.ok('.opencode/agents/reviewer.md' in result);
+    assert.ok(result['.opencode/agents/reviewer.md'].includes('mode: subagent'));
+  });
+
+  it('Codex: agents dizini yok, skills olarak uretir', () => {
+    const result = formatAgent('reviewer', 'Inceleme', '# Icerik', cap.codex, 'codex');
+    assert.ok('.codex/skills/reviewer/SKILL.md' in result);
+    assert.ok(result['.codex/skills/reviewer/SKILL.md'].includes('name: reviewer'));
+  });
+
+  it('ne agents ne skills yoksa bos nesne doner', () => {
+    const emptyCap = { agents: null, skills: null };
+    const result = formatAgent('test', 'desc', 'icerik', emptyCap, 'unknown');
+    assert.deepEqual(result, {});
+  });
+});
+
+describe('mergePathMaps', () => {
+  it('manifestPathMaps tanimsizsa varsayilan PATH_MAPS doner', () => {
+    assert.deepEqual(mergePathMaps(undefined), PATH_MAPS);
+    assert.deepEqual(mergePathMaps(null), PATH_MAPS);
+    assert.deepEqual(mergePathMaps({}), PATH_MAPS);
+  });
+
+  it('manifest ozel eslemelerini CLI bazinda birlestiriyor', () => {
+    const customMaps = { gemini: { 'CLAUDE.md': 'MY_GEMINI.md' } };
+    const merged = mergePathMaps(customMaps);
+    // Ozel eslem override edilmis olmali
+    assert.equal(merged.gemini['CLAUDE.md'], 'MY_GEMINI.md');
+    // Diger gemini eslemleri korunmali
+    assert.equal(merged.gemini['.claude/commands/'], '.gemini/commands/');
+    // Diger CLI'lar degismemeli
+    assert.deepEqual(merged.codex, PATH_MAPS.codex);
+  });
+
+  it('manifest yeni CLI tanimlayabilir', () => {
+    const customMaps = { mycli: { '.claude/commands/': '.mycli/cmds/' } };
+    const merged = mergePathMaps(customMaps);
+    assert.ok('mycli' in merged);
+    assert.equal(merged.mycli['.claude/commands/'], '.mycli/cmds/');
+  });
+
+  it('ozel path maps adaptPathReferences icerisinden gecirilebiliyor', () => {
+    const customMaps = { gemini: { 'CLAUDE.md': 'MY_GEMINI.md', '.claude/commands/': '.gemini/commands/' } };
+    const merged = mergePathMaps(customMaps);
+    const result = adaptPathReferences('Bkz: `CLAUDE.md` dosyasi', 'gemini', merged);
+    assert.ok(result.includes('MY_GEMINI.md'), 'ozel eslem uygulanmali');
   });
 });
