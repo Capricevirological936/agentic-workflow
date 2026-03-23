@@ -310,7 +310,7 @@ function hasBacklogMarkers(dir) {
   );
 }
 
-function findBacklogDir(startDir = AGENTBASE_DIR) {
+function findBacklogDir(startDir = PROJECT_ROOT) {
   if (process.env.AGENTBASE_BACKLOG_DIR) {
     return process.env.AGENTBASE_BACKLOG_DIR;
   }

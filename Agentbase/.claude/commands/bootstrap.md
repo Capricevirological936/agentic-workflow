@@ -1772,14 +1772,14 @@ Atlanan (template bulunamadi):
 
 ### 6.1 Backlog Baslatma
 
-Bash ile kontrol et: `ls backlog/config.yml 2>/dev/null`
+Bash ile kontrol et: `ls ../backlog/config.yml 2>/dev/null`
 
 - **Mevcutsa** → Atlat, mevcut backlog'u koru.
-- **Mevcut degilse** → Once `backlog init` dene. Eger interaktif mod gerektirirse (prompt bekler ve tamamlanmazsa), fallback olarak elle olustur:
+- **Mevcut degilse** → Once `cd .. && backlog init && cd Agentbase` dene. Eger interaktif mod gerektirirse (prompt bekler ve tamamlanmazsa), fallback olarak elle olustur:
 
 ```bash
-mkdir -p backlog/tasks backlog/completed backlog/drafts backlog/decisions backlog/docs
-cat > backlog/config.yml << EOF
+mkdir -p ../backlog/tasks ../backlog/completed ../backlog/drafts ../backlog/decisions ../backlog/docs
+cat > ../backlog/config.yml << EOF
 project_name: [manifest.project.name]
 version: 1
 milestones: []
