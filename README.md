@@ -21,6 +21,7 @@ Mevcut bir projeye entegre edebilir veya sıfırdan yeni bir proje başlatabilir
 - **Proje-spesifik kurallar** — Stack'inize göre hook'lar, framework kuralları ve koruma mekanizmaları otomatik üretilir.
 - **Canlı oturum izleme** — Birden fazla Claude Code oturumunu tek terminal ekranından takip edin.
 - **Worktree-dostu mimari** — Agentbase/Codebase ayrımı ile tek config, çok worktree, paralel geliştirme.
+- **Çoklu CLI desteği** — Claude Code çıktıları `transform.js` ile Gemini CLI, Codex CLI, Kimi CLI ve OpenCode formatlarına dönüştürülebilir.
 
 ## Temel Yaklaşım
 
@@ -67,6 +68,7 @@ Bu repoda bulunan ana bileşenler:
 - `Agentbase/.claude/commands/bootstrap.md` — Kurulum akışını başlatan ana komut
 - `Agentbase/templates/` — Çekirdek şablonlar ve modül bazlı iskelet dosyaları
 - `Agentbase/generate.js` — Manifestten deterministik içerik üreten betik
+- `Agentbase/transform.js` — Claude Code çıktılarını Gemini/Codex/Kimi/OpenCode formatlarına dönüştüren pipeline
 - `Agentbase/bin/session-monitor.js` — Oturum izleme aracı
 - `Agentbase/tests/` — Üretim ve hook davranışlarını doğrulayan testler
 
@@ -134,8 +136,9 @@ Bootstrap boş Codebase tespit ettiğinde greenfield moduna geçer: stack seçim
 4. `Docs/agentic/project-manifest.yaml` dosyasını üretir.
 5. Manifeste göre ilgili komutları, ajanları, hook'ları, kuralları ve yardımcı dokümanları oluşturur.
 6. Backlog'u başlatır ve başlangıç görevlerini oluşturur (`backlog/` root dizinde).
-7. Yeniden çalıştırmalarda `overwrite`, `merge` ve `incremental` senaryolarını destekler.
-8. Git hook'larını etkinleştirmeniz için gerekli komutu gösterir (otomatik çalıştırmaz): `cd ../Codebase && git config core.hooksPath "$(realpath ../Agentbase/git-hooks/)"`
+7. Röportajda seçilen hedef CLI araçları varsa (Gemini/Codex/Kimi/OpenCode) `transform.js` ile `.claude/` çıktılarını ilgili formatlara dönüştürür.
+8. Yeniden çalıştırmalarda `overwrite`, `merge` ve `incremental` senaryolarını destekler.
+9. Git hook'larını etkinleştirmeniz için gerekli komutu gösterir (otomatik çalıştırmaz): `cd ../Codebase && git config core.hooksPath "$(realpath ../Agentbase/git-hooks/)"`
 
 ## Komutlar
 
@@ -321,6 +324,23 @@ Aşağıdaki stack'ler bootstrap tarafından algılanır ve manifest'e yazılır
 
 Go, Rust, Java/Kotlin ve diğer stack'ler de aynı şekilde desteklenir. Bootstrap tespit listesinde yer almayan stack'ler manuel manifest yapılandırması gerektirir.
 
+## Çoklu CLI Dönüştürme
+
+Claude Code çıktıları `transform.js` ile diğer CLI formatlarına dönüştürülebilir. Bootstrap röportajında hedef araçlar seçilir veya mevcut projeler `--targets` parametresiyle doğrudan çalıştırabilir:
+
+```bash
+node transform.js ../Docs/agentic/project-manifest.yaml --targets gemini,codex,kimi,opencode
+```
+
+| Hedef CLI | Komut Formatı | Agent Formatı | Bağlam Dosyası |
+|-----------|--------------|---------------|----------------|
+| **Gemini CLI** | `.gemini/commands/*.toml` | `.gemini/agents/*.md` | `GEMINI.md` |
+| **Codex CLI** | `.codex/skills/*/SKILL.md` | — | `AGENTS.md` |
+| **Kimi CLI** | `.kimi/skills/*/SKILL.md` | `.kimi/agents/*.yaml` | Agent prompt içinde |
+| **OpenCode** | `.opencode/skills/*/SKILL.md` | `.opencode/agents/*.md` | `.opencode/AGENTS.md` |
+
+Dönüştürme süreci `.claude/` çıktısını kaynak olarak kullanır ve hedef CLI'ın anlayacağı formata adapte eder: komut çağırma sözdizimi (`/` → `$`, `@` vb.), dosya yolu referansları ve TOML/YAML/Markdown serializasyonu otomatik yapılır. `generate.js` hiç değiştirilmez — transform tamamen ayrı bir post-processor olarak çalışır.
+
 ## Üretimde Kanıtlanmış Desenler
 
 Bu template'deki her kural bir production deneyiminden doğmuştur:
@@ -344,6 +364,7 @@ cd Agentbase && node bin/session-monitor.js                                 # Ot
 
 # Bootstrap sonrası — manifest üretildikten sonra çalışır:
 cd Agentbase && node generate.js ../Docs/agentic/project-manifest.yaml --dry-run  # Kuru çalıştırma
+cd Agentbase && node transform.js ../Docs/agentic/project-manifest.yaml --targets gemini,codex --dry-run  # CLI dönüştürme
 ```
 
 ## Katkı

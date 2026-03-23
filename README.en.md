@@ -19,6 +19,7 @@ You can integrate it into an existing project or start a brand new one from scra
 - **Project-specific rules** — Hooks, framework rules, and protection mechanisms are auto-generated based on your stack.
 - **Live session monitoring** — Track multiple Claude Code sessions from a single terminal screen.
 - **Worktree-friendly architecture** — Agentbase/Codebase separation enables single config, multiple worktrees, parallel development.
+- **Multi-CLI support** — Claude Code outputs can be transformed to Gemini CLI, Codex CLI, Kimi CLI, and OpenCode formats via `transform.js`.
 
 ## Core Approach
 
@@ -65,6 +66,7 @@ Main components:
 - `Agentbase/.claude/commands/bootstrap.md` — The main command that starts the setup flow
 - `Agentbase/templates/` — Core templates and module-based skeleton files
 - `Agentbase/generate.js` — Script that produces deterministic content from the manifest
+- `Agentbase/transform.js` — Pipeline that transforms Claude Code outputs to Gemini/Codex/Kimi/OpenCode formats
 - `Agentbase/bin/session-monitor.js` — Session monitoring tool
 - `Agentbase/tests/` — Tests validating generation and hook behaviors
 
@@ -297,6 +299,23 @@ The template system is modular and only generates content for detected families:
 - **Frontend:** Next.js, React SPA, plain HTML/CSS/JS
 - **Mobile:** Expo, React Native, Flutter
 - **Additional:** Monorepo, security scanning, CI/CD, monitoring, API documentation
+
+## Multi-CLI Transform
+
+Claude Code outputs can be transformed to other CLI formats via `transform.js`. Target tools are selected during the bootstrap interview, or existing projects can run directly with the `--targets` flag:
+
+```bash
+node transform.js ../Docs/agentic/project-manifest.yaml --targets gemini,codex,kimi,opencode
+```
+
+| Target CLI | Command Format | Agent Format | Context File |
+|-----------|--------------|---------------|----------------|
+| **Gemini CLI** | `.gemini/commands/*.toml` | `.gemini/agents/*.md` | `GEMINI.md` |
+| **Codex CLI** | `.codex/skills/*/SKILL.md` | — | `AGENTS.md` |
+| **Kimi CLI** | `.kimi/skills/*/SKILL.md` | `.kimi/agents/*.yaml` | Inside agent prompt |
+| **OpenCode** | `.opencode/skills/*/SKILL.md` | `.opencode/agents/*.md` | `.opencode/AGENTS.md` |
+
+The transform process uses `.claude/` output as source and adapts it to the target CLI's format: invoke syntax (`/` to `$`, `@`, etc.), file path references, and TOML/YAML/Markdown serialization are handled automatically. `generate.js` is never modified — transform runs as a completely separate post-processor.
 
 ## Production-Proven Patterns
 
