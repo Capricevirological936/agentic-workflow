@@ -16,7 +16,8 @@ const path = require('path');
 const fs = require('fs');
 const { execSync } = require('child_process');
 
-const CODEBASE_ROOT = path.resolve(__dirname, '../../../Codebase');
+// Symlink li kurulumda gercek yolu cozer (startsWith icin gerekli)
+const CODEBASE_ROOT = (() => { const p = path.resolve(__dirname, '../../../Codebase'); try { return fs.realpathSync(p); } catch { return p; } })();
 
 // ─── GENERATE BOLUMU BASLANGIC ───
 

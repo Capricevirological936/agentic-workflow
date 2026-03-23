@@ -1346,7 +1346,7 @@ describe('processSkeletonFile — CODEBASE_ROOT yol destegi', () => {
     assert.doesNotThrow(() => {
       // CODEBASE_ROOT satirini cikar ve eval et
       const match = result.outputContent.match(/const CODEBASE_ROOT = (.+);/);
-      if (match) new Function('path', '__dirname', `return ${match[1]}`)({ resolve: (...a) => a.join('/') }, '/tmp');
+      if (match) new Function('path', '__dirname', 'fs', `return ${match[1]}`)({ resolve: (...a) => a.join('/') }, '/tmp', { realpathSync: (p) => p });
     }, 'uretilen JS syntax error vermemeli');
   });
 });

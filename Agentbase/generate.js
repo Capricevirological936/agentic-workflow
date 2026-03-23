@@ -1422,9 +1422,17 @@ function processSkeletonFile(filePath, manifest) {
 
   // Hook dosyalarindaki hardcoded CODEBASE_ROOT yolunu manifest ile degistir
   const codebasePath = getCodebasePath(manifest);
+  const codebaseReplacement = () => `const CODEBASE_ROOT = (() => { const p = path.resolve(__dirname, '../..', ${JSON.stringify(codebasePath)}); try { return fs.realpathSync(p); } catch { return p; } })();`;
+
+  // Basit format: path.resolve(__dirname, '../../../Codebase');
   let outputContent = result.content.replace(
     /const CODEBASE_ROOT = path\.resolve\(__dirname, '\.\.\/\.\.\/\.\.\/Codebase'\);/,
-    () => `const CODEBASE_ROOT = path.resolve(__dirname, '../..', ${JSON.stringify(codebasePath)});`
+    codebaseReplacement
+  );
+  // IIFE format: (() => { ... '../../../Codebase' ... })();
+  outputContent = outputContent.replace(
+    /const CODEBASE_ROOT = \(\(\) => \{ const p = path\.resolve\(__dirname, '\.\.\/\.\.\/\.\.\/Codebase'\); try \{ return fs\.realpathSync\(p\); \} catch \{ return p; \} \}\)\(\);/,
+    codebaseReplacement
   );
 
   return { outputContent, filled: result.filled, marked: result.marked };
@@ -1595,7 +1603,15 @@ function main() {
 
   // Manifest oku
   const manifestContent = fs.readFileSync(resolvedManifestPath, 'utf8');
-  const manifest = yaml.load(manifestContent);
+  let manifest;
+  try {
+    manifest = yaml.load(manifestContent);
+  } catch (yamlErr) {
+    const mark = yamlErr.mark;
+    const location = mark ? ` (satir ${mark.line + 1}, kolon ${mark.column + 1})` : '';
+    console.error(`Hata: Manifest YAML parse hatasi${location}: ${yamlErr.reason || yamlErr.message}`);
+    process.exit(1);
+  }
 
   if (!manifest) {
     console.error('Hata: Manifest bos veya gecersiz.');
