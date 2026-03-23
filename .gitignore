@@ -41,6 +41,7 @@ package-lock.json
 AGENTS.md
 GEMINI.md
 .copilot/
+.codex/
 .github/copilot-instructions.md
 
 # ─────────────────────────────────────────────────────
