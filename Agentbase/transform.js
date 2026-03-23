@@ -172,6 +172,38 @@ function adaptContent(content, targetCli, rules) {
 }
 
 // ─────────────────────────────────────────────────────
+// FORMATTERS
+// ─────────────────────────────────────────────────────
+
+function toToml(description, content) {
+  const escapedDesc = description.replace(/"/g, '\\"');
+  const escapedContent = content.replace(/"""/g, '\\"\\"\\"');
+  return `description = "${escapedDesc}"\n\nprompt = """\n${escapedContent}\n"""`;
+}
+
+function toSkillMd(name, description, content) {
+  const escapedDesc = description.replace(/"/g, '\\"');
+  return `---\nname: ${name}\ndescription: "${escapedDesc}"\n---\n\n${content}`;
+}
+
+function toKimiAgentYaml(name, promptPath) {
+  const obj = {
+    version: 1,
+    agent: {
+      extend: 'default',
+      name: name,
+      system_prompt_path: promptPath,
+    },
+  };
+  return yaml.dump(obj, { lineWidth: -1 });
+}
+
+function toOpenCodeAgent(name, description, content) {
+  const escapedDesc = description.replace(/"/g, '\\"');
+  return `---\ndescription: "${escapedDesc}"\nmode: subagent\n---\n\n${content}`;
+}
+
+// ─────────────────────────────────────────────────────
 // EXPORTS
 // ─────────────────────────────────────────────────────
 
@@ -182,6 +214,10 @@ module.exports = {
   stripClaudeOnlySections,
   inlineRules,
   adaptContent,
+  toToml,
+  toSkillMd,
+  toKimiAgentYaml,
+  toOpenCodeAgent,
   escapeRegex,
   CLI_CAPABILITIES,
   AGENTBASE_DIR,

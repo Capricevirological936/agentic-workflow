@@ -4,7 +4,8 @@
 const { describe, it } = require('node:test');
 const assert = require('node:assert/strict');
 
-const { extractDescription, adaptInvokeSyntax, adaptPathReferences, stripClaudeOnlySections, inlineRules, adaptContent } = require('./transform.js');
+const { extractDescription, adaptInvokeSyntax, adaptPathReferences, stripClaudeOnlySections, inlineRules, adaptContent, toToml, toSkillMd, toKimiAgentYaml, toOpenCodeAgent } = require('./transform.js');
+const yaml = require('js-yaml');
 
 describe('extractDescription', () => {
   it('baslik — aciklama formatindan cikarir', () => {
@@ -147,5 +148,55 @@ describe('adaptContent', () => {
     const rules = [{ name: 'rule1', content: '# Kural 1\n\nIcerik' }];
     const result = adaptContent('# Context', 'gemini', rules);
     assert.ok(result.includes('Kural 1'));
+  });
+});
+
+describe('toToml', () => {
+  it('gecerli TOML ciktisi uretir', () => {
+    const result = toToml('Backlog siralayici', '# Icerik\n\nStep 1...');
+    assert.ok(result.includes('description = "Backlog siralayici"'));
+    assert.ok(result.includes('prompt = """'));
+    assert.ok(result.includes('# Icerik'));
+    assert.ok(result.endsWith('"""'));
+  });
+
+  it('triple-quote icerik escape edilir', () => {
+    const result = toToml('Test', 'Ornek: """kod"""');
+    assert.ok(result.includes('\\"\\"\\"'));
+  });
+
+  it('description icindeki tirnaklari escape eder', () => {
+    const result = toToml('Bir "ozel" aciklama', 'icerik');
+    assert.ok(result.includes('description = "Bir \\"ozel\\" aciklama"'));
+  });
+});
+
+describe('toSkillMd', () => {
+  it('YAML frontmatter + icerik uretir', () => {
+    const result = toSkillMd('task-master', 'Backlog siralayici', '# Icerik');
+    assert.ok(result.startsWith('---\n'));
+    assert.ok(result.includes('name: task-master'));
+    assert.ok(result.includes('description: "Backlog siralayici"'));
+    assert.ok(result.includes('---\n\n# Icerik'));
+  });
+});
+
+describe('toKimiAgentYaml', () => {
+  it('gecerli YAML uretir', () => {
+    const result = toKimiAgentYaml('code-review', './code-review-prompt.md');
+    const parsed = yaml.load(result);
+    assert.equal(parsed.version, 1);
+    assert.equal(parsed.agent.name, 'code-review');
+    assert.equal(parsed.agent.system_prompt_path, './code-review-prompt.md');
+    assert.equal(parsed.agent.extend, 'default');
+  });
+});
+
+describe('toOpenCodeAgent', () => {
+  it('frontmatter + icerik uretir', () => {
+    const result = toOpenCodeAgent('code-review', 'Kod inceleme', '# Icerik');
+    assert.ok(result.includes('description: "Kod inceleme"'));
+    assert.ok(result.includes('mode: subagent'));
+    assert.ok(result.includes('# Icerik'));
   });
 });
