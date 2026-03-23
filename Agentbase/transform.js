@@ -177,10 +177,19 @@ function adaptContent(content, targetCli, rules) {
 
 function toToml(description, content) {
   const escapedDesc = description.replace(/"/g, '\\"');
-  // TOML literal string (''') — backslash escape YORUMLANMAZ
-  // Icerik icindeki ''' dizileri bolunerek escape edilir
-  const escapedContent = content.replace(/'''/g, "''' + '''");
-  return `description = "${escapedDesc}"\n\nprompt = '''\n${escapedContent}\n'''`;
+
+  // TOML literal multiline string (''') icinde ''' dizisi bulunamaz.
+  // Icerik ''' iceriyorsa multiline basic string (""") kullanilir
+  // ve backslash + cift tirnak escape edilir.
+  if (content.includes("'''")) {
+    const escapedContent = content
+      .replace(/\\/g, '\\\\')
+      .replace(/"/g, '\\"');
+    return `description = "${escapedDesc}"\n\nprompt = """\n${escapedContent}\n"""`;
+  }
+
+  // Guvenli durum: icerik ''' icermiyor, literal string kullanilabilir.
+  return `description = "${escapedDesc}"\n\nprompt = '''\n${content}\n'''`;
 }
 
 function toSkillMd(name, description, content) {
@@ -346,7 +355,7 @@ function resolveTargets(manifest, targetsFlag) {
 
   let targets;
   if (targetsFlag) {
-    const requested = targetsFlag.split(',').map(t => t.trim());
+    const requested = targetsFlag.split(',').map(t => t.trim()).filter(Boolean);
     if (manifestTargets.length > 0) {
       // Manifest'te targets varsa → filtrele
       targets = manifestTargets.filter(t => new Set(requested).has(t));

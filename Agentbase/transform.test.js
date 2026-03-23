@@ -168,9 +168,11 @@ describe('toToml', () => {
     assert.ok(result.includes('unused\\|no-unused'));
   });
 
-  it('triple single-quote icerik escape edilir', () => {
+  it('triple single-quote iceren icerik basic string fallback kullanlir', () => {
     const result = toToml('Test', "Ornek: '''kod'''");
-    assert.ok(result.includes("''' + '''"));
+    // ''' iceriyorsa multiline basic string (""") kullanilmali
+    assert.ok(result.includes('prompt = """'));
+    assert.ok(!result.includes("prompt = '''"));
   });
 
   it('description icindeki tirnaklari escape eder', () => {

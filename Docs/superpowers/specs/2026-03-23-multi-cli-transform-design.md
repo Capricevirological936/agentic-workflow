@@ -166,7 +166,7 @@ targets:
 - `targets` tanimsizsa → sadece `claude` (geriye uyumlu)
 - `targets: [claude]` → transform.js calismaz
 
-**`--targets` CLI flag onceligi:** CLI flag manifest'teki `targets` listesini FILTRELER. Manifest'te olmayan bir target `--targets` ile belirtilemez. Ornek: manifest `[claude, gemini, codex]` ise `--targets kimi` sessizce atlanir ve uyari yazdirilir.
+**`--targets` CLI flag onceligi:** Manifest'te `targets` alani varsa CLI flag bu listeyi filtreler. Manifest'te `targets` alani YOKSA `--targets` dogrudan hedef listesi olarak kullanilir — bu, mevcut projelerin manifest degistirmeden transform calistirmasina olanak tanir. Ornek: `node transform.js manifest.yaml --targets gemini,codex`
 
 ### 6.2 CLI Kabiliyet Haritasi
 
@@ -310,7 +310,7 @@ prompt = """
 """
 ```
 
-> **TOML serializasyon notu:** TOML ciktisi string template ile uretilir (kutuphane gerektirmez). Cok satirli stringler `"""` triple-quote ile sarilir. Icerik icindeki `"""` dizileri `\"\"\"` olarak escape edilir. Bu yeterli cunku skeleton icerikleri TOML meta-karakter icermez.
+> **TOML serializasyon notu:** TOML ciktisi string template ile uretilir (kutuphane gerektirmez). Varsayilan olarak multiline literal string (`'''`) kullanilir — backslash escape yorumlanmaz, icerik oldugu gibi korunur. Icerik `'''` dizisi iceriyorsa otomatik olarak multiline basic string (`"""`) formatina fallback yapilir ve backslash + cift tirnak escape edilir.
 
 ### 8.0.2 SKILL.md Ornegi (Codex/Kimi/OpenCode)
 
