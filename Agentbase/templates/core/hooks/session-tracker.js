@@ -21,9 +21,7 @@ function nowIso() {
 }
 
 function ensureDir() {
-  if (!fs.existsSync(SESSIONS_DIR)) {
-    fs.mkdirSync(SESSIONS_DIR, { recursive: true });
-  }
+  fs.mkdirSync(SESSIONS_DIR, { recursive: true });
 }
 
 function createEmptyFocus() {
@@ -147,6 +145,7 @@ function normalizeState(state) {
   normalized.backlog_sync.acceptance.completed = normalized.backlog_sync.acceptance.completed || 0;
   normalized.backlog_sync.acceptance.total = normalized.backlog_sync.acceptance.total || 0;
   normalized.backlog_sync.updated_at = normalized.backlog_sync.updated_at || null;
+  normalized.backlog_sync.path = normalized.backlog_sync.path || null;
 
   return normalized;
 }
@@ -172,6 +171,7 @@ function syncBacklogSnapshot(state) {
       ? state.backlog_sync.dependencies
       : [],
     acceptance: state.backlog_sync?.acceptance || { completed: 0, total: 0 },
+    path: state.backlog_sync?.path || null,
     updated_at: nowIso(),
   };
 }
@@ -181,7 +181,7 @@ function saveState(state) {
     ensureDir();
     state.last_activity = nowIso();
     syncBacklogSnapshot(state);
-    fs.writeFileSync(SESSION_FILE, JSON.stringify(state));
+    fs.writeFileSync(SESSION_FILE, JSON.stringify(state), { mode: 0o600 });
   } catch {
     // Hook sessiz kalmali.
   }
@@ -218,7 +218,7 @@ function getTarget(input, toolType) {
 }
 
 function shortenPath(filePath) {
-  if (!filePath) return null;
+  if (!filePath) return '';
   const segments = String(filePath).split(path.sep).filter(Boolean);
   return segments.slice(-2).join('/');
 }
@@ -310,7 +310,7 @@ function analyzeBashCommand(command, state, input, hadError) {
   if (!command) return;
 
   const shortened = shortenCommand(command);
-  const taskStartMatch = command.match(/backlog\s+task\s+edit\s+(\d+).*-s\s+["']?In\s*Progress["']?/i);
+  const taskStartMatch = command.match(/backlog\s+task\s+edit\s+(\d+).*?-s\s+["']?In\s*Progress["']?/i);
   if (taskStartMatch) {
     const taskId = `TASK-${taskStartMatch[1]}`;
     addUnique(state.backlog_activity.tasks_started, taskId);
@@ -325,7 +325,7 @@ function analyzeBashCommand(command, state, input, hadError) {
     return;
   }
 
-  const taskDoneMatch = command.match(/backlog\s+task\s+edit\s+(\d+).*-s\s+["']?Done["']?/i);
+  const taskDoneMatch = command.match(/backlog\s+task\s+edit\s+(\d+).*?-s\s+["']?Done["']?/i);
   if (taskDoneMatch) {
     const taskId = `TASK-${taskDoneMatch[1]}`;
     addUnique(state.backlog_activity.tasks_completed, taskId);

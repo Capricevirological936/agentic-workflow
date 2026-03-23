@@ -55,9 +55,9 @@ Her satir bir agent/session olacak sekilde, agent-first ozet ver:
 
 | Oturum | Durum | Task    | Faz        | Bekliyor | Son Aksiyon     |
 |--------|-------|---------|------------|----------|-----------------|
-| 45012  | [*]   | TASK-24 | implement  | none     | Edited monitor  |
-| 45078  | [~]   | TASK-11 | waiting    | test     | npm test fail   |
-| 45123  | [-]   | —       | planning   | none     | Read backlog    |
+| 45012  | ●   | TASK-24 | implement  | none     | Edited monitor  |
+| 45078  | ○   | TASK-11 | waiting    | test     | npm test fail   |
+| 45123  | ─   | —       | planning   | none     | Read backlog    |
 ```
 
 Ek backlog ozeti:

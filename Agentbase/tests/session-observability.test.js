@@ -734,3 +734,174 @@ describe('session-monitor edge cases', () => {
     assert.equal(enriched.backlog_sync.task_id, 'TASK-999', 'task_id korunmali');
   });
 });
+
+// ─────────────────────────────────────────────────────
+// SESSION-TRACKER UTILITY FUNCTION TESTLERI
+// ─────────────────────────────────────────────────────
+
+describe('session-tracker utility functions', () => {
+  const trackerPath = path.join(__dirname, '..', 'templates', 'core', 'hooks', 'session-tracker.js');
+
+  it('addToFileList MAX_FILE_ENTRIES asildiginda en eski girdi dusurulur', () => {
+    const { addToFileList } = loadModuleExports(trackerPath, {
+      exports: ['addToFileList'],
+    });
+
+    let list = [];
+    for (let i = 1; i <= 52; i++) {
+      list = addToFileList(list, `/tmp/project/src/file-${i}.js`, 50);
+    }
+
+    assert.equal(list.length, 50, 'liste 50 ile sinirlanmali');
+    assert.ok(!list.some(f => f && f.includes('file-1.js')), 'en eski girdi dusurulmeli');
+    assert.ok(list.some(f => f && f.includes('file-52.js')), 'en yeni girdi olmali');
+  });
+
+  it('addUnique ayni degeri tekrar eklemez', () => {
+    const { addUnique } = loadModuleExports(trackerPath, {
+      exports: ['addUnique'],
+    });
+
+    const list = [];
+    addUnique(list, 'TASK-1');
+    addUnique(list, 'TASK-1');
+    addUnique(list, 'TASK-2');
+
+    assert.equal(list.length, 2, 'duplicate eklenmemeli');
+    assert.deepEqual(list, ['TASK-1', 'TASK-2']);
+  });
+
+  it('pushEvent MAX_EVENT_ENTRIES asildiginda eski eventler dusurulur', () => {
+    const { pushEvent } = loadModuleExports(trackerPath, {
+      exports: ['pushEvent'],
+    });
+
+    const state = { recent_events: [] };
+    for (let i = 1; i <= 26; i++) {
+      pushEvent(state, 'test', `event-${i}`);
+    }
+
+    assert.equal(state.recent_events.length, 24, 'event listesi 24 ile sinirlanmali');
+    assert.ok(!state.recent_events.some(e => e.label === 'event-1'), 'en eski event dusurulmeli');
+    assert.equal(state.recent_events.at(-1).label, 'event-26', 'en yeni event korunmali');
+  });
+
+  it('normalizeState null veya undefined ile cagrildiginda gecerli state dondurur', () => {
+    const { normalizeState } = loadModuleExports(trackerPath, {
+      exports: ['normalizeState'],
+    });
+
+    const result = normalizeState(null);
+    assert.ok(result, 'null state → gecerli state olmali');
+    assert.ok(Array.isArray(result.recent_events), 'recent_events dizi olmali');
+    assert.equal(result.phase, 'planning', 'varsayilan faz planning olmali');
+    assert.equal(result.waiting_on, 'none', 'varsayilan waiting_on none olmali');
+
+    const result2 = normalizeState(undefined);
+    assert.ok(result2, 'undefined state → gecerli state olmali');
+    assert.ok(Array.isArray(result2.recent_events));
+  });
+
+  it('shortenPath null yerine bos string donduruyor', () => {
+    const { shortenPath } = loadModuleExports(trackerPath, {
+      exports: ['shortenPath'],
+    });
+
+    assert.equal(shortenPath(null), '', 'null → empty string');
+    assert.equal(shortenPath(''), '', 'empty string → empty string');
+    assert.equal(typeof shortenPath(null), 'string', 'donus tipi string olmali');
+  });
+});
+
+// ─────────────────────────────────────────────────────
+// SESSION-MONITOR DERIVE FUNCTION TESTLERI
+// ─────────────────────────────────────────────────────
+
+describe('session-monitor derive functions', () => {
+  const monitorPath = path.join(__dirname, '..', 'bin', 'session-monitor.js');
+
+  it('derivePhase Edit tool → implementing donduruyor', () => {
+    const { derivePhase } = loadModuleExports(monitorPath, {
+      exports: ['derivePhase'],
+    });
+
+    const session = { tools: { last_tool: 'Edit', last_tool_target: 'src/index.js' }, errors: { count: 0 } };
+    assert.equal(derivePhase(session), 'implementing');
+  });
+
+  it('derivePhase Agent tool → reviewing donduruyor', () => {
+    const { derivePhase } = loadModuleExports(monitorPath, {
+      exports: ['derivePhase'],
+    });
+
+    const session = { tools: { last_tool: 'Agent', last_tool_target: 'review-agent' }, errors: { count: 0 } };
+    assert.equal(derivePhase(session), 'reviewing');
+  });
+
+  it('derivePhase Bash + test komutu + hata → waiting donduruyor', () => {
+    const { derivePhase } = loadModuleExports(monitorPath, {
+      exports: ['derivePhase'],
+    });
+
+    const session = {
+      tools: { last_tool: 'Bash', last_tool_target: 'npm test' },
+      errors: { count: 1 },
+    };
+    assert.equal(derivePhase(session), 'waiting');
+  });
+
+  it('derivePhase Bash + test komutu + hata yok → testing donduruyor', () => {
+    const { derivePhase } = loadModuleExports(monitorPath, {
+      exports: ['derivePhase'],
+    });
+
+    const session = {
+      tools: { last_tool: 'Bash', last_tool_target: 'npm test' },
+      errors: { count: 0 },
+    };
+    assert.equal(derivePhase(session), 'testing');
+  });
+
+  it('inferLegacyTaskId tamamlanmamis son gorevi donduruyor', () => {
+    const { inferLegacyTaskId } = loadModuleExports(monitorPath, {
+      exports: ['inferLegacyTaskId'],
+    });
+
+    const session = {
+      backlog_activity: {
+        tasks_started: ['TASK-1', 'TASK-2', 'TASK-3'],
+        tasks_completed: ['TASK-1'],
+      },
+    };
+
+    // TASK-1 tamamlandi → active: [TASK-2, TASK-3] → son uncompleted: TASK-3
+    assert.equal(inferLegacyTaskId(session), 'TASK-3');
+  });
+
+  it('inferLegacyTaskId tum gorevler tamamlandi → son started gorevi donduruyor', () => {
+    const { inferLegacyTaskId } = loadModuleExports(monitorPath, {
+      exports: ['inferLegacyTaskId'],
+    });
+
+    const session = {
+      backlog_activity: {
+        tasks_started: ['TASK-10', 'TASK-11'],
+        tasks_completed: ['TASK-10', 'TASK-11'],
+      },
+    };
+
+    assert.equal(inferLegacyTaskId(session), 'TASK-11');
+  });
+
+  it('timeAgo sinir degerlerini dogru formatlıyor', () => {
+    const { timeAgo } = loadModuleExports(monitorPath, {
+      exports: ['timeAgo'],
+    });
+
+    const now = Date.now();
+    assert.match(timeAgo(new Date(now - 30000).toISOString()), /^30sn$/);
+    assert.match(timeAgo(new Date(now - 60000).toISOString()), /^1dk$/);
+    assert.match(timeAgo(new Date(now - 3600000).toISOString()), /^1sa$/);
+    assert.match(timeAgo(new Date(now - 86400000).toISOString()), /^1g$/);
+  });
+});
