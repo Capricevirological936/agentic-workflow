@@ -3,7 +3,10 @@
 > **[English version (README.en.md)](README.en.md)**
 
 > [!IMPORTANT]
-> Bu sistemin otonom görev yönetimi, paralel agent spawn ve çok adımlı workflow akışları yoğun token tüketimi gerektirir. Verimli kullanım için **Claude Max** paketinin kullanılması önerilir.
+> Bu sistem **[Backlog.md](https://github.com/MrLesk/Backlog.md)** üzerine kuruludur. Tüm görev yaşam döngüsü — oluşturma, önceliklendirme, implementasyon, review ve kapatma — Backlog.md CLI ile yönetilir. Bootstrap, Backlog.md kurulu değilse çalışmaz.
+
+> [!NOTE]
+> Otonom görev yönetimi, paralel agent spawn ve çok adımlı workflow akışları yoğun token tüketimi gerektirir. Verimli kullanım için **Claude Max** paketinin kullanılması önerilir.
 
 Claude Code ile yazılım geliştirmenin tüm yaşam döngüsünü yöneten bir workflow sistemidir. Görev planlamadan code review'a, bug fix'ten deploy kontrolüne kadar her adımı yapılandırılmış komutlar, ajanlar ve otomatik koruma mekanizmalarıyla yönetir.
 

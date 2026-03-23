@@ -1,7 +1,10 @@
 ![Agentic Workflow banner](Docs/assets/agentic-workflow-banner.png)
 
 > [!IMPORTANT]
-> This system's autonomous task management, parallel agent spawning, and multi-step workflow pipelines require high token consumption. **Claude Max** plan is recommended for efficient usage.
+> This system is built on **[Backlog.md](https://github.com/MrLesk/Backlog.md)**. The entire task lifecycle — creation, prioritization, implementation, review, and closure — is managed through the Backlog.md CLI. Bootstrap will not run without Backlog.md installed.
+
+> [!NOTE]
+> Autonomous task management, parallel agent spawning, and multi-step workflow pipelines require high token consumption. **Claude Max** plan is recommended for efficient usage.
 
 A workflow system that manages the entire lifecycle of software development with Claude Code. From task planning to code review, bug fixing to deploy control — every step is managed through structured commands, agents, and automated protection mechanisms.
 
