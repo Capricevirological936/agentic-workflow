@@ -949,6 +949,31 @@ describe('SIMPLE_GENERATORS', () => {
     assert.ok(!result.includes('comv2'), 'URL kirilmamali');
   });
 
+  it('SMOKE_TEST_ENDPOINTS dinamik api_endpoints listesi uretiyor', () => {
+    const manifest = {
+      environments: [{ name: 'production', url: 'https://api.example.com' }],
+      api_endpoints: [
+        { method: 'GET', path: '/api/v1/users', auth: 'required', response: 200 },
+        { method: 'POST', path: '/api/v1/users', auth: 'required', response: 201 },
+        { method: 'GET', path: '/api/v1/products', auth: 'none', response: 200 },
+      ],
+    };
+    const result = SIMPLE_GENERATORS.SMOKE_TEST_ENDPOINTS(manifest);
+    assert.ok(result.includes('/api/v1/users'), 'users endpoint olmali');
+    assert.ok(result.includes('Authorization gerekli'), 'auth notu olmali');
+    assert.ok(result.includes('201'), 'POST beklenen status olmali');
+    assert.ok(!result.includes('/status'), 'fallback status olmamali');
+  });
+
+  it('SMOKE_TEST_ENDPOINTS api_endpoints yoksa fallback calisiyor', () => {
+    const manifest = {
+      environments: [{ name: 'production', url: 'https://api.example.com' }],
+    };
+    const result = SIMPLE_GENERATORS.SMOKE_TEST_ENDPOINTS(manifest);
+    assert.ok(result.includes('/health'), 'health olmali');
+    assert.ok(result.includes('/status'), 'fallback status olmali');
+  });
+
   it('TEST_FILE_MAPPING Node.js icin kaynak-test eslestirme uretir', () => {
     const result = SIMPLE_GENERATORS.TEST_FILE_MAPPING(testManifest, 'js');
     assert.ok(result.includes('sourcePattern'), 'sourcePattern alani olmali');

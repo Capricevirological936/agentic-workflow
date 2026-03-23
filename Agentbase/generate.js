@@ -861,18 +861,35 @@ const SIMPLE_GENERATORS = {
     const healthCheck = prodEnv?.health_check;
     const rawPrefix = manifest?.project?.api_prefix || '';
     const apiPrefix = rawPrefix && !rawPrefix.startsWith('/') ? '/' + rawPrefix : rawPrefix;
+    const apiEndpoints = manifest?.api_endpoints || [];
 
-    // health_check manifest te varsa oldugu gibi kullan, yoksa url + /health
+    const rows = [];
+
+    // Health check endpoint — her zaman dahil
     const healthUrl = healthCheck || `${url}/health`;
-    const statusUrl = `${url}${apiPrefix}/status`;
+    rows.push(`| \`GET ${healthUrl}\` | 200 OK | — |`);
+
+    if (apiEndpoints.length > 0) {
+      // Dinamik endpoint listesi (manifest.api_endpoints den)
+      for (const ep of apiEndpoints) {
+        const method = (ep.method || 'GET').toUpperCase();
+        const epPath = ep.path || '/';
+        const expectedStatus = ep.response || 200;
+        const auth = ep.auth === 'required' ? 'Authorization gerekli' : '—';
+        rows.push(`| \`${method} ${url}${epPath}\` | ${expectedStatus} | ${auth} |`);
+      }
+    } else {
+      // Fallback: sabit status endpoint (api_endpoints yoksa)
+      const statusUrl = `${url}${apiPrefix}/status`;
+      rows.push(`| \`GET ${statusUrl}\` | 200 OK | — |`);
+    }
 
     return [
       '## Smoke Test Endpoint\'leri',
       '',
-      '| Endpoint | Beklenen |',
-      '|---|---|',
-      `| \`GET ${healthUrl}\` | 200 OK |`,
-      `| \`GET ${statusUrl}\` | 200 OK |`,
+      '| Endpoint | Beklenen | Auth |',
+      '|---|---|---|',
+      ...rows,
     ].join('\n');
   },
 
