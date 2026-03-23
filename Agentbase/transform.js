@@ -337,11 +337,27 @@ function transformForTarget(source, targetCli) {
 }
 
 function writeTarget(outputDir, targetCli, fileMap) {
+  const errors = [];
   for (const [relPath, content] of Object.entries(fileMap)) {
     const fullPath = path.join(outputDir, relPath);
-    fs.mkdirSync(path.dirname(fullPath), { recursive: true });
-    fs.writeFileSync(fullPath, content, 'utf8');
+    try {
+      // Path traversal koruması
+      const resolvedFull = path.resolve(fullPath);
+      const resolvedBase = path.resolve(outputDir);
+      if (!resolvedFull.startsWith(resolvedBase + path.sep) && resolvedFull !== resolvedBase) {
+        throw new Error(`Path traversal: ${relPath} dizin disinda`);
+      }
+      fs.mkdirSync(path.dirname(fullPath), { recursive: true });
+      fs.writeFileSync(fullPath, content, 'utf8');
+    } catch (err) {
+      errors.push(`${relPath}: ${err.message}`);
+    }
   }
+  if (errors.length > 0) {
+    console.error(`[${targetCli}] ${errors.length} dosya yazilamadi:`);
+    errors.forEach(e => console.error(`  ! ${e}`));
+  }
+  return errors;
 }
 
 // ─────────────────────────────────────────────────────

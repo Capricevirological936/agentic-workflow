@@ -45,14 +45,18 @@ const TARGET_MAP = {
  * Format: <!-- GENERATE: BLOCK_NAME\n...\n-->
  * Tum HTML comment'i replace edilir.
  */
-const MD_GENERATE_RE = /<!-- GENERATE: (\w+)\n[\s\S]*?-->/g;
+// Regex factory — her cagri yeni instance dondurur (lastIndex yan etkisi onlenir)
+function createMdGenerateRe() {
+  return /<!-- GENERATE: (\w+)\n[\s\S]*?-->/g;
+}
 
-/**
- * JS dosyalarindaki GENERATE bloklarini parse eder.
- * Format: /* GENERATE: BLOCK_NAME\n ... *\/\n  /* END GENERATE *\/
- * Start marker + aradaki content + end marker replace edilir.
- */
-const JS_GENERATE_RE = /\/\* GENERATE: (\w+)\n[\s\S]*?\*\/\s*\n?\s*\/\* END GENERATE \*\//g;
+function createJsGenerateRe() {
+  return /\/\* GENERATE: (\w+)\n[\s\S]*?\*\/\s*\n?\s*\/\* END GENERATE \*\//g;
+}
+
+// Geriye uyumluluk icin export edilen sabitler (test'lerde kullanilabilir)
+const MD_GENERATE_RE = createMdGenerateRe();
+const JS_GENERATE_RE = createJsGenerateRe();
 
 /**
  * Bir icerikten tum GENERATE blok isimlerini cikarir.
@@ -61,11 +65,9 @@ const JS_GENERATE_RE = /\/\* GENERATE: (\w+)\n[\s\S]*?\*\/\s*\n?\s*\/\* END GENE
  * @returns {string[]} Blok isimleri
  */
 function extractBlockNames(content, fileType) {
-  const re = fileType === 'js' ? JS_GENERATE_RE : MD_GENERATE_RE;
+  const re = fileType === 'js' ? createJsGenerateRe() : createMdGenerateRe();
   const names = [];
   let match;
-  // Reset regex state
-  re.lastIndex = 0;
   while ((match = re.exec(content)) !== null) {
     names.push(match[1]);
   }
@@ -80,12 +82,10 @@ function extractBlockNames(content, fileType) {
  * @returns {{ content: string, filled: string[], marked: string[] }}
  */
 function fillBlocks(content, fileType, manifest) {
-  const re = fileType === 'js' ? JS_GENERATE_RE : MD_GENERATE_RE;
+  const re = fileType === 'js' ? createJsGenerateRe() : createMdGenerateRe();
   const filled = [];
   const marked = [];
 
-  // Reset regex state
-  re.lastIndex = 0;
   const result = content.replace(re, (fullMatch, blockName) => {
     const generator = SIMPLE_GENERATORS[blockName];
     if (generator) {
@@ -1666,6 +1666,12 @@ function main() {
       }
 
       if (!flags.dryRun) {
+        // Path traversal koruması: çıktı yolu outputDir içinde kalmalı
+        const resolvedOutput = path.resolve(outputPath);
+        const resolvedBase = path.resolve(outputDir);
+        if (!resolvedOutput.startsWith(resolvedBase + path.sep) && resolvedOutput !== resolvedBase) {
+          throw new Error(`Path traversal tespit edildi: ${outputPath} dizin disinda`);
+        }
         const dir = path.dirname(outputPath);
         fs.mkdirSync(dir, { recursive: true });
         fs.writeFileSync(outputPath, outputContent, 'utf8');
