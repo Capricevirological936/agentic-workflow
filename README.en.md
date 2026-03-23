@@ -323,6 +323,14 @@ cd Agentbase && node bin/session-monitor.js                                 # Se
 cd Agentbase && node generate.js ../Docs/agentic/project-manifest.yaml --dry-run  # Dry run
 ```
 
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for contribution guidelines.
+
+## Security
+
+For security vulnerability reports, see [SECURITY.md](SECURITY.md). Do **not** open a public issue — report to hello@varien.software.
+
 ## License
 
-This project is licensed under [MIT](LICENSE).
+This project is licensed under [MIT](LICENSE). Copyright (c) 2026 Varien Software.
