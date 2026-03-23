@@ -235,6 +235,16 @@ function adaptPathReferences(content, targetCli, pathMaps = PATH_MAPS) {
     }
   }
 
+  // Skill-based CLI'lar: {skills_dir}/{name}.md → {skills_dir}/{name}/SKILL.md
+  const cap = CLI_CAPABILITIES[targetCli];
+  if (cap?.skills?.dir) {
+    const skillsDir = cap.skills.dir;
+    result = result.replace(
+      new RegExp(`${escapeRegex(skillsDir)}/([\\w-]+)\\.md`, 'g'),
+      `${skillsDir}/$1/SKILL.md`
+    );
+  }
+
   return result;
 }
 
@@ -547,7 +557,20 @@ function main() {
     process.exit(1);
   }
 
-  const manifest = yaml.load(fs.readFileSync(resolvedPath, 'utf8'));
+  let manifest;
+  try {
+    manifest = yaml.load(fs.readFileSync(resolvedPath, 'utf8'));
+  } catch (err) {
+    const location = err.mark ? ` (satir ${err.mark.line + 1})` : '';
+    console.error(`Hata: Manifest YAML parse hatasi${location}: ${err.message}`);
+    process.exit(1);
+  }
+
+  if (!manifest || typeof manifest !== 'object') {
+    console.error('Hata: Manifest bos veya gecersiz — YAML objesi bekleniyor.');
+    process.exit(1);
+  }
+
   const { targets, invalid } = resolveTargets(manifest, flags.targets);
 
   if (invalid.length > 0) {
