@@ -79,12 +79,65 @@ function adaptInvokeSyntax(content, targetCli) {
 }
 
 // ─────────────────────────────────────────────────────
+// PATH REFERENCES DONUSUMU
+// ─────────────────────────────────────────────────────
+
+const PATH_MAPS = {
+  gemini: {
+    '.claude/commands/': '.gemini/commands/',
+    '.claude/agents/': '.gemini/agents/',
+    'CLAUDE.md': 'GEMINI.md',
+  },
+  codex: {
+    '.claude/commands/': '.codex/skills/',
+    '.claude/agents/': '.codex/skills/',
+    'CLAUDE.md': 'AGENTS.md',
+  },
+  kimi: {
+    '.claude/commands/': '.kimi/skills/',
+    '.claude/agents/': '.kimi/agents/',
+    'CLAUDE.md': 'default-prompt.md',
+  },
+  opencode: {
+    '.claude/commands/': '.opencode/skills/',
+    '.claude/agents/': '.opencode/agents/',
+    'CLAUDE.md': 'AGENTS.md',
+  },
+};
+
+const SKIP_PATHS = ['.claude/hooks/', '.claude/tracking/', '.claude/reports/', '.claude/rules/'];
+
+function adaptPathReferences(content, targetCli) {
+  let result = content;
+
+  for (const skipPath of SKIP_PATHS) {
+    result = result.replace(new RegExp(`^.*${escapeRegex(skipPath)}.*$`, 'gm'), '');
+  }
+  result = result.replace(/\n{3,}/g, '\n\n');
+
+  const maps = PATH_MAPS[targetCli];
+  if (maps) {
+    for (const [from, to] of Object.entries(maps)) {
+      result = result.replace(new RegExp(escapeRegex(from), 'g'), to);
+    }
+  }
+
+  return result;
+}
+
+function escapeRegex(str) {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+// ─────────────────────────────────────────────────────
 // EXPORTS
 // ─────────────────────────────────────────────────────
 
 module.exports = {
   extractDescription,
   adaptInvokeSyntax,
+  adaptPathReferences,
+  escapeRegex,
   CLI_CAPABILITIES,
   AGENTBASE_DIR,
 };

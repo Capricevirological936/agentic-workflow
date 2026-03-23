@@ -4,7 +4,7 @@
 const { describe, it } = require('node:test');
 const assert = require('node:assert/strict');
 
-const { extractDescription, adaptInvokeSyntax } = require('./transform.js');
+const { extractDescription, adaptInvokeSyntax, adaptPathReferences } = require('./transform.js');
 
 describe('extractDescription', () => {
   it('baslik — aciklama formatindan cikarir', () => {
@@ -57,5 +57,38 @@ describe('adaptInvokeSyntax', () => {
   it('backtick disindaki /path/to/file gibi yollara dokunmaz', () => {
     const safe = 'Dosya: /usr/local/bin/test ve `cd ../Codebase/`';
     assert.equal(adaptInvokeSyntax(safe, 'codex'), safe);
+  });
+});
+
+describe('adaptPathReferences', () => {
+  it('codex — .claude/commands/ → .codex/skills/', () => {
+    const input = 'Bkz: `.claude/commands/task-master.md`';
+    const result = adaptPathReferences(input, 'codex');
+    assert.ok(result.includes('.codex/skills/'));
+  });
+
+  it('kimi — .claude/agents/ → .kimi/agents/', () => {
+    const input = '`.claude/agents/code-review.md` dosyasi';
+    const result = adaptPathReferences(input, 'kimi');
+    assert.ok(result.includes('.kimi/agents/'));
+  });
+
+  it('.claude/hooks/ ve .claude/tracking/ referanslari kaldirilir', () => {
+    const input = 'Hook: `.claude/hooks/test.js` ve tracking: `.claude/tracking/`';
+    const result = adaptPathReferences(input, 'gemini');
+    assert.ok(!result.includes('.claude/hooks/'));
+    assert.ok(!result.includes('.claude/tracking/'));
+  });
+
+  it('.claude/rules/ referansi kaldirilir', () => {
+    const input = '`.claude/rules/workflow.md` dosyasina bakin';
+    const result = adaptPathReferences(input, 'codex');
+    assert.ok(!result.includes('.claude/rules/'));
+  });
+
+  it('CLAUDE.md → hedef context dosyasi', () => {
+    const input = '`CLAUDE.md` dosyasi ana context';
+    const result = adaptPathReferences(input, 'gemini');
+    assert.ok(result.includes('GEMINI.md'));
   });
 });
