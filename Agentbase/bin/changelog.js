@@ -6,11 +6,13 @@
  *
  * Git commit tarihçesinden otomatik CHANGELOG.md üretir.
  * Conventional Commits formatını parse eder.
+ * Tag-aware: git tag'larını tanır ve her versiyon için ayrı bölüm üretir.
  *
  * Kullanım:
  *   node bin/changelog.js                    # Son tag'den bu yana
- *   node bin/changelog.js --all              # Tüm tarihçe
+ *   node bin/changelog.js --all              # Tüm tarihçe (tag bazlı bölümler)
  *   node bin/changelog.js --from v0.1.0      # Belirli tag'den bu yana
+ *   node bin/changelog.js --release v1.0.0   # Yayınlanmamış → v1.0.0 olarak etiketle
  *   node bin/changelog.js --dry-run          # Dosyaya yazmadan göster
  */
 
@@ -33,6 +35,8 @@ const CATEGORIES = {
   ci: { label: 'CI/CD', emoji: '' },
 };
 
+const HEADER = '# Değişiklik Günlüğü\n\nTüm önemli değişiklikler bu dosyada belgelenir.\nFormat [Keep a Changelog](https://keepachangelog.com/tr/1.1.0/) standardını takip eder.\n\n';
+
 function git(cmd) {
   try {
     return execSync(`git ${cmd}`, { cwd: REPO_ROOT, encoding: 'utf8' }).trim();
@@ -45,8 +49,25 @@ function getLatestTag() {
   return git('describe --tags --abbrev=0 2>/dev/null') || null;
 }
 
-function getCommits(from) {
-  const range = from ? `${from}..HEAD` : '';
+function getAllTags() {
+  const raw = git('tag --sort=version:refname -l "v*"');
+  if (!raw) return [];
+  return raw.split('\n').filter(Boolean);
+}
+
+function getTagDate(tag) {
+  return git(`log -1 --format=%ai ${tag} 2>/dev/null`);
+}
+
+function getCommits(from, to) {
+  let range = '';
+  if (from && to) {
+    range = `${from}..${to}`;
+  } else if (from) {
+    range = `${from}..HEAD`;
+  } else if (to) {
+    range = to;
+  }
   const raw = git(`log ${range} --pretty=format:"%H|%s|%an|%ai" --no-merges`);
   if (!raw) return [];
 
@@ -81,6 +102,8 @@ function formatDate(isoDate) {
 }
 
 function generateSection(version, date, commits) {
+  if (commits.length === 0) return '';
+
   const groups = groupByType(commits);
   const lines = [];
 
@@ -107,26 +130,117 @@ function generateSection(version, date, commits) {
   return lines.join('\n');
 }
 
+function generateAllSections() {
+  const tags = getAllTags();
+  const sections = [];
+
+  // Son tag → HEAD arası (Yayınlanmamış)
+  if (tags.length > 0) {
+    const lastTag = tags[tags.length - 1];
+    const unreleased = getCommits(lastTag, null);
+    if (unreleased.length > 0) {
+      sections.push(generateSection('Yayınlanmamış', formatDate(unreleased[0]?.date), unreleased));
+    }
+  }
+
+  // Tag aralıkları (yeniden eskiye)
+  for (let i = tags.length - 1; i >= 0; i--) {
+    const tag = tags[i];
+    const from = i > 0 ? tags[i - 1] : null;
+    const commits = getCommits(from, tag);
+    const version = tag.replace(/^v/, '');
+    const date = formatDate(getTagDate(tag));
+    if (commits.length > 0) {
+      sections.push(generateSection(version, date, commits));
+    }
+  }
+
+  // Hiç tag yoksa tüm tarihçe Yayınlanmamış
+  if (tags.length === 0) {
+    const all = getCommits(null, null);
+    if (all.length > 0) {
+      sections.push(generateSection('Yayınlanmamış', formatDate(all[0]?.date), all));
+    }
+  }
+
+  return sections;
+}
+
+function releaseVersion(version) {
+  if (!fs.existsSync(CHANGELOG_PATH)) {
+    console.error('Hata: CHANGELOG.md bulunamadı.');
+    process.exit(1);
+  }
+
+  const content = fs.readFileSync(CHANGELOG_PATH, 'utf8');
+  const displayVersion = version.replace(/^v/, '');
+  const today = new Date().toISOString().slice(0, 10);
+
+  // [Yayınlanmamış] → [version] ve tarihi güncelle
+  const updated = content.replace(
+    /## \[Yayınlanmamış\]\s*-\s*\d{4}-\d{2}-\d{2}/,
+    `## [${displayVersion}] - ${today}`
+  );
+
+  if (updated === content) {
+    console.error('Hata: [Yayınlanmamış] bölümü bulunamadı.');
+    process.exit(1);
+  }
+
+  fs.writeFileSync(CHANGELOG_PATH, updated);
+  console.log(`CHANGELOG.md güncellendi: [Yayınlanmamış] → [${displayVersion}] (${today})`);
+}
+
 function main() {
   const args = process.argv.slice(2);
   const dryRun = args.includes('--dry-run');
   const all = args.includes('--all');
   const fromIdx = args.indexOf('--from');
   const fromTag = fromIdx !== -1 ? args[fromIdx + 1] : null;
+  const releaseIdx = args.indexOf('--release');
+  const releaseTag = releaseIdx !== -1 ? args[releaseIdx + 1] : null;
 
-  const latestTag = fromTag || (all ? null : getLatestTag());
-  const commits = getCommits(latestTag);
+  // --release modu: mevcut CHANGELOG'daki Yayınlanmamış → versiyon
+  if (releaseTag) {
+    releaseVersion(releaseTag);
+    return;
+  }
+
+  if (all) {
+    // Tag-aware tam tarihçe üretimi
+    const sections = generateAllSections();
+
+    if (sections.length === 0) {
+      console.log('Commit bulunamadı.');
+      return;
+    }
+
+    const content = HEADER + sections.join('\n');
+    const totalCommits = sections.reduce((acc, s) => acc + (s.match(/^- /gm) || []).length, 0);
+
+    if (dryRun) {
+      console.log(content);
+      console.log(`\n--- ${totalCommits} satır işlendi ---`);
+      return;
+    }
+
+    fs.writeFileSync(CHANGELOG_PATH, content);
+    console.log(`CHANGELOG.md güncellendi — ${sections.length} bölüm, tag-aware.`);
+    return;
+  }
+
+  // Incremental mod: son tag'den bu yana
+  const latestTag = fromTag || getLatestTag();
+  const commits = getCommits(latestTag, null);
 
   if (commits.length === 0) {
     console.log('Yeni commit bulunamadı.');
     return;
   }
 
-  const version = latestTag ? `${latestTag} sonrası` : 'Yayınlanmamış';
+  const version = 'Yayınlanmamış';
   const date = formatDate(commits[0]?.date);
   const section = generateSection(version, date, commits);
-
-  const header = '# Değişiklik Günlüğü\n\nTüm önemli değişiklikler bu dosyada belgelenir.\nFormat [Keep a Changelog](https://keepachangelog.com/tr/1.1.0/) standardını takip eder.\n\n';
 
   if (dryRun) {
     console.log(section);
@@ -137,18 +251,36 @@ function main() {
   let existing = '';
   if (fs.existsSync(CHANGELOG_PATH)) {
     existing = fs.readFileSync(CHANGELOG_PATH, 'utf8');
-    // Header'ı atla, sadece içeriği al
-    const headerEnd = existing.indexOf('\n## ');
-    if (headerEnd !== -1) {
-      existing = existing.slice(headerEnd);
+    // Header'ı atla, Yayınlanmamış bölümünü atla, versiyonlu bölümleri koru
+    const versionedStart = existing.search(/\n## \[\d/);
+    if (versionedStart !== -1) {
+      existing = existing.slice(versionedStart);
     } else {
       existing = '';
     }
   }
 
-  const content = header + section + '\n' + existing;
+  const content = HEADER + section + '\n' + existing;
   fs.writeFileSync(CHANGELOG_PATH, content);
   console.log(`CHANGELOG.md güncellendi — ${commits.length} commit işlendi.`);
 }
 
-main();
+if (require.main === module) {
+  main();
+}
+
+module.exports = {
+  getCommits,
+  getAllTags,
+  getTagDate,
+  getLatestTag,
+  groupByType,
+  generateSection,
+  generateAllSections,
+  releaseVersion,
+  formatDate,
+  CATEGORIES,
+  HEADER,
+  CHANGELOG_PATH,
+  REPO_ROOT,
+};
