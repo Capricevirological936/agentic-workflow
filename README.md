@@ -2,6 +2,9 @@
 
 > **[English version (README.en.md)](README.en.md)**
 
+> [!IMPORTANT]
+> Bu sistemin otonom görev yönetimi, paralel agent spawn ve çok adımlı workflow akışları yoğun token tüketimi gerektirir. Verimli kullanım için **Claude Max** paketinin kullanılması önerilir.
+
 Claude Code ile yazılım geliştirmenin tüm yaşam döngüsünü yöneten bir workflow sistemidir. Görev planlamadan code review'a, bug fix'ten deploy kontrolüne kadar her adımı yapılandırılmış komutlar, ajanlar ve otomatik koruma mekanizmalarıyla yönetir.
 
 Mevcut bir projeye entegre edebilir veya sıfırdan yeni bir proje başlatabilirsiniz. `/bootstrap` komutu projenizi tanır (veya greenfield modunda stack bilgilerini sorar), sizinle kısa bir röportaj yapar ve projenize özel workflow dosyalarını üretir.

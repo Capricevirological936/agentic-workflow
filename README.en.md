@@ -1,5 +1,8 @@
 ![Agentic Workflow banner](Docs/assets/agentic-workflow-banner.png)
 
+> [!IMPORTANT]
+> This system's autonomous task management, parallel agent spawning, and multi-step workflow pipelines require high token consumption. **Claude Max** plan is recommended for efficient usage.
+
 A workflow system that manages the entire lifecycle of software development with Claude Code. From task planning to code review, bug fixing to deploy control — every step is managed through structured commands, agents, and automated protection mechanisms.
 
 You can integrate it into an existing project or start a brand new one from scratch. The `/bootstrap` command recognizes your project (or asks for stack info in greenfield mode), runs a short interview, and generates project-specific workflow files.
