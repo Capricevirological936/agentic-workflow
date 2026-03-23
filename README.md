@@ -79,6 +79,7 @@ Not: Bu depodaki bazı komut dosyaları örnek veya çekirdek içerik olarak yer
 - Node.js 18+ ve npm
 - [jq](https://jqlang.github.io/jq/) — JSON işlemci, hook kuralları için gerekli (`brew install jq` veya `apt install jq`)
 - Git 2.38+ — pre-push hook'undaki `git merge-tree --write-tree` desteği için gerekli
+- Docker CLI — Docker veya Coolify deploy modülü aktifse gerekli (`docker build`, `docker compose` komutları için)
 
 ## Hızlı Başlangıç
 

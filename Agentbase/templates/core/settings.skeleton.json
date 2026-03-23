@@ -13,7 +13,7 @@
           {
             "__doc__": "Lock dosyasi korumasi — her zaman aktif",
             "type": "command",
-            "command": "jq -r 'if (.tool_input.file_path // \"\" | test(\"package-lock\\\\.json$|yarn\\\\.lock$\")) then {\"decision\":\"block\",\"reason\":\"Lock dosyasi elle duzenlenemez\"} else empty end'",
+            "command": "jq -r 'if (.tool_input.file_path // \"\" | test(\"package-lock\\\\.json$|yarn\\\\.lock$|pnpm-lock\\\\.yaml$|bun\\\\.lock$|composer\\\\.lock$|Cargo\\\\.lock$|poetry\\\\.lock$\")) then {\"decision\":\"block\",\"reason\":\"Lock dosyasi elle duzenlenemez\"} else empty end'",
             "timeout": 5
           },
           {
