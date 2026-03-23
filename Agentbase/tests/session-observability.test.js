@@ -742,6 +742,15 @@ describe('session-monitor edge cases', () => {
 describe('session-tracker utility functions', () => {
   const trackerPath = path.join(__dirname, '..', 'templates', 'core', 'hooks', 'session-tracker.js');
 
+  it('addToFileList kok dizin yolu icin bos girdi eklemiyor', () => {
+    const { addToFileList } = loadModuleExports(trackerPath, {
+      exports: ['addToFileList'],
+    });
+
+    const list = addToFileList([], '/', 50);
+    assert.equal(list.length, 0, 'kok dizin yolu listeye eklenmemeli');
+  });
+
   it('addToFileList MAX_FILE_ENTRIES asildiginda en eski girdi dusurulur', () => {
     const { addToFileList } = loadModuleExports(trackerPath, {
       exports: ['addToFileList'],

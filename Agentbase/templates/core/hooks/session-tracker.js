@@ -231,6 +231,7 @@ function shortenCommand(command, max = 80) {
 function addToFileList(list, filePath, max) {
   if (!filePath) return list;
   const shortPath = shortenPath(filePath);
+  if (!shortPath) return list;
   const filtered = list.filter(entry => entry !== shortPath);
   filtered.push(shortPath);
   return filtered.slice(-max);
