@@ -168,31 +168,27 @@ const PATH_MAPS = {
   gemini: {
     '.claude/commands/': '.gemini/commands/',
     '.claude/agents/': '.gemini/agents/',
-    '.claude/rules/': '.gemini/rules/',
     'CLAUDE.md': 'GEMINI.md',
   },
   codex: {
     '.claude/commands/': '.codex/skills/',
     '.claude/agents/': '.codex/skills/',
-    '.claude/rules/': '.codex/rules/',
     'CLAUDE.md': 'AGENTS.md',
   },
   kimi: {
     '.claude/commands/': '.kimi/skills/',
     '.claude/agents/': '.kimi/agents/',
-    '.claude/rules/': '.kimi/rules/',
     'CLAUDE.md': '.kimi/agents/default-prompt.md',
   },
   opencode: {
     '.claude/commands/': '.opencode/skills/',
     '.claude/agents/': '.opencode/agents/',
-    '.claude/rules/': '.opencode/rules/',
     'CLAUDE.md': '.opencode/AGENTS.md',
   },
 };
 
 // Manifest transform.skip_paths ile override edilebilir
-// .claude/rules/ SKIP_PATHS'ten cikarildi — rule referanslari PATH_MAPS ile donusturuluyor
+// .claude/rules/ ayri dosya olarak uretilmiyor — inline-context ile context dosyasina gomulur
 let SKIP_PATHS = ['.claude/hooks/', '.claude/tracking/', '.claude/reports/'];
 
 /**
@@ -243,6 +239,21 @@ function adaptPathReferences(content, targetCli, pathMaps = PATH_MAPS) {
       new RegExp(`${escapeRegex(skillsDir)}/([\\w-]+)\\.md`, 'g'),
       `${skillsDir}/$1/SKILL.md`
     );
+  }
+
+  // Rule referanslari: .claude/rules/ ayri dosya olarak uretilmiyor —
+  // icerik context dosyasina inline edilir. Path referansini context yoluna cevir.
+  if (cap?.context?.file) {
+    const contextRef = cap.context.location === 'root'
+      ? cap.context.file
+      : `${cap.context.location}/${cap.context.file}`;
+    result = result.replace(
+      /\.claude\/rules\/[\w-]+\.md/g,
+      `${contextRef} (rules inline)`
+    );
+  } else {
+    // agent-yaml-prompt (Kimi): rule referanslarini temizle
+    result = result.replace(/\.claude\/rules\/[\w-]+\.md/g, 'context dosyasi (rules inline)');
   }
 
   return result;
