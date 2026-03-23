@@ -9,7 +9,7 @@
     "test": "node --test generate.test.js transform.test.js tests/*.test.js",
     "changelog": "node bin/changelog.js",
     "changelog:dry": "node bin/changelog.js --dry-run",
-    "release": "node bin/changelog.js && git add CHANGELOG.md && git commit -m 'docs: CHANGELOG guncellendi'"
+    "release": "node bin/release.js"
   },
   "engines": {
     "node": ">=18.0.0"

@@ -75,6 +75,8 @@ function createInitialState() {
       status: null,
       priority: null,
       dependencies: [],
+      // NOT: missing alani tracker tarafindan YAZILMAZ — monitor enrichSession() icinde
+      // backlogIndex ile karsilastirarak runtime hesaplar (stateless lazy-evaluate).
       acceptance: {
         completed: 0,
         total: 0,
@@ -273,19 +275,23 @@ function hasToolError(result) {
   return /^(Error|SyntaxError|TypeError|ReferenceError|ENOENT|EACCES):/.test(resultStr);
 }
 
-function isTestCommand(command) {
-  if (!command) return false;
-  return (
-    /\b(?:npm|pnpm|yarn|bun)\s+(?:run\s+)?test\b/i.test(command) ||
-    /\bnode\s+--test\b/i.test(command) ||
-    /\bjest\b/i.test(command) ||
-    /\bvitest\b/i.test(command) ||
-    /\bpytest\b/i.test(command) ||
-    /\bphpunit\b/i.test(command) ||
-    /\bcargo\s+test\b/i.test(command) ||
-    /\bgo\s+test\b/i.test(command)
-  );
-}
+// Test komutu tespiti — shared-patterns.js ile paylasiliyor
+const { isTestCommand } = (() => {
+  try { return require('../../bin/shared-patterns.js'); } catch {
+    // Fallback: generate.js ile materialize edildikten sonra bin/ yolu degisebilir
+    return {
+      isTestCommand(command) {
+        if (!command) return false;
+        return [
+          /\b(?:npm|pnpm|yarn|bun)\s+(?:run\s+)?test\b/i,
+          /\bnode\s+--test\b/i, /\bjest\b/i, /\bvitest\b/i,
+          /\bpytest\b/i, /\bphpunit\b/i,
+          /\bcargo\s+test\b/i, /\bgo\s+test\b/i,
+        ].some(p => p.test(command));
+      },
+    };
+  }
+})();
 
 function detectErrors(input, state, toolType) {
   const result = input.tool_result;
@@ -409,12 +415,17 @@ function detectTeammate(input, state) {
     return;
   }
 
+  const MAX_TEAMMATES = 100;
   state.teammates.push({
     name,
     spawned_at: nowIso(),
     status: hasResult ? 'completed' : 'spawned',
     completed_at: hasResult ? nowIso() : undefined,
   });
+  // Ust sinir — eski kayitlari dusur
+  if (state.teammates.length > MAX_TEAMMATES) {
+    state.teammates = state.teammates.slice(-MAX_TEAMMATES);
+  }
 
   state.phase = 'reviewing';
   state.waiting_on = 'none';

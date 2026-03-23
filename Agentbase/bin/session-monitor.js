@@ -478,18 +478,8 @@ function inferLegacyTaskId(session) {
   return active.at(-1) || started.at(-1) || null;
 }
 
-function isTestLikeCommand(command) {
-  return (
-    /\b(?:npm|pnpm|yarn|bun)\s+(?:run\s+)?test\b/i.test(command || '') ||
-    /\bnode\s+--test\b/i.test(command || '') ||
-    /\bjest\b/i.test(command || '') ||
-    /\bvitest\b/i.test(command || '') ||
-    /\bpytest\b/i.test(command || '') ||
-    /\bphpunit\b/i.test(command || '') ||
-    /\bcargo\s+test\b/i.test(command || '') ||
-    /\bgo\s+test\b/i.test(command || '')
-  );
-}
+// Test komutu tespiti — shared-patterns.js ile paylasiliyor
+const { isTestCommand: isTestLikeCommand } = require('./shared-patterns.js');
 
 function derivePhase(session) {
   if (session.phase) return session.phase;
