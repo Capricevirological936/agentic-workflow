@@ -16,6 +16,10 @@ Ornek cikti:
 - **Next.js Versiyonu:** 14.x (App Router)
 - **Deploy:** Vercel
 - **Styling:** Tailwind CSS
+Kutsal Kurallar:
+- Config dosyalari SADECE Agentbase icinde yasar
+- Codebase icinde `.claude/` OLUSTURULMAZ
+- Git sadece Codebase de calisir
 -->
 
 ---

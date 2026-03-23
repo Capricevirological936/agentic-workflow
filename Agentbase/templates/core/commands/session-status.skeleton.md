@@ -40,9 +40,9 @@ Oturum durumunu `last_activity` zamanina gore siniflandir:
 
 | Aralik | Durum | Simge |
 |--------|-------|-------|
-| < 5 dakika | aktif | `[*]` |
-| 5 — 30 dakika | bosta | `[~]` |
-| > 30 dakika | kapali | `[-]` |
+| < 5 dakika | aktif | `●` |
+| 5 — 30 dakika | bosta | `○` |
+| > 30 dakika | kapali | `─` |
 
 ### 3. Ozet Tablosu Goster
 

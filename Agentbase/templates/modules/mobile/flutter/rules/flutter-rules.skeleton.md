@@ -18,6 +18,10 @@ Ornek cikti:
 - **State Management:** Riverpod
 - **Navigation:** GoRouter
 - **Deploy:** App Store + Google Play
+Kutsal Kurallar:
+- Config dosyalari SADECE Agentbase icinde yasar
+- Codebase icinde `.claude/` OLUSTURULMAZ
+- Git sadece Codebase de calisir
 -->
 
 ---

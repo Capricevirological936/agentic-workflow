@@ -279,6 +279,10 @@ Ornek cikti:
   - `apps/api/` — NestJS backend
   - `apps/mobile/` — Expo React Native
   - `packages/shared/` — Paylasilan tipler ve yardimcilar
+Kutsal Kurallar:
+- Config dosyalari SADECE Agentbase icinde yasar
+- Codebase icinde `.claude/` OLUSTURULMAZ
+- Git sadece Codebase de calisir
 -->
 
 ### 4.4 — Dogrulama Kapisi (Her Gorev Icin)

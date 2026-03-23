@@ -34,6 +34,10 @@ Example output:
 ├── web/src/          # Web landing page
 └── backend/          # Eski PHP backend
 ```
+Kutsal Kurallar:
+- Config dosyalari SADECE Agentbase icinde yasar
+- Codebase icinde `.claude/` OLUSTURULMAZ
+- Git sadece Codebase de calisir
 -->
 
 <!-- GENERATE: PROJECT_CHECKLIST

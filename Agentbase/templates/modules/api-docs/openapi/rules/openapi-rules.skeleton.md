@@ -3,6 +3,10 @@
 <!-- GENERATE: CODEBASE_CONTEXT
 Aciklama: Bu bolum Bootstrap tarafindan manifest verileriyle doldurulur.
 Gerekli manifest alanlari: project.name, project.description, project.structure
+Kutsal Kurallar:
+- Config dosyalari SADECE Agentbase icinde yasar
+- Codebase icinde `.claude/` OLUSTURULMAZ
+- Git sadece Codebase de calisir
 -->
 
 ---

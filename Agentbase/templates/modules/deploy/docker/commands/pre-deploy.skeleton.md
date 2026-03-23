@@ -25,6 +25,10 @@ Ornek cikti:
   - `apps/web/` — Next.js frontend
   - `apps/api/` — NestJS backend
   - `apps/mobile/` — Expo React Native
+Kutsal Kurallar:
+- Config dosyalari SADECE Agentbase icinde yasar
+- Codebase icinde `.claude/` OLUSTURULMAZ
+- Git sadece Codebase de calisir
 -->
 
 ---

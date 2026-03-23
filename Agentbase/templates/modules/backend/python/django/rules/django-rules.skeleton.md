@@ -18,6 +18,10 @@ Ornek cikti:
   - `apps/` — Django uygulamalari
   - `templates/` — Sablonlar
   - `static/` — Statik dosyalar
+Kutsal Kurallar:
+- Config dosyalari SADECE Agentbase icinde yasar
+- Codebase icinde `.claude/` OLUSTURULMAZ
+- Git sadece Codebase de calisir
 -->
 
 ---

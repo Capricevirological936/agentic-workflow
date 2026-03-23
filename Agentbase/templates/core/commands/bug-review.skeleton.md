@@ -13,6 +13,10 @@ Ornek cikti:
 - **Proje:** E-ticaret platformu (Next.js + NestJS + React Native)
 - **Stack:** TypeScript, Prisma, PostgreSQL, Expo
 - Review sirasinda stack-spesifik kurallari goz onunde bulundur.
+Kutsal Kurallar:
+- Config dosyalari SADECE Agentbase icinde yasar
+- Codebase icinde `.claude/` OLUSTURULMAZ
+- Git sadece Codebase de calisir
 -->
 
 ---

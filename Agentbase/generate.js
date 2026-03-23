@@ -497,7 +497,15 @@ const SIMPLE_GENERATORS = {
   // --- PATH BLOKLARI ---
 
   MEMORY_PATH(manifest) {
-    const memoryPath = manifest?.paths?.memory || '.claude/memory';
+    const requestedPath = manifest?.paths?.memory || manifest?.project?.memory_path;
+    const isSafeMemoryPath = typeof requestedPath === 'string'
+      && (
+        requestedPath === '.claude/memory'
+        || requestedPath.startsWith('.claude/memory/')
+        || requestedPath === 'Agentbase/.claude/memory'
+        || requestedPath.startsWith('Agentbase/.claude/memory/')
+      );
+    const memoryPath = isSafeMemoryPath ? requestedPath : '.claude/memory';
     return [
       '## Memory Yolu',
       '',

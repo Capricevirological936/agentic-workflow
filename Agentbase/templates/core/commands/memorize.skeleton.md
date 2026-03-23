@@ -59,7 +59,7 @@ Her ogrenme icin ayri bir hafiza dosyasi olustur:
 
 <!-- GENERATE: MEMORY_PATH
 Aciklama: Bu bolum Bootstrap tarafindan manifest verileriyle doldurulur.
-Gerekli manifest alanlari: project.memory_path
+Gerekli manifest alanlari: paths.memory
 Ornek cikti:
 **Hafiza dizini:** `.claude/memory/`
 

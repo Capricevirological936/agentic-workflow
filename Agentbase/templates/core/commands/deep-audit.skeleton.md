@@ -27,6 +27,10 @@ Ornek cikti:
   - `apps/mobile/` — Expo React Native
   - `apps/web/` — Next.js frontend
   - `packages/shared/` — Paylasilan tipler
+Kutsal Kurallar:
+- Config dosyalari SADECE Agentbase icinde yasar
+- Codebase icinde `.claude/` OLUSTURULMAZ
+- Git sadece Codebase de calisir
 -->
 
 ---

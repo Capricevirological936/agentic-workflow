@@ -3,6 +3,10 @@
 <!-- GENERATE: CODEBASE_CONTEXT
 Aciklama: Stack bilgileri — runtime, diller, framework'ler.
 Gerekli manifest alanlari: stack.primary, stack.detected, stack.runtime
+Kutsal Kurallar:
+- Config dosyalari SADECE Agentbase icinde yasar
+- Codebase icinde `.claude/` OLUSTURULMAZ
+- Git sadece Codebase de calisir
 -->
 
 ## Test

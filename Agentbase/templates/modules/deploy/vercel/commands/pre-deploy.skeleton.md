@@ -24,6 +24,10 @@ Ornek cikti:
 - **Yapi:**
   - `src/` — Next.js app directory
   - `prisma/` — Veritabani semasi
+Kutsal Kurallar:
+- Config dosyalari SADECE Agentbase icinde yasar
+- Codebase icinde `.claude/` OLUSTURULMAZ
+- Git sadece Codebase de calisir
 -->
 
 ---

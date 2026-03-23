@@ -24,6 +24,10 @@ Example output:
 
 **Proje:** Siparis, hesap ve icerik yonetimi sunan cok katmanli uygulama platformu.
 **Stack:** Node.js + Express + Prisma | Expo + React Native | Vite + React
+Kutsal Kurallar:
+- Config dosyalari SADECE Agentbase icinde yasar
+- Codebase icinde `.claude/` OLUSTURULMAZ
+- Git sadece Codebase de calisir
 -->
 
 <!-- GENERATE: PROJECT_PATHS

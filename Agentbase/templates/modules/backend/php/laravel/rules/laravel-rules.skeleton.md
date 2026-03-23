@@ -18,6 +18,10 @@ Ornek cikti:
   - `routes/` — Rota tanimlari
   - `database/` — Migration ve seeder
   - `tests/` — Test dosyalari
+Kutsal Kurallar:
+- Config dosyalari SADECE Agentbase icinde yasar
+- Codebase icinde `.claude/` OLUSTURULMAZ
+- Git sadece Codebase de calisir
 -->
 
 ---

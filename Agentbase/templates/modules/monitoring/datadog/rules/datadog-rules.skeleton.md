@@ -16,6 +16,10 @@ Ornek cikti:
 - **Datadog SDK:** dd-trace + @datadog/browser-rum
 - **DD_ENV:** development | staging | production
 - **DD_SERVICE:** myapp-api, myapp-web
+Kutsal Kurallar:
+- Config dosyalari SADECE Agentbase icinde yasar
+- Codebase icinde `.claude/` OLUSTURULMAZ
+- Git sadece Codebase de calisir
 -->
 
 ---

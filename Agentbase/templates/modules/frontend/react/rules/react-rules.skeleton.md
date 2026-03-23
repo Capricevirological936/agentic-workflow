@@ -20,6 +20,10 @@ Ornek cikti:
 - **Router:** React Router v6
 - **Styling:** Tailwind CSS
 - **Test:** Vitest + React Testing Library
+Kutsal Kurallar:
+- Config dosyalari SADECE Agentbase icinde yasar
+- Codebase icinde `.claude/` OLUSTURULMAZ
+- Git sadece Codebase de calisir
 -->
 
 ---

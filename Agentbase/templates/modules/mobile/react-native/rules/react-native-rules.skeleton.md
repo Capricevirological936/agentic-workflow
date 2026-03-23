@@ -16,6 +16,10 @@ Ornek cikti:
 - **RN Versiyonu:** 0.73.x (New Architecture aktif)
 - **State Management:** Zustand
 - **Navigation:** React Navigation v6
+Kutsal Kurallar:
+- Config dosyalari SADECE Agentbase icinde yasar
+- Codebase icinde `.claude/` OLUSTURULMAZ
+- Git sadece Codebase de calisir
 -->
 
 ---

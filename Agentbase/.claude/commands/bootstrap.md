@@ -1155,8 +1155,8 @@ Lead (sen)
   │    Girdi: manifest + templates/core/commands/*.skeleton.md
   │                     + templates/core/agents/*.skeleton.md
   │                     + templates/core/rules/*.md (sabit) ve *.skeleton.md
-  │    Cikti: .claude/commands/ (8 dosya)
-  │           .claude/agents/ (3 core + uzman agent'lar)
+  │    Cikti: .claude/commands/ (13 core command dosyasi)
+  │           .claude/agents/ (7 core + uzman agent'lar)
   │           .claude/rules/ (2 dosya)
   │    UZMAN AGENT URETIMI (bkz. 5.1.2):
   │
@@ -1284,7 +1284,7 @@ Sadece `claude` varsa veya `targets` alani yoksa bu adimi ATLA.
 Transform raporu ciktisini kullaniciya goster. Bu adim `.claude/` ciktisini diger CLI formatlarina (`.gemini/`, `.codex/`, `.kimi/`, `.opencode/`) donusturur.
 
 **Script tarafindan doldurulan basit bloklar:**
-`COMMIT_CONVENTION`, `VERIFICATION_COMMANDS`, `TEST_COMMANDS`, `COMPILE_COMMANDS`, `BUILD_COMMANDS`, `MIGRATION_COMMANDS`, `FILE_EXTENSIONS`, `CODE_EXTENSIONS`, `MEMORY_PATH`, `PRISMA_PATH`, `LARAVEL_PATHS`, `DJANGO_PATHS`, `TYPEORM_PATHS`, `SECURITY_PATTERNS`, `LAYER_TESTS`, `SUBPROJECT_CONFIGS`, `STACK_SPECIFIC_IGNORES`, `DEPLOY_LOG_PATH`, `HEALTH_CHECK_URL`, `SMOKE_TEST_ENDPOINTS`, `TASK_ROUTING_CONFIG`, `GIT_PRECOMMIT_COMPILE`, `GIT_PRECOMMIT_TEST`, `GIT_PRECOMMIT_LINT`, `GIT_PRECOMMIT_FORMAT`, `GIT_PREPUSH_LOCALHOST`, `GIT_PREPUSH_MIGRATION`, `GIT_PREPUSH_ENV`, `GIT_PREPUSH_DESTRUCTIVE`
+`COMMIT_CONVENTION`, `VERIFICATION_COMMANDS`, `TEST_COMMANDS`, `COMPILE_COMMANDS`, `BUILD_COMMANDS`, `MIGRATION_COMMANDS`, `FILE_EXTENSIONS`, `CODE_EXTENSIONS`, `MEMORY_PATH`, `PRISMA_PATH`, `LARAVEL_PATHS`, `DJANGO_PATHS`, `TYPEORM_PATHS`, `SECURITY_PATTERNS`, `LAYER_TESTS`, `SUBPROJECT_CONFIGS`, `STACK_SPECIFIC_IGNORES`, `DEPLOY_LOG_PATH`, `HEALTH_CHECK_URL`, `SMOKE_TEST_ENDPOINTS`, `API_SMOKE_SCRIPT`, `API_SMOKE_NODE_TESTS`, `TASK_ROUTING_CONFIG`, `GIT_PRECOMMIT_COMPILE`, `GIT_PRECOMMIT_TEST`, `GIT_PRECOMMIT_LINT`, `GIT_PRECOMMIT_FORMAT`, `GIT_PREPUSH_LOCALHOST`, `GIT_PREPUSH_MIGRATION`, `GIT_PREPUSH_ENV`, `GIT_PREPUSH_DESTRUCTIVE`
 
 **Claude'a birakilacak karmasik bloklar (CLAUDE_FILL ile isaretlenir):**
 `CODEBASE_CONTEXT`, `PROJECT_CHECKLIST`, `IMPLEMENTATION_RULES`, `PROJECT_SPECIFIC_RULES`, `REVIEW_CHECKLIST`, `FILE_DISCOVERY_HINTS`, `FILE_DETECTION_PATTERNS`, `AC_TEMPLATES`, `DEPLOY_TOPOLOGY`, `DEPLOY_STEPS`, `ENVIRONMENT_DIFFERENCES`, `HOOK_BEHAVIORS`, `CRITICAL_RULES`, `PROJECT_CONVENTIONS`, `STYLING_APPROACH`, `ROUTER_TYPE`, `STATE_MANAGEMENT` ve diger bağlam-yoğun bloklar.
@@ -1378,6 +1378,7 @@ Teammate'ler skeleton dosyalarini islerken hangi GENERATE bloklarinin hangi dosy
 
 | Skeleton Dosyasi | GENERATE Bloklari |
 |-----------------|-------------------|
+| api-smoke.skeleton.md | CODEBASE_CONTEXT, SMOKE_TEST_ENDPOINTS, API_SMOKE_SCRIPT, API_SMOKE_NODE_TESTS |
 | task-hunter.skeleton.md | CODEBASE_CONTEXT, FILE_DISCOVERY_HINTS, IMPLEMENTATION_RULES, VERIFICATION_COMMANDS, COMMIT_CONVENTION, PROJECT_SPECIFIC_RULES, TASK_ROUTING_CONFIG |
 | task-master.skeleton.md | CODEBASE_CONTEXT |
 | task-conductor.skeleton.md | CODEBASE_CONTEXT, VERIFICATION_COMMANDS, COMMIT_CONVENTION |
@@ -1385,11 +1386,14 @@ Teammate'ler skeleton dosyalarini islerken hangi GENERATE bloklarinin hangi dosy
 | task-plan.skeleton.md | CODEBASE_CONTEXT, FILE_DETECTION_PATTERNS, AC_TEMPLATES |
 | bug-hunter.skeleton.md | CODEBASE_CONTEXT, VERIFICATION_COMMANDS, COMMIT_CONVENTION |
 | bug-review.skeleton.md | CODEBASE_CONTEXT, REVIEW_CHECKLIST, COMMIT_CONVENTION |
+| auto-review.skeleton.md | CODEBASE_CONTEXT |
 | deep-audit.skeleton.md | CODEBASE_CONTEXT, MODULE_MAPPING, SUBPROJECT_LAYERS, REVIEW_AGENTS, VERIFICATION_COMMANDS, IDOR_CHECKLIST |
 | deadcode.skeleton.md | CODEBASE_CONTEXT, DEADCODE_TOOLS, COMMIT_CONVENTION |
 | memorize.skeleton.md | MEMORY_PATH |
 | code-review.skeleton.md (agent) | CODEBASE_CONTEXT, PROJECT_CHECKLIST |
 | regression-analyzer.skeleton.md (agent) | CODEBASE_CONTEXT, PROJECT_PATHS |
+| service-documentation.skeleton.md (agent) | CODEBASE_CONTEXT |
+| devils-advocate.skeleton.md (agent) | CODEBASE_CONTEXT |
 | workflow-lifecycle.skeleton.md (rule) | COMMIT_CONVENTION, DEPLOY_TOPOLOGY, DEPLOY_STEPS, ROLLBACK_PLATFORM_STEPS, ENVIRONMENT_DIFFERENCES, TEAM_REVIEW_POLICY, HOOK_BEHAVIORS, CRITICAL_RULES |
 | code-review-check.skeleton.js (hook — JS format) | SECURITY_PATTERNS, FILE_EXTENSIONS |
 | test-enforcer.skeleton.js (hook — JS format) | TEST_FILE_MAPPING, CODE_EXTENSIONS |
@@ -1398,6 +1402,16 @@ Teammate'ler skeleton dosyalarini islerken hangi GENERATE bloklarinin hangi dosy
 | backend-expert.skeleton.md (agent) | CODEBASE_CONTEXT, BACKEND_FRAMEWORK_RULES |
 | mobile-expert.skeleton.md (agent) | CODEBASE_CONTEXT, MOBILE_PLATFORM_RULES |
 | frontend-expert.skeleton.md (agent) | CODEBASE_CONTEXT, FRONTEND_FRAMEWORK_RULES |
+| docker-pre-deploy.skeleton.md | CODEBASE_CONTEXT, COMPILE_COMMANDS, TEST_COMMANDS, ENV_CHECKS, DEPLOY_CONFIG |
+| docker-post-deploy.skeleton.md | CODEBASE_CONTEXT, HEALTH_CHECK_URL, SMOKE_TEST_ENDPOINTS, DEPLOY_PLATFORM, DEPLOY_LOG_PATH |
+| coolify-pre-deploy.skeleton.md | CODEBASE_CONTEXT, COMPILE_COMMANDS, TEST_COMMANDS, ENV_CHECKS, DEPLOY_CONFIG |
+| coolify-post-deploy.skeleton.md | CODEBASE_CONTEXT, HEALTH_CHECK_URL, SMOKE_TEST_ENDPOINTS, DEPLOY_LOG_PATH |
+| vercel-pre-deploy.skeleton.md | CODEBASE_CONTEXT, BUILD_COMMANDS, TEST_COMMANDS, VERCEL_CONFIG |
+| review-module.skeleton.md | CODEBASE_CONTEXT, MODULE_MAPPING, SUBPROJECT_LAYERS, REVIEW_AGENTS, VERIFICATION_COMMANDS |
+| idor-scan.skeleton.md | CODEBASE_CONTEXT, CONTROLLER_TABLE, MODULE_MAPPING, KNOWN_PATTERNS |
+| docker-devops.skeleton.md (agent) | SERVER_INFO, DEPLOY_PLATFORM_CONFIG, DOCKER_ARCHITECTURE, COMMON_OPERATIONS |
+| coolify-devops.skeleton.md (agent) | SERVER_INFO, COOLIFY_CONFIG, DOCKER_ARCHITECTURE, COMMON_OPERATIONS |
+| vercel-frontend.skeleton.md (agent) | VERCEL_CONFIG, BUILD_INFO |
 | pre-commit.skeleton (git-hook) | GIT_PRECOMMIT_COMPILE, GIT_PRECOMMIT_TEST, GIT_PRECOMMIT_LINT, GIT_PRECOMMIT_FORMAT |
 | pre-push.skeleton (git-hook) | GIT_PREPUSH_LOCALHOST, GIT_PREPUSH_MIGRATION, GIT_PREPUSH_ENV, GIT_PREPUSH_DESTRUCTIVE |
 | CLAUDE.md.skeleton (config) | PROFESSIONAL_STANCE, PROJECT_DEFINITION, TECH_STACK, ENVIRONMENTS, COMMANDS, ARCHITECTURE, CONVENTIONS, AVAILABLE_COMMANDS |

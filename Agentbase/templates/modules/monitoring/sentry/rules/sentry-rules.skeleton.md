@@ -16,6 +16,10 @@ Ornek cikti:
 - **Sentry SDK:** @sentry/react + @sentry/node
 - **DSN:** Env variable uzerinden (`NEXT_PUBLIC_SENTRY_DSN`, `SENTRY_DSN`)
 - **Environment:** development | staging | production
+Kutsal Kurallar:
+- Config dosyalari SADECE Agentbase icinde yasar
+- Codebase icinde `.claude/` OLUSTURULMAZ
+- Git sadece Codebase de calisir
 -->
 
 ---

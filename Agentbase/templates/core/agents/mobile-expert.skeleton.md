@@ -38,6 +38,10 @@ Example output:
 ├── types/            # TypeScript tipleri
 └── assets/           # Gorseller, fontlar
 ```
+Kutsal Kurallar:
+- Config dosyalari SADECE Agentbase icinde yasar
+- Codebase icinde `.claude/` OLUSTURULMAZ
+- Git sadece Codebase de calisir
 -->
 
 <!-- GENERATE: MOBILE_PLATFORM_RULES

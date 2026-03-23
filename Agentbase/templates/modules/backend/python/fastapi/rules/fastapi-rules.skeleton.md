@@ -20,6 +20,10 @@ Ornek cikti:
   - `app/schemas/` — Pydantic semalari
   - `app/services/` — Is logigi
   - `tests/` — Test dosyalari
+Kutsal Kurallar:
+- Config dosyalari SADECE Agentbase icinde yasar
+- Codebase icinde `.claude/` OLUSTURULMAZ
+- Git sadece Codebase de calisir
 -->
 
 ---

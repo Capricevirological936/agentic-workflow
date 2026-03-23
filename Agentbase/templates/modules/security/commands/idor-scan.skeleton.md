@@ -23,6 +23,10 @@ Ornek cikti:
 - **Stack:** TypeScript, Prisma, PostgreSQL
 - **API Framework:** NestJS
 - **Auth:** JWT + Guard pattern
+Kutsal Kurallar:
+- Config dosyalari SADECE Agentbase icinde yasar
+- Codebase icinde `.claude/` OLUSTURULMAZ
+- Git sadece Codebase de calisir
 -->
 
 ---

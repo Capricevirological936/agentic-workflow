@@ -17,6 +17,10 @@ Ornek cikti:
 - **CSS Yaklasimi:** BEM + CSS custom properties
 - **JS:** ES6+ modules
 - **Deploy:** Netlify / GitHub Pages
+Kutsal Kurallar:
+- Config dosyalari SADECE Agentbase icinde yasar
+- Codebase icinde `.claude/` OLUSTURULMAZ
+- Git sadece Codebase de calisir
 -->
 
 ---

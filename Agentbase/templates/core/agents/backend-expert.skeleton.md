@@ -37,6 +37,10 @@ Example output:
 ├── utils/           # Yardimci fonksiyonlar
 └── types/           # TypeScript tip tanimlari
 ```
+Kutsal Kurallar:
+- Config dosyalari SADECE Agentbase icinde yasar
+- Codebase icinde `.claude/` OLUSTURULMAZ
+- Git sadece Codebase de calisir
 -->
 
 <!-- GENERATE: BACKEND_FRAMEWORK_RULES

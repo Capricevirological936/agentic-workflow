@@ -24,6 +24,10 @@ Ornek cikti:
 - **Yapi:**
   - `apps/web/` — Next.js frontend
   - `apps/api/` — NestJS backend
+Kutsal Kurallar:
+- Config dosyalari SADECE Agentbase icinde yasar
+- Codebase icinde `.claude/` OLUSTURULMAZ
+- Git sadece Codebase de calisir
 -->
 
 ---

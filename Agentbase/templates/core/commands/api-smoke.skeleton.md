@@ -21,6 +21,10 @@ Ornek cikti:
 - **Proje:** E-ticaret API
 - **Stack:** Node.js + Express
 - **Production:** https://api.example.com
+Kutsal Kurallar:
+- Config dosyalari SADECE Agentbase icinde yasar
+- Codebase icinde `.claude/` OLUSTURULMAZ
+- Git sadece Codebase de calisir
 -->
 
 ---
@@ -64,11 +68,10 @@ Gerekli manifest alanlari: environments, api_endpoints, project.api_prefix
 CI ortaminda calistirilabilir node:test bazli smoke test:
 
 ```javascript
-/* GENERATE: API_SMOKE_NODE_TESTS
- * Manifest ten node:test bazli smoke test dosyasi.
- * Gerekli manifest alanlari: environments, api_endpoints, project.api_prefix
- */
-/* END GENERATE */
+<!-- GENERATE: API_SMOKE_NODE_TESTS
+Aciklama: Manifest ten node:test bazli smoke test dosyasi.
+Gerekli manifest alanlari: environments, api_endpoints, project.api_prefix
+-->
 ```
 
 Calistirma: `SMOKE_TEST_URL=https://api.example.com SMOKE_TEST_TOKEN=xxx node --test smoke-test.js`
