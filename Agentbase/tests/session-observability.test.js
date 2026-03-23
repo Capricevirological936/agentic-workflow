@@ -13,6 +13,13 @@ const {
 } = require('./helpers/hook-runner.js');
 const { loadModuleExports } = require('./helpers/module-loader.js');
 
+// Path sabit: session state dosyalarinin projectRoot altindaki alt yolu
+const SESSIONS_SUBPATH = path.join('Agentbase', '.claude', 'tracking', 'sessions');
+
+// Dinamik yollar: __dirname = Agentbase/tests
+const AGENTBASE_ROOT = path.resolve(__dirname, '..');
+const PROJECT_ROOT = path.resolve(__dirname, '..', '..');
+
 function makeToolPayload(toolInput, toolResult) {
   return JSON.stringify({
     tool_input: toolInput,
@@ -21,7 +28,7 @@ function makeToolPayload(toolInput, toolResult) {
 }
 
 function readSessionState(projectRoot) {
-  const sessionsDir = path.join(projectRoot, 'Agentbase', '.claude', 'tracking', 'sessions');
+  const sessionsDir = path.join(projectRoot, SESSIONS_SUBPATH);
   const sessionFiles = fs
     .readdirSync(sessionsDir)
     .filter(file => file.startsWith('session-') && file.endsWith('.json'));
@@ -435,11 +442,11 @@ dependencies: []
     });
 
     const formatted = formatDisplayPath(
-      '/Users/varienos/Landing/Repo/agentic-workflow/Agentbase/.claude/tracking/sessions',
-      '/Users/varienos/Landing/Repo/agentic-workflow'
+      path.join(AGENTBASE_ROOT, '.claude', 'tracking', 'sessions'),
+      PROJECT_ROOT
     );
 
-    assert.equal(formatted, 'Agentbase/.claude/tracking/sessions');
+    assert.equal(formatted, path.join('Agentbase', '.claude', 'tracking', 'sessions'));
   });
 
   it('prefers AGENTBASE_BACKLOG_DIR when resolving backlog root', () => {
@@ -458,7 +465,7 @@ dependencies: []
       },
     });
 
-    assert.equal(findBacklogDir('/Users/varienos/Landing/Repo/agentic-workflow/Agentbase'), '/tmp/custom-backlog');
+    assert.equal(findBacklogDir(AGENTBASE_ROOT), '/tmp/custom-backlog');
   });
 
   it('renders shortcut hints with a bright key and dimmed description', () => {
@@ -510,7 +517,7 @@ describe('session-monitor bugfixes', () => {
 
   it('TASK-97: siralama degisince selectedId ayni session_id de kaliyor', () => {
     const mod = loadModuleExports(monitorPath, {
-      exports: ['getFilteredSessions', 'selectDelta', 'sessions', '_getSelectedId'],
+      exports: ['getFilteredSessions', 'selectDelta', 'sessions', '_getSelectedId', '_getSelectedIndex'],
       replacements: [
         {
           find: /let sessions = \[\];/,
@@ -521,9 +528,9 @@ describe('session-monitor bugfixes', () => {
           ];`,
         },
         {
-          // selectedId getter export et — primitive oldugundan dogrudan export ise yaramaz
+          // selectedId ve selectedIndex getter'larini export et — primitive oldugu icin dogrudan export yaramaz
           find: /let selectedId = null;/,
-          replace: `let selectedId = null;\nfunction _getSelectedId() { return selectedId; }`,
+          replace: `let selectedId = null;\nfunction _getSelectedId() { return selectedId; }\nfunction _getSelectedIndex() { return selectedIndex; }`,
         },
         // render() yi no-op yap (terminal ciktisi engelle)
         {
@@ -550,10 +557,18 @@ describe('session-monitor bugfixes', () => {
     const filtered = mod.getFilteredSessions();
     assert.equal(mod._getSelectedId(), 'B-2026', 'siralama degisse de selectedId B de kalmali');
 
-    // Eski bugli davranis kontrolu: index-tabanli olsaydi, index 1 = A-2026 olurdu
-    const selectedSession = filtered.find(s => s.session_id === mod._getSelectedId());
-    assert.ok(selectedSession, 'secili session listede olmali');
-    assert.equal(selectedSession.session_id, 'B-2026', 'secili session B olmali, A degil');
+    // Render path dogrulamasi: render() filtered[selectedIndex] kullanir.
+    // selectedIndex stale kalip index 1 (A-2026) gosteriyor olsaydi bu assert fail olurdu.
+    const selectedIndex = mod._getSelectedIndex();
+    assert.ok(
+      selectedIndex >= 0 && selectedIndex < filtered.length,
+      'selectedIndex gecerli aralikta olmali'
+    );
+    assert.equal(
+      filtered[selectedIndex].session_id,
+      'B-2026',
+      'render path: filtered[selectedIndex] B-2026 gostermeli — stale index A-2026 gosterirse fail olur'
+    );
   });
 
   it('TASK-98: loadBacklogIndex bozuk dosyayi atliyor', () => {
@@ -581,17 +596,20 @@ describe('session-monitor bugfixes', () => {
     fs.rmSync(tmpDir, { recursive: true, force: true });
   });
 
-  it('TASK-100: priorityColor ANSI kodu donduruyor, stripAnsi ile silinmiyor', () => {
+  it('TASK-100: priorityColor dogru ANSI renk kodlarini donduruyor', () => {
     const { priorityColor, stripAnsi } = loadModuleExports(monitorPath, {
       exports: ['priorityColor', 'stripAnsi'],
     });
 
-    const highColor = priorityColor('high');
-    assert.ok(highColor.includes('\x1b['), 'ANSI escape kodu icermeli');
-    assert.notEqual(stripAnsi(highColor), highColor, 'ANSI kodu stripAnsi ile farkli olmali');
+    // Tam renk kodu dogrulamasi: yanlis renk eslemesi (ornek: high=mavi) bu testleri fail ettirir
+    assert.equal(priorityColor('high'), '\x1b[31m', 'high priority kirmizi (\\x1b[31m) olmali');
+    assert.equal(priorityColor('medium'), '\x1b[33m', 'medium priority sari (\\x1b[33m) olmali');
+    assert.equal(priorityColor('low'), '\x1b[34m', 'low priority mavi (\\x1b[34m) olmali');
+    // stripAnsi ile ANSI kodlari temizlenmeli
+    assert.equal(stripAnsi('\x1b[31mtest\x1b[0m'), 'test', 'stripAnsi ANSI escape kodlarini silmeli');
   });
 
-  it('TASK-100 regresyon: summarizeBacklog priority segmenti ANSI renk koduna sarili', () => {
+  it('TASK-100 regresyon: summarizeBacklog priority segmenti dogru ANSI renk koduyla sarili', () => {
     const { summarizeBacklog, stripAnsi } = loadModuleExports(monitorPath, {
       exports: ['summarizeBacklog', 'stripAnsi'],
     });
@@ -603,18 +621,25 @@ describe('session-monitor bugfixes', () => {
 
     const output = summarizeBacklog(session);
 
-    // Priority segmentinin kendisi ANSI renk koduyla sarili olmali
-    // Eski bugli davranista "high" duz metin olarak geliyor, ANSI kodu yok
-    // Dogru davranista: \x1b[31mhigh\x1b[0m (kirmizi)
-    assert.match(output, /\x1b\[\d+mhigh\x1b\[0m/, 'priority "high" kendi ANSI renk koduyla sarili olmali');
+    // Tam ANSI kodu dogrulamasi: \x1b[31m = kirmizi (red), \d+ olsaydi yanlis renk kacabilirdi
+    // Eski bugli davranista "high" duz metin; dogru davranista \x1b[31mhigh\x1b[0m
+    assert.match(output, /\x1b\[31mhigh\x1b\[0m/, 'priority "high" kirmizi \\x1b[31m koduyla sarili olmali');
 
-    // "medium" icin de kontrol et
+    // medium: \x1b[33m = sari (yellow)
     const mediumSession = {
       current_focus: { task_id: 'TASK-43' },
       backlog_sync: { status: 'To Do', priority: 'medium', acceptance: { completed: 0, total: 2 } },
     };
     const mediumOutput = summarizeBacklog(mediumSession);
-    assert.match(mediumOutput, /\x1b\[\d+mmedium\x1b\[0m/, 'priority "medium" kendi ANSI renk koduyla sarili olmali');
+    assert.match(mediumOutput, /\x1b\[33mmedium\x1b\[0m/, 'priority "medium" sari \\x1b[33m koduyla sarili olmali');
+
+    // low: \x1b[34m = mavi (blue)
+    const lowSession = {
+      current_focus: { task_id: 'TASK-44' },
+      backlog_sync: { status: 'To Do', priority: 'low', acceptance: { completed: 0, total: 1 } },
+    };
+    const lowOutput = summarizeBacklog(lowSession);
+    assert.match(lowOutput, /\x1b\[34mlow\x1b\[0m/, 'priority "low" mavi \\x1b[34m koduyla sarili olmali');
   });
 });
 
