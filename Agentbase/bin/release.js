@@ -96,6 +96,19 @@ function stageAndCommitAll() {
   return true;
 }
 
+function extractReleaseNotes(version) {
+  const changelogPath = path.join(REPO_ROOT, 'CHANGELOG.md');
+  if (!fs.existsSync(changelogPath)) return `v${version} release`;
+
+  const content = fs.readFileSync(changelogPath, 'utf8');
+  const sectionRegex = new RegExp(`## \\[${version.replace(/\./g, '\\.')}\\][^]*?(?=\\n## \\[|$)`);
+  const match = content.match(sectionRegex);
+  if (!match) return `v${version} release`;
+
+  // Bölüm başlığını çıkar, sadece içeriği al
+  return match[0].replace(/^## \[.*?\].*\n+/, '').trim();
+}
+
 function main() {
   const args = process.argv.slice(2);
   const dryRun = args.includes('--dry-run');
@@ -165,6 +178,15 @@ function main() {
   run('git push origin main');
   run(`git push origin v${newVersion}`);
   console.log(`  Push basarili: main + v${newVersion}`);
+
+  // 9. GitHub Release olustur (gh CLI varsa)
+  try {
+    const notes = extractReleaseNotes(newVersion);
+    run(`gh release create v${newVersion} --title "v${newVersion}" --notes ${JSON.stringify(notes)}`);
+    console.log(`  GitHub Release: v${newVersion}`);
+  } catch {
+    console.log('  GitHub Release olusturulamadi (gh CLI yok veya auth gerekli)');
+  }
 
   console.log('');
   console.log('\u2501'.repeat(55));
