@@ -15,8 +15,8 @@ const PROJECT_ROOT = path.resolve(AGENTBASE_DIR, '..');
 const SESSIONS_DIR = process.env.AGENTBASE_SESSIONS_DIR || path.join(AGENTBASE_DIR, '.claude', 'tracking', 'sessions');
 const REFRESH_INTERVAL = Number(process.env.AGENTBASE_REFRESH_INTERVAL || 2000);
 const THROTTLE_MS = 150;
-const ACTIVE_THRESHOLD = 5 * 60 * 1000;
-const IDLE_THRESHOLD = 30 * 60 * 1000;
+const ACTIVE_THRESHOLD = Number(process.env.AGENTBASE_ACTIVE_THRESHOLD || 5 * 60 * 1000);
+const IDLE_THRESHOLD = Number(process.env.AGENTBASE_IDLE_THRESHOLD || 30 * 60 * 1000);
 
 const C = {
   reset: '\x1b[0m',
