@@ -17,11 +17,14 @@ Mevcut bir projeye entegre edebilir veya sıfırdan yeni bir proje başlatabilir
 - **Otonom görev yönetimi** — Backlog'dan görev al, planla, implement et, test et, commit et, kapat. Tek komutla.
 - **Otomatik code review** — 3+1 agent ile her değişikliği inceler: kod kalitesi, sessiz hatalar, regresyon riski. Güvenlik değişikliklerinde koşullu Devils Advocate perspektifi.
 - **Akıllı bug fix** — Root cause analizi, maks 3 hipotez, minimal fix, regresyon testi. Sonsuz derinliğe dalmaz.
-- **Deploy güvenlik ağı** — Push öncesi kontrol, deploy sonrası doğrulama, rollback rehberi. Kontrol adımları deploy platformuna göre değişir (Docker/Coolify: migration + Docker build; Vercel: TypeScript + edge-runtime). Git hook'larının etkinleştirilmesini gerektirir (bkz. Bootstrap Akışı adım 8).
+- **Deploy güvenlik ağı** — İki katmanlı koruma: (1) pre-push git hook'ları ile localhost leak, migration tutarlılığı ve env sync kontrolü, (2) `/pre-deploy` ve `/post-deploy` slash komutları ile platform-spesifik kontroller (Docker build, health check, rollback rehberi). Git hook'larının etkinleştirilmesini gerektirir (bkz. Bootstrap Akışı adım 9).
 - **Proje-spesifik kurallar** — Stack'inize göre hook'lar, framework kuralları ve koruma mekanizmaları otomatik üretilir.
 - **Canlı oturum izleme** — Birden fazla Claude Code oturumunu tek terminal ekranından takip edin.
-- **Worktree-dostu mimari** — Agentbase/Codebase ayrımı ile tek config, çok worktree, paralel geliştirme.
+- **Worktree-dostu mimari** — Agentbase/Codebase ayrımı worktree kullanımını mimari olarak destekler (bkz. Worktree Avantajı bölümü).
 - **Çoklu CLI desteği** — Claude Code çıktıları `transform.js` ile Gemini CLI, Codex CLI, Kimi CLI ve OpenCode formatlarına dönüştürülebilir.
+- **Dokümantasyon senkronizasyonu** — Kod değişikliği sonrası PROJECT.md, ARCHITECTURE.md gibi dokümanların güncellenmesini öneren service-documentation agent'ı.
+- **Eklenti öneri sistemi** — Bootstrap tamamlandığında projenize uygun üçüncü parti skill ve plugin'leri öneren dahili registry taraması.
+- **Otomatik CHANGELOG** — Her push'ta GitHub Action ile CHANGELOG.md otomatik güncellenir. Conventional Commits formatı parse edilir.
 
 ## Temel Yaklaşım
 
@@ -195,7 +198,7 @@ Son değişiklikleri 3+1 agent ile review eder. Code Reviewer genel kod kalitesi
 
 ### /auto-review
 
-Diff-based, loop uyumlu ve idempotent review. Son commit'ten bu yana yapılan değişiklikleri hash kontrolüyle inceler — aynı diff'i iki kez review etmez. MINOR bulguları doğrudan düzeltir ve commit eder, MAJOR bulgular için backlog task açar. `/loop` skill'i ile periyodik çalıştırmaya uygundur. Kendi fix commit'lerini sonraki çalıştırmada tekrar review etmez.
+Diff-based, loop uyumlu ve idempotent review. Son commit'ten bu yana yapılan değişiklikleri hash kontrolüyle inceler — aynı diff'i iki kez review etmez. MINOR bulguları doğrudan düzeltir ve commit eder, MAJOR bulgular için backlog task açar. Harici `/loop` skill'i (örneğin [superpowers](https://github.com/obra/superpowers) eklentisi) ile periyodik çalıştırmaya uygundur — bu skill repo ile birlikte gelmez, ayrıca kurulur. Kendi fix commit'lerini sonraki çalıştırmada tekrar review etmez.
 
 ```
 /auto-review                    # Son commit
@@ -322,7 +325,7 @@ Aşağıdaki stack'ler bootstrap tarafından algılanır ve manifest'e yazılır
 - **Backend:** Flask
 - **ORM:** Sequelize, Drizzle
 
-Go, Rust, Java/Kotlin ve diğer stack'ler de aynı şekilde desteklenir. Bootstrap tespit listesinde yer almayan stack'ler manuel manifest yapılandırması gerektirir.
+Go, Rust, Java/Kotlin greenfield modunda seçilebilir ancak otomatik tespit listesinde yer almaz — bootstrap bu stack'leri ancak kullanıcı açıkça belirtirse tanır. Yukarıda listelenmeyen stack'ler için manifest elle yapılandırılmalıdır. Generic destek, framework-spesifik koruma sağlamaz; yalnızca çekirdek workflow komutları ve genel güvenlik kontrolleri üretilir.
 
 ## Çoklu CLI Dönüştürme
 
