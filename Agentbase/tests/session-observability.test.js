@@ -295,6 +295,65 @@ dependencies:
     assert.equal(task.acceptance.total, 2);
   });
 
+  it('folded scalar (>-) ile yazilmis title dogru parse ediliyor', t => {
+    const tmpDir = createTempDir(t);
+    const monitorPath = path.join(__dirname, '..', 'bin', 'session-monitor.js');
+    const { parseBacklogTaskFile } = loadModuleExports(monitorPath, {
+      exports: ['parseBacklogTaskFile'],
+    });
+    const taskPath = writeBacklogTask(
+      tmpDir,
+      'tasks/task-50 - Folded-scalar-test.md',
+      `---
+id: TASK-50
+title: >-
+  Bootstrap greenfield modu bos Codebase
+  ile sifirdan proje baslatma destegi
+status: Done
+priority: medium
+---
+
+## Acceptance Criteria
+<!-- AC:BEGIN -->
+- [x] #1 Test
+<!-- AC:END -->
+`
+    );
+
+    const task = parseBacklogTaskFile(taskPath);
+    assert.equal(task.id, 'TASK-50');
+    assert.ok(task.title.includes('Bootstrap greenfield'), 'folded title dogru parse edilmeli');
+    assert.ok(task.title.includes('sifirdan proje'), 'tum satirlar birlestirilmeli');
+    assert.ok(!task.title.includes('>-'), 'title >- icermemeli');
+    assert.equal(task.status, 'Done', 'scalar sonrasi normal key calismali');
+  });
+
+  it('literal scalar (|) ile yazilmis deger satir sonlarini koruyor', t => {
+    const tmpDir = createTempDir(t);
+    const monitorPath = path.join(__dirname, '..', 'bin', 'session-monitor.js');
+    const { parseBacklogTaskFile } = loadModuleExports(monitorPath, {
+      exports: ['parseBacklogTaskFile'],
+    });
+    const taskPath = writeBacklogTask(
+      tmpDir,
+      'tasks/task-51 - Literal-scalar-test.md',
+      `---
+id: TASK-51
+title: |
+  Satir bir
+  Satir iki
+status: In Progress
+priority: high
+---
+`
+    );
+
+    const task = parseBacklogTaskFile(taskPath);
+    assert.ok(task.title.includes('Satir bir'), 'literal scalar ilk satir');
+    assert.ok(task.title.includes('Satir iki'), 'literal scalar ikinci satir');
+    assert.equal(task.status, 'In Progress');
+  });
+
   it('enriches older session payloads from backlog files and inferred phase', t => {
     const tmpDir = createTempDir(t);
     const monitorPath = path.join(__dirname, '..', 'bin', 'session-monitor.js');

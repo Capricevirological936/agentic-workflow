@@ -351,13 +351,45 @@ function parseFrontmatter(content) {
 
   const data = {};
   let currentListKey = null;
+  let scalarKey = null; // folded/literal scalar icin aktif key
+  let scalarLines = []; // folded/literal scalar satirlari
+  let scalarFolded = false; // true = folded (>), false = literal (|)
+
+  function flushScalar() {
+    if (!scalarKey) return;
+    const joined = scalarFolded
+      ? scalarLines.join(' ').trim()
+      : scalarLines.join('\n').trim();
+    data[scalarKey] = joined;
+    scalarKey = null;
+    scalarLines = [];
+  }
 
   for (const line of match[1].split('\n')) {
+    // Folded/literal scalar devam satiri (indent'li)
+    if (scalarKey && /^\s+\S/.test(line)) {
+      scalarLines.push(line.trim());
+      continue;
+    }
+
+    // Scalar bittiyse flush et
+    flushScalar();
+
     const kvMatch = line.match(/^([A-Za-z0-9_]+):\s*(.*)$/);
     if (kvMatch) {
       const key = kvMatch[1];
-      const rawValue = kvMatch[2];
-      const value = rawValue.trim() === '' ? [] : parseScalar(rawValue);
+      const rawValue = kvMatch[2].trim();
+
+      // Folded scalar (>- veya >) veya literal scalar (|- veya |)
+      if (/^[>|]-?$/.test(rawValue)) {
+        scalarKey = key;
+        scalarFolded = rawValue.startsWith('>');
+        scalarLines = [];
+        currentListKey = null;
+        continue;
+      }
+
+      const value = rawValue === '' ? [] : parseScalar(rawValue);
       data[key] = value;
       currentListKey = Array.isArray(value) ? key : null;
       continue;
@@ -370,6 +402,7 @@ function parseFrontmatter(content) {
     }
   }
 
+  flushScalar();
   return data;
 }
 
