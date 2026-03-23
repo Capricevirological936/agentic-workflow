@@ -68,11 +68,11 @@ function getCommits(from, to) {
   } else if (to) {
     range = to;
   }
-  const raw = git(`log ${range} --pretty=format:"%H|%s|%an|%ai" --no-merges`);
+  const raw = git(`log ${range} --pretty=format:"%H%x00%s%x00%an%x00%ai" --no-merges`);
   if (!raw) return [];
 
   return raw.split('\n').filter(Boolean).map(line => {
-    const [hash, subject, author, date] = line.split('|');
+    const [hash, subject, author, date] = line.split('\0');
     const match = subject.match(/^(\w+)(?:\(([^)]*)\))?:\s*(.+)$/);
     if (!match) return { hash: hash.slice(0, 7), type: 'other', scope: null, message: subject, author, date };
     return {

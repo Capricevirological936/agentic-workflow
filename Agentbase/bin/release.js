@@ -172,8 +172,10 @@ function main() {
   // 8. Push
   try {
     run('git pull --rebase origin main');
-  } catch {
-    // Conflict yoksa devam, varsa kullaniciya bildir
+  } catch (err) {
+    console.error('  ❌ Rebase conflict tespit edildi. Release durduruldu.');
+    console.error('  Manuel cozum: git rebase --continue veya git rebase --abort');
+    process.exit(1);
   }
   run('git push origin main');
   run(`git push origin v${newVersion}`);
