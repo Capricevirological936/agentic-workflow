@@ -90,3 +90,13 @@ Gerekli manifest alanlari: environments, api_endpoints, project.api_prefix
 | Token yok, auth endpoint var | UYAR: "SMOKE_TEST_TOKEN set edilmeli" |
 | URL erisilemez | FAIL: "Baglanti kurulamadi" |
 | Timeout | FAIL: "10sn icerisinde yanit alinamadi" |
+
+---
+
+## Zorunlu Kurallar
+
+### Kutsal Kurallar (Her Komutta Gecerli)
+
+1. **Codebase e config YAZMA** — `.claude/`, `CLAUDE.md`, `.mcp.json`, `.claude-ignore` dosyalari SADECE Agentbase icinde olusturulur. Codebase icinde `.claude/` dizini olusturma, `../Codebase/CLAUDE.md` yazma YASAK.
+2. **Git sadece Codebase de** — Tum git islemleri (commit, push, branch) `../Codebase/` icinde yapilir. Agentbase de git YOKTUR.
+3. **Codebase OKUNUR, config YAZILMAZ** — Proje dosyalari (`src/`, `app/`, vb.) okunabilir ve gorev gerekiyorsa duzenlenebilir. Config dosyalari (`.claude/`, `CLAUDE.md`) Codebase icinde YAZILAMAZ.

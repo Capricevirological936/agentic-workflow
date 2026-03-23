@@ -13,6 +13,7 @@ function read(relativePath) {
 }
 
 const COMMAND_FILES = [
+  'templates/core/commands/api-smoke.skeleton.md',
   'templates/core/commands/task-hunter.skeleton.md',
   'templates/core/commands/task-master.skeleton.md',
   'templates/core/commands/task-conductor.skeleton.md',
