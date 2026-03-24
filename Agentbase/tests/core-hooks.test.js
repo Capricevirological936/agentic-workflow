@@ -742,3 +742,109 @@ describe('auto-test-runner hook', () => {
     assert.equal(result.status, 0, 'bozuk state ile crash olmamali');
   });
 });
+
+describe('drift-detector hook', () => {
+  function setupDriftProject(t) {
+    const projectRoot = createTempProject(t);
+    const agentbaseRoot = path.join(projectRoot, 'Agentbase');
+    const hooksDir = path.join(agentbaseRoot, '.claude', 'hooks');
+    fs.mkdirSync(hooksDir, { recursive: true });
+
+    // Hook dosyasini kopyala
+    const srcHook = path.join(__dirname, '..', 'templates', 'core', 'hooks', 'drift-detector.js');
+    const destHook = path.join(hooksDir, 'drift-detector.js');
+    fs.copyFileSync(srcHook, destHook);
+    fs.chmodSync(destHook, 0o755);
+
+    // Config dosyalarini olustur (hook __dirname'e gore goreceli arar)
+    const settingsPath = path.join(hooksDir, '..', 'settings.json');
+    fs.writeFileSync(settingsPath, '{"hooks":{}}', 'utf8');
+    const claudeMdPath = path.join(hooksDir, '..', '..', 'CLAUDE.md');
+    fs.writeFileSync(claudeMdPath, '# Test Project\n', 'utf8');
+
+    return { projectRoot, hooksDir, destHook, settingsPath, claudeMdPath };
+  }
+
+  function runDrift(hookPath, env = {}) {
+    return runHook(hookPath, '{"tool_input":{}}', {
+      env: { DRIFT_CALL_THRESHOLD: '3', DRIFT_COOLDOWN_MS: '100', ...env },
+      timeout: 3000,
+    });
+  }
+
+  it('esik altinda sessiz kalmali', t => {
+    const { destHook } = setupDriftProject(t);
+
+    // 2 cagri — esik 3, henuz kontrol yapilmamali
+    const r1 = runDrift(destHook);
+    const r2 = runDrift(destHook);
+
+    assert.equal(r1.stdout, '', 'ilk cagri sessiz olmali');
+    assert.equal(r2.stdout, '', 'ikinci cagri sessiz olmali');
+    assert.equal(r1.status, 0);
+    assert.equal(r2.status, 0);
+  });
+
+  it('esik asildiginda ve hash degistiginde oneri vermeli', t => {
+    const { destHook, hooksDir, settingsPath } = setupDriftProject(t);
+    const stateFile = path.join(hooksDir, '.drift-state.json');
+
+    // Onceki hash'i kaydet (farkli bir hash)
+    fs.writeFileSync(stateFile, JSON.stringify({
+      callCount: 2, // bir sonraki esigi asacak
+      lastHash: 'eski_hash_degeri',
+      lastSuggested: null,
+    }), 'utf8');
+
+    const result = runDrift(destHook);
+
+    assert.equal(result.status, 0);
+    assert.ok(result.stdout.length > 0, 'cikti olmali');
+    const output = JSON.parse(result.stdout);
+    assert.ok(output.systemMessage, 'systemMessage olmali');
+    assert.match(output.systemMessage, /workflow-update/, 'guncelleme onerisi icermeli');
+  });
+
+  it('24 saat cooldown icinde tekrar onermemeli', t => {
+    const { destHook, hooksDir } = setupDriftProject(t);
+    const stateFile = path.join(hooksDir, '.drift-state.json');
+
+    // Son oneri simdi yapilmis, cooldown aktif (DRIFT_COOLDOWN_MS=100 ama state'e simdiki zamani yaziyoruz)
+    fs.writeFileSync(stateFile, JSON.stringify({
+      callCount: 2,
+      lastHash: 'eski_hash',
+      lastSuggested: new Date().toISOString(),
+    }), 'utf8');
+
+    // Cooldown suresi cok kisa (100ms) ama hemen ardindan calistiriyoruz
+    const result = runDrift(destHook, { DRIFT_COOLDOWN_MS: '999999999' });
+
+    assert.equal(result.stdout, '', 'cooldown icinde sessiz olmali');
+  });
+
+  it('hash ayni kalirsa sessiz olmali', t => {
+    const { destHook, hooksDir, settingsPath, claudeMdPath } = setupDriftProject(t);
+
+    // Once 3 cagri yaparak mevcut hash'i kaydet
+    runDrift(destHook);
+    runDrift(destHook);
+    runDrift(destHook); // 3. cagri — hash hesaplanir ve kaydedilir
+
+    // Tekrar 3 cagri — hash degismedi
+    runDrift(destHook);
+    runDrift(destHook);
+    const result = runDrift(destHook);
+
+    assert.equal(result.stdout, '', 'hash ayni kaldiysa sessiz olmali');
+  });
+
+  it('bozuk state dosyasi ile crash olmamali', t => {
+    const { destHook, hooksDir } = setupDriftProject(t);
+    const stateFile = path.join(hooksDir, '.drift-state.json');
+    fs.writeFileSync(stateFile, '{{BOZUK!!!', 'utf8');
+
+    const result = runDrift(destHook);
+
+    assert.equal(result.status, 0, 'bozuk state crash olmamali');
+  });
+});
