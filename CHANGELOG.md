@@ -3,6 +3,28 @@
 Tüm önemli değişiklikler bu dosyada belgelenir.
 Format [Keep a Changelog](https://keepachangelog.com/tr/1.1.0/) standardını takip eder.
 
+## [1.3.0] - 2026-03-24
+
+### Eklenen
+
+- generate.js --modules parametresi — incremental modul uretimi (`353fa64`)
+- task-hunter stack uyumluluk kontrolu — aktif olmayan modul uyarisi (`8a742af`)
+- drift-detector hook — periyodik config hash kontrolu ile guncelleme onerisi (`196277d`)
+- workflow-update altyapisi — manifest meta, diff motoru, slash komutu (TASK-176/177/178) (`86f3e64`)
+- GitHub Action ile otomatik release — main push'ta otonom calısır (`f3b23e6`)
+
+### Düzeltilen
+
+- workflow-update skeleton kutsal kural metinleri eklendi (`1b01787`)
+- bootstrap hedef dizin netligi, interview downstream enforce, test suite (TASK-187/188/189) (`62b51ea`)
+- code review bulgulari — gitignore, stdin convention, symlink, timeout (`d524312`)
+- session-monitor guvenlik ve DRY iyilestirmeleri (TASK-182/183/184) (`61358c7`)
+- **deep-audit:** session-monitor test kapsamasi ve MAX_TEAMMATES sabit tasi (`b848d75`)
+
+### Test
+
+- markdown dosyalarinda kirik link dogrulama testi eklendi (`ffb5aae`)
+
 ## [1.2.0] - 2026-03-24
 
 ### Eklenen
