@@ -1,7 +1,7 @@
 # Değişiklik Günlüğü
 
 Tüm önemli değişiklikler bu dosyada belgelenir.
-Format [Keep a Changelog](https://keepachangelog.com/tr/1.1.0/) standardını takip eder.
+Format [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) standardını takip eder.
 
 ## [1.1.3] - 2026-03-24
 

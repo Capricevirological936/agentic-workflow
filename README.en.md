@@ -1,5 +1,7 @@
 ![Agentic Workflow banner](Docs/assets/agentic-workflow-banner.png)
 
+> **[Türkçe versiyon (README.md)](README.md)**
+
 > [!IMPORTANT]
 > This system is built on **[Backlog.md](https://github.com/MrLesk/Backlog.md)**. The entire task lifecycle — creation, prioritization, implementation, review, and closure — is managed through the Backlog.md CLI. Bootstrap will not run without Backlog.md installed.
 
@@ -83,6 +85,7 @@ Note: Some command files in this repo serve as examples or core content. The act
 - [jq](https://jqlang.github.io/jq/) — JSON processor, required for hook rules (`brew install jq` or `apt install jq`)
 - Git 2.38+ — required for `git merge-tree --write-tree` support in pre-push hook
 - Docker CLI — required if Docker or Coolify deploy module is active (`docker build`, `docker compose` commands)
+- [GitHub CLI (gh)](https://cli.github.com/) — optional, used by `release.js` for GitHub Release creation
 
 ## Quick Start
 
@@ -157,7 +160,7 @@ Autonomously implements a task from the backlog. Reads the task file, discovers 
 
 ### /task-master
 
-Prioritizes all open tasks using 4-dimensional scoring. Calculates Impact, Risk, Dependency, and Complexity (inverse) scores for each task. Produces a phase-based work plan: Phase 1 critical tasks, Phase 2 important tasks, Phase 3 planned tasks, MANUAL phase for tasks requiring human intervention.
+Prioritizes all open tasks using 4-dimensional scoring. Calculates Impact, Risk, Dependency, and Complexity (inverse) scores for each task. Produces a phase-based work plan: Phase 1 critical tasks, Phase 2 important tasks, Phase 3 planned tasks, MANUAL phase for tasks requiring human intervention (excluded from scoring, listed separately at the end of the report). To trigger the MANUAL phase: a directive such as "Prioritize task X manually" must have been given in a previous session and saved to agent memory.
 
 ```
 /task-master
@@ -165,7 +168,7 @@ Prioritizes all open tasks using 4-dimensional scoring. Calculates Impact, Risk,
 
 ### /task-conductor
 
-Processes multiple tasks autonomously in phases. Assigns tasks to phases using its own scoring system, implements sequentially or in parallel within each phase, performs summary and integrity checks at the end of each phase. Supports manual phases — pauses when tasks require human intervention. Resumes from where it left off using a state file.
+Processes multiple tasks autonomously in phases. Assigns tasks to phases using its own scoring system, implements sequentially or in parallel within each phase, performs summary and integrity checks at the end of each phase. Supports manual phases — pauses when tasks require human intervention. Resumes from where it left off using a state file. Stops after 3 consecutive errors in a phase and notifies the user.
 
 ```
 /task-conductor top 5        # Top 5 highest priority tasks
@@ -246,6 +249,16 @@ Detects unused code in the project and suggests cleanup. Scans for uncalled func
 ```
 /deadcode
 /deadcode api/src/services/    # Specific directory
+```
+
+### /api-smoke
+
+Quickly validates API endpoints. Can be run post-deploy or independently at any time. Reads base URL from project manifest (or accepts a custom URL) and runs smoke tests on critical endpoints.
+
+```
+/api-smoke                               # Default URL from manifest
+/api-smoke staging                       # Staging environment
+/api-smoke https://custom-url.com        # Custom URL
 ```
 
 ### /deep-audit
@@ -366,6 +379,24 @@ cd Agentbase && node bin/session-monitor.js                                 # Se
 # After bootstrap — runs once manifest has been generated:
 cd Agentbase && node generate.js ../Docs/agentic/project-manifest.yaml --dry-run  # Dry run
 cd Agentbase && node transform.js ../Docs/agentic/project-manifest.yaml --targets gemini,codex --dry-run  # CLI transform
+```
+
+### Release and CHANGELOG
+
+```bash
+cd Agentbase && node bin/release.js auto            # Auto: determine bump type from commits
+cd Agentbase && node bin/release.js patch           # Manual: patch release (1.2.3 → 1.2.4)
+cd Agentbase && node bin/release.js minor           # Manual: minor release (1.2.3 → 1.3.0)
+cd Agentbase && node bin/release.js major           # Manual: major release (1.2.3 → 2.0.0)
+cd Agentbase && node bin/release.js auto --dry-run  # Dry run (no file changes)
+```
+
+`release.js` runs sequentially: version bump → generate CHANGELOG → commit → tag → push → create GitHub Release. GitHub Release creation requires `gh` CLI (optional — skipped if not installed).
+
+```bash
+cd Agentbase && node bin/changelog.js --all          # Generate CHANGELOG from all tags
+cd Agentbase && node bin/changelog.js --from v1.0.0  # Generate from specific tag onwards
+cd Agentbase && node bin/changelog.js --release v2.0.0 --dry-run  # Dry run
 ```
 
 ## Contributing

@@ -251,6 +251,16 @@ Projede kullanılmayan kodu tespit eder ve temizlik önerir. Çağrılmayan fonk
 /deadcode api/src/services/    # Belirli dizin
 ```
 
+### /api-smoke
+
+API endpoint'lerini hızlıca doğrular. Post-deploy sonrası veya bağımsız olarak çalıştırılabilir. Proje manifestinden base URL'yi okur (veya özel URL kabul eder) ve kritik endpoint'ler üzerinde smoke testleri çalıştırır.
+
+```
+/api-smoke                               # Manifestteki varsayılan URL
+/api-smoke staging                       # Staging ortamı
+/api-smoke https://custom-url.com        # Özel URL
+```
+
 ### /deep-audit
 
 Bir domain modülünü (auth, profil, ödeme, mesaj vb.) tüm katmanlarda (API + DB + Mobil + Frontend) uçtan uca denetler. Bulguları iki boyutta sınıflandırır: basit olanları doğrudan düzeltir, karmaşık olanları backlog'a kaydeder.
