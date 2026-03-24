@@ -15,6 +15,14 @@ const {
 } = require('./helpers/hook-runner.js');
 const { loadModuleExports } = require('./helpers/module-loader.js');
 
+// shared-hook-utils.js core/hooks'ta yaşıyor; module testleri kendi __dirname'ini kullanır.
+const sharedHookUtilsReplacement = {
+  find: /require\(require\('path'\)\.join\(__dirname,\s*'shared-hook-utils\.js'\)\)/g,
+  replace: `require(${JSON.stringify(
+    path.join(__dirname, '..', 'templates', 'core', 'hooks', 'shared-hook-utils.js')
+  )})`,
+};
+
 describe('prisma-db-push-guard hook', () => {
   it('blocks prisma db push commands', t => {
     const projectRoot = createTempProject(t);
@@ -189,6 +197,7 @@ describe('destructive-migration-check hook', () => {
     );
     const { scanForDestructiveChanges } = loadModuleExports(hookPath, {
       exports: ['scanForDestructiveChanges'],
+      replacements: [sharedHookUtilsReplacement],
     });
 
     const findings = scanForDestructiveChanges('DROP TABLE users;\nDROP TABLE posts;\n');
@@ -210,6 +219,7 @@ describe('destructive-migration-check hook', () => {
     );
     const { scanForDestructiveChanges } = loadModuleExports(hookPath, {
       exports: ['scanForDestructiveChanges'],
+      replacements: [sharedHookUtilsReplacement],
     });
 
     const sql = [

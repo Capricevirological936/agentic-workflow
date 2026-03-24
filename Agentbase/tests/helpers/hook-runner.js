@@ -64,6 +64,15 @@ function materializeHook(projectRoot, templateRelativePath, options = {}) {
   fs.mkdirSync(path.dirname(hookPath), { recursive: true });
   fs.writeFileSync(hookPath, content, 'utf8');
   fs.chmodSync(hookPath, 0o755);
+
+  // shared-hook-utils.js: tüm hook'lar bunu __dirname'den require eder.
+  // Üretimde tüm hook'lar aynı .claude/hooks/ dizininde olur; test ortamında da aynısını sağla.
+  const sharedUtils = path.join(TEMPLATES_DIR, 'core', 'hooks', 'shared-hook-utils.js');
+  const sharedUtilsDest = path.join(path.dirname(hookPath), 'shared-hook-utils.js');
+  if (!fs.existsSync(sharedUtilsDest)) {
+    fs.copyFileSync(sharedUtils, sharedUtilsDest);
+  }
+
   return hookPath;
 }
 

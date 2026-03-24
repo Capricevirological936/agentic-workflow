@@ -16,7 +16,7 @@ function loadModuleExports(filePath, options = {}) {
   }
 
   source = source.replace(
-    /\nmain\(\);\s*$/,
+    /\n(?:if\s*\(require\.main\s*===\s*module\)\s*)?main\(\);\s*$/,
     `\nmodule.exports = { ${options.exports.join(', ')} };\n`
   );
 
