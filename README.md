@@ -18,6 +18,8 @@ Mevcut bir projeye entegre edebilir veya sıfırdan yeni bir proje başlatabilir
 - **Otomatik code review** — 3+1 agent ile her değişikliği inceler: kod kalitesi, sessiz hatalar, regresyon riski. Güvenlik değişikliklerinde koşullu Devils Advocate perspektifi.
 - **Akıllı bug fix** — Root cause analizi, maks 3 hipotez, minimal fix, regresyon testi. Sonsuz derinliğe dalmaz.
 - **Deploy güvenlik ağı** — İki katmanlı koruma: (1) pre-push git hook'ları ile localhost leak, migration tutarlılığı ve env sync kontrolü, (2) `/pre-deploy` ve `/post-deploy` slash komutları ile platform-spesifik kontroller (Docker build, health check, rollback rehberi). Git hook'larının etkinleştirilmesini gerektirir (bkz. Bootstrap Akışı adım 9).
+- **Codebase config koruması** — `codebase-guard` hook'u Codebase içine `.claude/`, `CLAUDE.md`, `.mcp.json` yazmayı otomatik engeller. Agent config dosyaları yalnızca Agentbase'de yaşar.
+- **Test zorlama** — `test-enforcer` hook'u kaynak dosya değişikliklerinde ilgili testlerin çalıştırılmasını hatırlatır. Pre-push hook'u ile test geçmeden push engellenir.
 - **Proje-spesifik kurallar** — Stack'inize göre hook'lar, framework kuralları ve koruma mekanizmaları otomatik üretilir.
 - **Canlı oturum izleme** — Birden fazla Claude Code oturumunu tek terminal ekranından takip edin.
 - **Worktree-dostu mimari** — Agentbase/Codebase ayrımı worktree kullanımını mimari olarak destekler (bkz. Worktree Avantajı bölümü).
@@ -286,7 +288,9 @@ Komut adları `/{varyant}-{komut}` formatında üretilir — çakışmayı önle
 
 ## Canlı Oturum İzleme
 
-Birden fazla Claude Code oturumu paralel çalışırken terminal dashboard ile takip edin. Bu özellik bootstrap tamamlandıktan ve session-tracker hook'u aktif olduktan sonra çalışır — hook materyalize edilmemişse dashboard boş görünür:
+Birden fazla Claude Code oturumu paralel çalışırken terminal dashboard ile takip edin.
+
+**Ön koşul:** Bootstrap tamamlandıktan sonra `session-tracker` hook'u `.claude/hooks/` altına kopyalanır. Bu hook her tool çağrısında oturum durumunu `.claude/tracking/sessions/` dosyasına yazar. Dashboard bu dosyaları okur. Bootstrap Akışı adım 9'daki `git config core.hooksPath` komutu çalıştırılmamışsa veya bootstrap henüz yapılmamışsa hook aktif olmaz ve dashboard boş görünür:
 
 ```bash
 cd Agentbase && node bin/session-monitor.js

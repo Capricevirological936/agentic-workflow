@@ -18,6 +18,8 @@ You can integrate it into an existing project or start a brand new one from scra
 - **Automatic code review** — 3+1 agents review every change: code quality, silent failures, regression risk. Conditional Devils Advocate perspective for security changes.
 - **Smart bug fix** — Root cause analysis, max 3 hypotheses, minimal fix, regression test. Doesn't dive into endless depth.
 - **Deploy safety net** — Pre-push checks, post-deploy verification, rollback guide. Control steps vary by deploy platform (Docker/Coolify: migration + Docker build; Vercel: TypeScript + edge-runtime). Requires git hook activation (see Bootstrap Flow step 9).
+- **Codebase config protection** — `codebase-guard` hook automatically blocks writing `.claude/`, `CLAUDE.md`, `.mcp.json` inside Codebase. Agent config lives exclusively in Agentbase.
+- **Test enforcement** — `test-enforcer` hook reminds you to run related tests when source files change. Pre-push hook prevents pushing without passing tests.
 - **Project-specific rules** — Hooks, framework rules, and protection mechanisms are auto-generated based on your stack.
 - **Live session monitoring** — Track multiple Claude Code sessions from a single terminal screen.
 - **Worktree-friendly architecture** — Agentbase/Codebase separation enables single config, multiple worktrees, parallel development.
@@ -286,7 +288,9 @@ Command names use `/{variant}-{command}` format to prevent collisions — varian
 
 ## Live Session Monitoring
 
-Track multiple Claude Code sessions running in parallel with a terminal dashboard. This feature works after bootstrap completes and session-tracker hook is active — dashboard will appear empty if the hook hasn't been materialized:
+Track multiple Claude Code sessions running in parallel with a terminal dashboard.
+
+**Prerequisite:** After bootstrap completes, the `session-tracker` hook is copied to `.claude/hooks/`. This hook writes session state to `.claude/tracking/sessions/` on every tool call. The dashboard reads these files. If the `git config core.hooksPath` command from Bootstrap Flow step 9 hasn't been run, or bootstrap hasn't been completed yet, the hook won't be active and the dashboard will appear empty:
 
 ```bash
 cd Agentbase && node bin/session-monitor.js
