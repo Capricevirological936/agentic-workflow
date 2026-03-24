@@ -90,6 +90,43 @@ Gorev turune gore dosya arama stratejisi:
 3. Komsuluk analizi yap: ayni dizindeki diger dosyalar nasil yapilandirilmis?
 4. Eger benzer bir is daha once yapildiysa (orn. baska bir controller), onu referans al
 
+### 2.3.1 — Stack Uyumluluk Kontrolu
+
+Etkilenen dosyalarin stack'ini taniyip manifest'teki aktif modullerle karsilastir.
+Eslesmeme varsa kullaniciyi uyar — zorunlu degil, bilgilendirme amacli:
+
+| Dosya Deseni | Beklenen Modul |
+|---|---|
+| `*.prisma`, `prisma/` dizini | `orm/prisma` |
+| `Dockerfile`, `docker-compose*` | `deploy/docker` |
+| `*.expo.*`, `app.json` (expo), `expo-*` | `mobile/expo` |
+| `*.swift`, `*.xcodeproj`, `Podfile` | `mobile/react-native` veya iOS |
+| `*.flutter.*`, `pubspec.yaml` | `mobile/flutter` |
+| `next.config.*`, `app/` (Next.js) | `frontend/nextjs` |
+| `*.module.ts` (NestJS pattern) | `backend/nodejs/nestjs` |
+| `artisan`, `composer.json` (Laravel) | `backend/php/laravel` |
+| `manage.py`, `settings.py` (Django) | `backend/python/django` |
+| `.github/workflows/` | `ci-cd/github-actions` |
+
+**Kontrol:**
+1. Etkilenen dosya listesini yukardaki desenlerle karsilastir
+2. Eslesen modul manifest'te `modules.active` icinde mi kontrol et
+3. Aktif DEGILSE uyari ver:
+
+```
+⚠️ Stack Uyumsuzlugu Tespit Edildi
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Dosya: <dosya yolu>
+Tespit: <stack adi> (orn: "Prisma ORM")
+Beklenen modul: <modul adi> (orn: "orm/prisma")
+Durum: Bu modul aktif degil.
+
+Oneri: /workflow-update calistirarak modulu etkinlestirin.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+```
+
+4. Aktif ise → sessiz gec, uyari VERME
+
 ### 2.4 — Gorev Tipi Analizi ve Yonlendirme
 
 Gorev AC'lerini, aciklamasini ve hedef dosya listesini analiz ederek yaklasim modunu OTOMATIK sec. Bu bir menu DEGIL — task-hunter otomatik yonlendirir.
