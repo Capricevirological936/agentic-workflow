@@ -11,7 +11,10 @@ const assert = require('node:assert/strict');
 const path = require('path');
 
 const {
+  escapeForShell,
   escapeForJqShell,
+  isJqRegexSafe,
+  sanitizeShellCommand,
   extractBlockNames,
   fillBlocks,
   findManifestArg,
@@ -22,6 +25,8 @@ const {
   toOutputName,
   detectFileType,
   getActiveModules,
+  getCodebasePath,
+  getForbiddenRules,
   getFileExtensions,
   getCodeExtensions,
   getSubprojectPath,
@@ -1812,5 +1817,201 @@ describe('Modul komut prefix tutarliligi', () => {
     const outputFilename = path.basename(outputPath);
 
     assert.strictEqual(originalFilename, outputFilename, 'zaten prefix li dosya yeniden prefix lenmemeli');
+  });
+});
+
+// ─────────────────────────────────────────────────────
+// TASK-173: getCodebasePath + getForbiddenRules TESTLERI
+// ─────────────────────────────────────────────────────
+
+describe('getCodebasePath', () => {
+  it('manifest.project.structure tanimli ise onu dondurur', () => {
+    assert.equal(getCodebasePath({ project: { structure: '../MyProject' } }), '../MyProject');
+  });
+
+  it('structure tanimsizsa ../Codebase dondurur', () => {
+    assert.equal(getCodebasePath({}), '../Codebase');
+    assert.equal(getCodebasePath({ project: {} }), '../Codebase');
+  });
+
+  it('null manifest icin ../Codebase dondurur', () => {
+    assert.equal(getCodebasePath(null), '../Codebase');
+    assert.equal(getCodebasePath(undefined), '../Codebase');
+  });
+});
+
+describe('getForbiddenRules', () => {
+  it('block type kurallarini dondurur', () => {
+    const manifest = { rules: { forbidden: [
+      { type: 'block', pattern: 'rm -rf /', reason: 'Tehlikeli' },
+      { type: 'warn', pattern: 'console.log', reason: 'Debug' },
+    ] } };
+    const rules = getForbiddenRules(manifest);
+    assert.equal(rules.length, 1);
+    assert.equal(rules[0].pattern, 'rm -rf /');
+  });
+
+  it('bos forbidden dizisi icin bos dizi dondurur', () => {
+    assert.deepEqual(getForbiddenRules({ rules: { forbidden: [] } }), []);
+  });
+
+  it('null manifest icin bos dizi dondurur', () => {
+    assert.deepEqual(getForbiddenRules(null), []);
+    assert.deepEqual(getForbiddenRules({}), []);
+  });
+
+  it('ReDoS riski tasiyan pattern atlaniyor', () => {
+    const manifest = { rules: { forbidden: [
+      { type: 'block', pattern: '(a+)+b', reason: 'test' },
+      { type: 'block', pattern: 'rm -rf', reason: 'guvenli' },
+    ] } };
+    const rules = getForbiddenRules(manifest);
+    assert.equal(rules.length, 1);
+    assert.equal(rules[0].pattern, 'rm -rf');
+  });
+});
+
+// ─────────────────────────────────────────────────────
+// TASK-170: escapeForShell + sanitizeShellCommand TESTLERI
+// ─────────────────────────────────────────────────────
+
+describe('escapeForShell', () => {
+  it('tek tirnak icine sarar', () => {
+    assert.equal(escapeForShell('hello'), "'hello'");
+  });
+
+  it('icerideki tek tirnaklari escape eder', () => {
+    assert.equal(escapeForShell("it's"), "'it'\\''s'");
+  });
+
+  it('bos string icin bos dondurur', () => {
+    assert.equal(escapeForShell(''), '');
+    assert.equal(escapeForShell(null), '');
+  });
+
+  it('$ ve backtick iceren stringi tek tirnak icine alarak guvenli hale getirir', () => {
+    const result = escapeForShell('$(rm -rf /)');
+    assert.ok(result.startsWith("'"), 'tek tirnak ile baslamali');
+    assert.ok(result.endsWith("'"), 'tek tirnak ile bitmeli');
+    // Tek tirnak icinde $() shell tarafindan yorumlanmaz
+    assert.equal(result, "'$(rm -rf /)'");
+  });
+});
+
+describe('sanitizeShellCommand', () => {
+  it('guvenli komutu degistirmez', () => {
+    assert.equal(sanitizeShellCommand('npm test'), 'npm test');
+  });
+
+  it('$() iceren komutu reddeder', () => {
+    const result = sanitizeShellCommand('npm test && $(rm -rf /)');
+    assert.ok(result.includes('UYARI'));
+    assert.ok(result.includes('exit 1'));
+  });
+
+  it('backtick iceren komutu reddeder', () => {
+    const result = sanitizeShellCommand('npm test `id`');
+    assert.ok(result.includes('UYARI'));
+  });
+
+  it('null/undefined icin bos string dondurur', () => {
+    assert.equal(sanitizeShellCommand(null), '');
+    assert.equal(sanitizeShellCommand(undefined), '');
+  });
+});
+
+// ─────────────────────────────────────────────────────
+// TASK-171: isJqRegexSafe TESTLERI
+// ─────────────────────────────────────────────────────
+
+describe('isJqRegexSafe', () => {
+  it('basit pattern guvenli', () => {
+    assert.ok(isJqRegexSafe('rm -rf'));
+    assert.ok(isJqRegexSafe('prisma db push'));
+  });
+
+  it('nested quantifier guvenli degil', () => {
+    assert.ok(!isJqRegexSafe('(a+)+b'));
+    assert.ok(!isJqRegexSafe('(x*)+'));
+    assert.ok(!isJqRegexSafe('(a{2,})+'));
+  });
+
+  it('cok uzun pattern guvenli degil', () => {
+    assert.ok(!isJqRegexSafe('a'.repeat(1001)));
+  });
+
+  it('null/undefined guvenli degil', () => {
+    assert.ok(!isJqRegexSafe(null));
+    assert.ok(!isJqRegexSafe(undefined));
+  });
+
+  it('normal quantifier guvenli', () => {
+    assert.ok(isJqRegexSafe('prisma\\s+db\\s+push'));
+    assert.ok(isJqRegexSafe('rm -rf /'));
+  });
+});
+
+// ─────────────────────────────────────────────────────
+// TASK-172: 8 GIT HOOK GENERATOR TESTLERI
+// ─────────────────────────────────────────────────────
+
+describe('GIT hook generatorlari', () => {
+  const nodeManifest = {
+    stack: { primary: 'Node.js', typescript: true, test_framework: 'jest', linter: 'eslint', formatter: 'prettier', runtime: 'node', orm: 'prisma' },
+    project: { scripts: { test: 'npm test' }, structure: '../Codebase' },
+    environments: [{ name: 'production', url: 'https://api.example.com' }],
+  };
+
+  it('GIT_PRECOMMIT_COMPILE TypeScript tsc komutu uretiyor', () => {
+    const result = SIMPLE_GENERATORS.GIT_PRECOMMIT_COMPILE(nodeManifest);
+    assert.ok(result.includes('tsc --noEmit'), 'tsc komutu olmali');
+    assert.ok(result.includes('CODEBASE_DIR'), 'CODEBASE_DIR kullanilmali');
+  });
+
+  it('GIT_PRECOMMIT_TEST test komutu uretiyor', () => {
+    const result = SIMPLE_GENERATORS.GIT_PRECOMMIT_TEST(nodeManifest);
+    assert.ok(result.includes('npm test'), 'testCmd olmali');
+    assert.ok(result.includes('ERRORS=1'), 'hata sayaci olmali');
+  });
+
+  it('GIT_PRECOMMIT_TEST guvenli olmayan testCmd reddediyor', () => {
+    const badManifest = { ...nodeManifest, project: { scripts: { test: 'npm test && $(id)' } } };
+    const result = SIMPLE_GENERATORS.GIT_PRECOMMIT_TEST(badManifest);
+    assert.ok(result.includes('UYARI'), 'UYARI icermeli');
+  });
+
+  it('GIT_PRECOMMIT_LINT eslint staged dosya kontrolu', () => {
+    const result = SIMPLE_GENERATORS.GIT_PRECOMMIT_LINT(nodeManifest);
+    assert.ok(result.includes('eslint'), 'eslint olmali');
+    assert.ok(result.includes('STAGED_FILES'), 'staged files kullanilmali');
+  });
+
+  it('GIT_PRECOMMIT_FORMAT prettier staged dosya formatlama', () => {
+    const result = SIMPLE_GENERATORS.GIT_PRECOMMIT_FORMAT(nodeManifest);
+    assert.ok(result.includes('prettier'), 'prettier olmali');
+  });
+
+  it('GIT_PREPUSH_LOCALHOST localhost taramasi', () => {
+    const result = SIMPLE_GENERATORS.GIT_PREPUSH_LOCALHOST(nodeManifest);
+    assert.ok(result.includes('localhost'), 'localhost kontrolu olmali');
+    assert.ok(result.includes('127.0.0.1'), '127.0.0.1 kontrolu olmali');
+  });
+
+  it('GIT_PREPUSH_MIGRATION prisma migration tutarliligi', () => {
+    const result = SIMPLE_GENERATORS.GIT_PREPUSH_MIGRATION(nodeManifest);
+    assert.ok(result.includes('schema.prisma'), 'prisma schema kontrolu olmali');
+    assert.ok(result.includes('migration'), 'migration kelimesi olmali');
+  });
+
+  it('GIT_PREPUSH_ENV env senkronizasyon kontrolu', () => {
+    const result = SIMPLE_GENERATORS.GIT_PREPUSH_ENV(nodeManifest);
+    assert.ok(result.includes('.env.example'), 'env example kontrolu olmali');
+    assert.ok(result.includes('process.env'), 'process.env taramasi olmali');
+  });
+
+  it('GIT_PREPUSH_DESTRUCTIVE destructive migration uyarisi', () => {
+    const result = SIMPLE_GENERATORS.GIT_PREPUSH_DESTRUCTIVE(nodeManifest);
+    assert.ok(result.includes('DROP TABLE') || result.includes('DROP COLUMN'), 'destructive SQL kontrolu olmali');
+    assert.ok(result.includes('DESTRUCTIVE'), 'DESTRUCTIVE kelimesi olmali');
   });
 });

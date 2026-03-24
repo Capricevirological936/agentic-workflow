@@ -313,8 +313,9 @@ function escapeForJqShell(str) {
  */
 function isJqRegexSafe(pattern) {
   if (!pattern || typeof pattern !== 'string') return false;
-  // Nested quantifier tespiti: (...)[+*] ardından [+*{]
-  if (/\([^)]*[+*][^)]*\)[+*{]/.test(pattern)) return false;
+  // Nested quantifier tespiti: (...)[+*{n,}] ardından [+*{]
+  if (/\([^)]*[+*][^)]*\)[+*]/.test(pattern)) return false;
+  if (/\([^)]*\{[^}]*\}[^)]*\)[+*]/.test(pattern)) return false;
   // Aşırı uzun pattern (1000+ karakter) timeout riski
   if (pattern.length > 1000) return false;
   return true;
