@@ -63,6 +63,17 @@ function stripAnsi(str) {
   return String(str || '').replace(/\x1b\[[0-9;]*m/g, '');
 }
 
+/**
+ * Terminal ciktisini ANSI injection'a karsi korur.
+ * Sadece renk/bold/reset kodlarina (SGR: \x1b[...m) izin verir.
+ * Cursor reposition, ekran silme, OSC sekanslarini temizler.
+ */
+function sanitizeForDisplay(str) {
+  return String(str || '')
+    .replace(/\x1b\[[^m]*[^0-9;m]/g, '')        // Non-SGR CSI sekanslarini sil
+    .replace(/\x1b\][^\x07\x1b]*(\x07|\x1b\\)/g, ''); // OSC sekanslarini sil
+}
+
 function visibleLength(str) {
   return stripAnsi(str).length;
 }
@@ -453,7 +464,7 @@ function loadBacklogIndex(backlogDir = findBacklogDir()) {
       if (!file.endsWith('.md')) continue;
       const filePath = path.join(fullDir, file);
       try {
-        if (!fs.statSync(filePath).isFile()) continue; // dizin olan girdiyi atla
+        if (!fs.lstatSync(filePath).isFile()) continue; // dizin ve symlink atla
         const task = parseBacklogTaskFile(filePath);
         if (task.id) index[task.id] = task;
       } catch {
@@ -560,8 +571,8 @@ function enrichSession(session, backlogIndex = {}) {
     },
     phase,
     waiting_on: waitingOn,
-    last_meaningful_action: deriveLastMeaningfulAction(session),
-    recent_events: normalizeRecentEvents(session),
+    last_meaningful_action: sanitizeForDisplay(deriveLastMeaningfulAction(session)),
+    recent_events: normalizeRecentEvents(session).map(e => ({ ...e, label: sanitizeForDisplay(e.label) })),
     backlog_sync: {
       task_id: currentFocus.task_id,
       status: linkedTask?.status || session.backlog_sync?.status || currentFocus.status || null,
@@ -609,7 +620,10 @@ function loadSessions() {
 
   const files = fs
     .readdirSync(SESSIONS_DIR)
-    .filter(file => file.startsWith('session-') && file.endsWith('.json'));
+    .filter(file => {
+      if (!file.startsWith('session-') || !file.endsWith('.json')) return false;
+      try { return fs.lstatSync(path.join(SESSIONS_DIR, file)).isFile(); } catch { return false; }
+    });
   meta.sessionFileCount = files.length;
 
   const loadedSessions = files
@@ -808,7 +822,8 @@ function renderTimeline() {
   }
 
   lines.push(hLine(width, B.ml, B.mr));
-  lines.push(row(` ${C.dim}Secim:${C.reset} ${getFilteredSessions().length === 0 ? '—' : `${selectedIndex + 1}/${getFilteredSessions().length}`}  ${C.dim}Ayrisma hatasi:${C.reset} ${loadMeta?.parseErrors || 0}`, width));
+  const footerFiltered = getFilteredSessions();
+  lines.push(row(` ${C.dim}Secim:${C.reset} ${footerFiltered.length === 0 ? '—' : `${selectedIndex + 1}/${footerFiltered.length}`}  ${C.dim}Ayrisma hatasi:${C.reset} ${loadMeta?.parseErrors || 0}`, width));
   lines.push(hLine(width, B.ml, B.mr));
   lines.push(row(` ${joinShortcutHints([
     ['Tab', 'Sekme'],

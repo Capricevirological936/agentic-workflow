@@ -276,23 +276,8 @@ function hasToolError(result) {
   return /^(Error|SyntaxError|TypeError|ReferenceError|ENOENT|EACCES):/.test(resultStr);
 }
 
-// Test komutu tespiti — shared-patterns.js ile paylasiliyor
-const { isTestCommand } = (() => {
-  try { return require('../../bin/shared-patterns.js'); } catch {
-    // Fallback: generate.js ile materialize edildikten sonra bin/ yolu degisebilir
-    return {
-      isTestCommand(command) {
-        if (!command) return false;
-        return [
-          /\b(?:npm|pnpm|yarn|bun)\s+(?:run\s+)?test\b/i,
-          /\bnode\s+--test\b/i, /\bjest\b/i, /\bvitest\b/i,
-          /\bpytest\b/i, /\bphpunit\b/i,
-          /\bcargo\s+test\b/i, /\bgo\s+test\b/i,
-        ].some(p => p.test(command));
-      },
-    };
-  }
-})();
+// Test komutu tespiti — shared-patterns.js ayni dizinde (.claude/hooks/)
+const { isTestCommand } = require(require('path').join(__dirname, 'shared-patterns.js'));
 
 /**
  * Bilinen secret pattern'lerini metinden maskeler.
