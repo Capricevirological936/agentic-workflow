@@ -101,6 +101,9 @@ Uretilen dosyalar: 4 yeni, 2 guncellenen, 0 silinen
 3. **`.claude/custom/` KORU** — Kullanici ozellestirmelerini asla silme veya uzerine yazma.
 4. **Degismeyen dosyalara DOKUNMA** — Drift raporu bos ise hicbir dosyayi degistirme.
 5. **Kullanici onayi ZORUNLU** — Drift raporunu goster, onaysiz degisiklik yapma.
+6. **Codebase e config YAZMA** — `.claude/`, `CLAUDE.md`, `.mcp.json` Codebase icinde olusturulmaz.
+7. **Git sadece Codebase de calisir** — Agentbase de `.git` yok.
+8. **Codebase OKUNUR, config YAZILMAZ** — Analiz icin oku, workflow dosyalarini Agentbase e yaz.
 
 <!-- GENERATE: CODEBASE_CONTEXT
 Aciklama: Projeye ozel baglam — stack bilgisi, manifest yolu, ozel kurallar
@@ -111,4 +114,8 @@ Bu proje {project.name} icin ozellestirilmistir.
 Stack: {stack.primary}
 Manifest: Docs/agentic/project-manifest.yaml
 Aktif moduller: {modules.active listesi}
+Kutsal Kurallar:
+- Config dosyalari SADECE Agentbase icinde yasar
+- Codebase icinde `.claude/` OLUSTURULMAZ
+- Git sadece Codebase de calisir
 -->
