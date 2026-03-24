@@ -76,6 +76,7 @@ Agentbase/AGENTS.md
 Agentbase/.claude/tracking/sessions/session-*.json
 Agentbase/.claude/reports/deploys/deploy-*.md
 Agentbase/.claude/hooks/.test-reminder-state.json
+Agentbase/.claude/hooks/.drift-state.json
 
 # Agentbase backlog (hedef proje icin bootstrap uretir)
 Agentbase/backlog/

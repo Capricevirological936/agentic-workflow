@@ -109,7 +109,7 @@
             "__doc__": "Drift detector — her 50 tool call'da config hash kontrol eder, degismisse guncelleme onerisi sunar",
             "type": "command",
             "command": "node .claude/hooks/drift-detector.js",
-            "timeout": 5
+            "timeout": 50
           }
         ]
       },

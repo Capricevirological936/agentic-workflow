@@ -756,6 +756,10 @@ describe('drift-detector hook', () => {
     fs.copyFileSync(srcHook, destHook);
     fs.chmodSync(destHook, 0o755);
 
+    // shared-hook-utils.js — drift-detector readStdin icin buna ihtiyac duyar
+    const sharedUtils = path.join(__dirname, '..', 'templates', 'core', 'hooks', 'shared-hook-utils.js');
+    fs.copyFileSync(sharedUtils, path.join(hooksDir, 'shared-hook-utils.js'));
+
     // Config dosyalarini olustur (hook __dirname'e gore goreceli arar)
     const settingsPath = path.join(hooksDir, '..', 'settings.json');
     fs.writeFileSync(settingsPath, '{"hooks":{}}', 'utf8');

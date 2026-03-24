@@ -31,6 +31,7 @@ function collectMarkdownFiles(dir, collected = new Set()) {
   const entries = fs.readdirSync(dir, { withFileTypes: true });
   for (const entry of entries) {
     if (SKIP_DIRS.includes(entry.name)) continue;
+    if (entry.isSymbolicLink()) continue; // symlink traversal korunmasi
 
     const fullPath = path.join(dir, entry.name);
     if (entry.isFile() && entry.name.endsWith('.md')) {

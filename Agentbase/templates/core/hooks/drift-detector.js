@@ -55,12 +55,9 @@ function isInCooldown(lastSuggested) {
 
 async function main() {
   try {
-    // stdin'i oku (PostToolUse protokolu)
-    let data = '';
-    process.stdin.setEncoding('utf8');
-    for await (const chunk of process.stdin) {
-      data += chunk;
-    }
+    // stdin'i oku (PostToolUse protokolu — veri kullanilmaz, stream bitmesini bekler)
+    const { readStdin } = require(require('path').join(__dirname, 'shared-hook-utils.js'));
+    await readStdin();
 
     const state = readState();
     state.callCount = (state.callCount || 0) + 1;
