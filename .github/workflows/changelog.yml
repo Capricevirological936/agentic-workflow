@@ -22,9 +22,7 @@ jobs:
 
       - name: CHANGELOG üret
         working-directory: Agentbase
-        run: |
-          npm install --production
-          node bin/changelog.js --all
+        run: node bin/changelog.js --all
 
       - name: Değişiklik var mı kontrol et
         id: check

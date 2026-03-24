@@ -15,6 +15,9 @@ const os = require('os');
 const {
   groupByType,
   generateSection,
+  generateAllSections,
+  getAllTags,
+  getCommits,
   formatDate,
   CATEGORIES,
   HEADER,
@@ -167,5 +170,50 @@ describe('HEADER', () => {
 
   it('baslik satiri var', () => {
     assert.ok(HEADER.startsWith('# '));
+  });
+});
+
+// ─────────────────────────────────────────────────────
+// generateAllSections ENTEGRASYON TESTLERI
+// ─────────────────────────────────────────────────────
+
+describe('generateAllSections', () => {
+  it('en az bir bolum uretiyor (repo da commit var)', () => {
+    const sections = generateAllSections();
+    assert.ok(sections.length >= 1, 'en az bir bolum olmali');
+  });
+
+  it('tag varsa versiyonlu bolum uretiyor', () => {
+    const tags = getAllTags();
+    if (tags.length === 0) return; // tag yoksa atla
+
+    const sections = generateAllSections();
+    const allContent = sections.join('\n');
+    const firstTag = tags[0].replace(/^v/, '');
+    assert.ok(allContent.includes(`[${firstTag}]`), `ilk tag (${firstTag}) bolum olarak uretilmeli`);
+  });
+
+  it('Yayinlanmamis bolumu varsa sadece son tag sonrasi commitler icin', () => {
+    const tags = getAllTags();
+    if (tags.length === 0) return;
+
+    const lastTag = tags[tags.length - 1];
+    const unreleasedCommits = getCommits(lastTag, null);
+
+    const sections = generateAllSections();
+    const hasUnreleased = sections.some(s => s.includes('[Yayınlanmamış]'));
+
+    if (unreleasedCommits.length > 0) {
+      assert.ok(hasUnreleased, 'unreleased commit varsa Yayinlanmamis bolumu olmali');
+    } else {
+      assert.ok(!hasUnreleased, 'unreleased commit yoksa Yayinlanmamis bolumu olmamali');
+    }
+  });
+
+  it('her bolum ## [ ile basliyor', () => {
+    const sections = generateAllSections();
+    for (const section of sections) {
+      assert.ok(section.startsWith('## ['), `bolum "## [" ile baslamali: ${section.slice(0, 40)}`);
+    }
   });
 });
