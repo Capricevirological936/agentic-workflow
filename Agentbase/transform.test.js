@@ -740,26 +740,46 @@ describe('PATH_MAPS ↔ CLI_CAPABILITIES tutarlilik', () => {
       if (!maps || !cap) continue;
 
       for (const [from, to] of Object.entries(maps)) {
-        // .claude/commands/ → hedef dizin, CLI_CAPABILITIES.commands.dir ile uyumlu olmali
-        if (from === '.claude/commands/' && cap.commands?.dir) {
-          if (!to.startsWith(cap.commands.dir.replace(/\/?$/, '/'))) {
-            // Skills-based CLI lerde commands → skills donusumu beklenir
-            if (cap.skills?.dir && to.startsWith(cap.skills.dir.replace(/\/?$/, '/'))) continue;
-            mismatches.push(`${cli}: PATH_MAPS[.claude/commands/]=${to} != CLI_CAPABILITIES.commands.dir=${cap.commands.dir}`);
+        // .claude/commands/ → commands.dir veya skills.dir ile uyumlu olmali
+        if (from === '.claude/commands/') {
+          if (cap.commands?.dir) {
+            if (!to.startsWith(cap.commands.dir.replace(/\/?$/, '/'))) {
+              if (cap.skills?.dir && to.startsWith(cap.skills.dir.replace(/\/?$/, '/'))) continue;
+              mismatches.push(`${cli}: PATH_MAPS[.claude/commands/]=${to} != commands.dir=${cap.commands.dir}`);
+            }
+          } else if (cap.skills?.dir) {
+            // commands null — skills fallback ile kontrol et
+            if (!to.startsWith(cap.skills.dir.replace(/\/?$/, '/'))) {
+              mismatches.push(`${cli}: PATH_MAPS[.claude/commands/]=${to} != skills.dir=${cap.skills.dir}`);
+            }
           }
         }
-        if (from === '.claude/agents/' && cap.agents?.dir) {
-          if (!to.startsWith(cap.agents.dir.replace(/\/?$/, '/'))) {
-            mismatches.push(`${cli}: PATH_MAPS[.claude/agents/]=${to} != CLI_CAPABILITIES.agents.dir=${cap.agents.dir}`);
+        // .claude/agents/ → agents.dir veya skills.dir (codex gibi agents null olabilir)
+        if (from === '.claude/agents/') {
+          if (cap.agents?.dir) {
+            if (!to.startsWith(cap.agents.dir.replace(/\/?$/, '/'))) {
+              mismatches.push(`${cli}: PATH_MAPS[.claude/agents/]=${to} != agents.dir=${cap.agents.dir}`);
+            }
+          } else if (cap.skills?.dir) {
+            if (!to.startsWith(cap.skills.dir.replace(/\/?$/, '/'))) {
+              mismatches.push(`${cli}: PATH_MAPS[.claude/agents/]=${to} != skills.dir=${cap.skills.dir}`);
+            }
           }
         }
-        if (from === 'CLAUDE.md' && cap.context?.file) {
-          // Context dosyasi eslesmesi — location ile birlestirilerek kontrol edilir
-          const expectedContext = cap.context.location === 'root'
-            ? cap.context.file
-            : `${cap.context.location}/${cap.context.file}`;
-          if (to !== cap.context.file && to !== expectedContext) {
-            mismatches.push(`${cli}: PATH_MAPS[CLAUDE.md]=${to} != context=${expectedContext}`);
+        // CLAUDE.md → context.file veya agent-yaml-prompt stratejisinde agents.dir altinda
+        if (from === 'CLAUDE.md') {
+          if (cap.context?.file) {
+            const expectedContext = cap.context.location === 'root'
+              ? cap.context.file
+              : `${cap.context.location}/${cap.context.file}`;
+            if (to !== cap.context.file && to !== expectedContext) {
+              mismatches.push(`${cli}: PATH_MAPS[CLAUDE.md]=${to} != context=${expectedContext}`);
+            }
+          } else if (cap.context?.strategy === 'agent-yaml-prompt' && cap.agents?.dir) {
+            // file null ama strategy var — hedef path agents dizini altinda olmali
+            if (!to.startsWith(cap.agents.dir.replace(/\/?$/, '/'))) {
+              mismatches.push(`${cli}: PATH_MAPS[CLAUDE.md]=${to} agents.dir=${cap.agents.dir} altinda degil`);
+            }
           }
         }
       }
