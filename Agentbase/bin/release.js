@@ -18,6 +18,7 @@
 const { execSync, spawnSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
+const { getLatestTag, getCommits: changelogGetCommits } = require('./changelog.js');
 
 const REPO_ROOT = path.resolve(__dirname, '../..');
 const AGENTBASE_DIR = path.resolve(__dirname, '..');
@@ -32,15 +33,13 @@ function runSafe(cmd) {
   try { return run(cmd); } catch { return ''; }
 }
 
-function getLatestTag() {
-  return runSafe('git describe --tags --abbrev=0 2>/dev/null') || null;
-}
-
-function getCommitsSinceTag(tag) {
-  const range = tag ? `${tag}..HEAD` : '';
-  const raw = runSafe(`git log ${range} --pretty=format:"%s" --no-merges`);
-  if (!raw) return [];
-  return raw.split('\n').filter(Boolean);
+function getCommitMessages(tag) {
+  const commits = changelogGetCommits(tag, null);
+  return commits.map(c => {
+    // detectBump orijinal subject satirina ihtiyac duyar (feat:, fix:, BREAKING vb.)
+    const prefix = c.type !== 'other' ? `${c.type}${c.scope ? `(${c.scope})` : ''}: ` : '';
+    return `${prefix}${c.message}`;
+  });
 }
 
 function detectBump(commits) {
@@ -138,7 +137,7 @@ function main() {
   }
 
   // 3. Bump tipi tespit
-  const commits = getCommitsSinceTag(latestTag);
+  const commits = getCommitMessages(latestTag);
   const bump = bumpArg === 'auto' ? detectBump(commits) : bumpArg;
   const newVersion = bumpVersion(currentVersion, bump);
   console.log(`  Bump: ${bump} (${currentVersion} → ${newVersion})`);
