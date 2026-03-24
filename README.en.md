@@ -1,5 +1,6 @@
 ![Agentic Workflow banner](Docbase/assets/agentic-workflow-banner.png)
 
+[![Tests](https://img.shields.io/github/actions/workflow/status/varienos/agentic-workflow/test.yml?label=tests&logo=github)](https://github.com/varienos/agentic-workflow/actions/workflows/test.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Claude Code](https://img.shields.io/badge/Claude_Code-Powered-blueviolet?logo=anthropic)](https://docs.anthropic.com/claude-code)
 [![GitHub Stars](https://img.shields.io/github/stars/varienos/agentic-workflow)](https://github.com/varienos/agentic-workflow)
