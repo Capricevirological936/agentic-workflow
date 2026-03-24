@@ -706,3 +706,123 @@ describe('loadExternalCapabilities', () => {
     }
   });
 });
+
+// ─────────────────────────────────────────────────────
+// PATH_MAPS ↔ CLI_CAPABILITIES TUTARLILIK TESTLERI
+// ─────────────────────────────────────────────────────
+
+describe('PATH_MAPS ↔ CLI_CAPABILITIES tutarlilik', () => {
+  const cliNames = Object.keys(CLI_CAPABILITIES);
+  const pathMapNames = Object.keys(PATH_MAPS);
+
+  it('her CLI_CAPABILITIES CLI si PATH_MAPS te de tanimli olmali', () => {
+    const missing = cliNames.filter(cli => !PATH_MAPS[cli]);
+    assert.equal(
+      missing.length, 0,
+      `CLI_CAPABILITIES teki su CLI ler PATH_MAPS te yok: ${missing.join(', ')}`
+    );
+  });
+
+  it('her PATH_MAPS CLI si CLI_CAPABILITIES te de tanimli olmali', () => {
+    const missing = pathMapNames.filter(cli => !CLI_CAPABILITIES[cli]);
+    assert.equal(
+      missing.length, 0,
+      `PATH_MAPS teki su CLI ler CLI_CAPABILITIES te yok: ${missing.join(', ')}`
+    );
+  });
+
+  it('PATH_MAPS hedef dizinleri CLI_CAPABILITIES dir alanlariyla uyumlu olmali', () => {
+    const mismatches = [];
+
+    for (const cli of cliNames) {
+      const maps = PATH_MAPS[cli];
+      const cap = CLI_CAPABILITIES[cli];
+      if (!maps || !cap) continue;
+
+      for (const [from, to] of Object.entries(maps)) {
+        // .claude/commands/ → hedef dizin, CLI_CAPABILITIES.commands.dir ile uyumlu olmali
+        if (from === '.claude/commands/' && cap.commands?.dir) {
+          if (!to.startsWith(cap.commands.dir.replace(/\/?$/, '/'))) {
+            // Skills-based CLI lerde commands → skills donusumu beklenir
+            if (cap.skills?.dir && to.startsWith(cap.skills.dir.replace(/\/?$/, '/'))) continue;
+            mismatches.push(`${cli}: PATH_MAPS[.claude/commands/]=${to} != CLI_CAPABILITIES.commands.dir=${cap.commands.dir}`);
+          }
+        }
+        if (from === '.claude/agents/' && cap.agents?.dir) {
+          if (!to.startsWith(cap.agents.dir.replace(/\/?$/, '/'))) {
+            mismatches.push(`${cli}: PATH_MAPS[.claude/agents/]=${to} != CLI_CAPABILITIES.agents.dir=${cap.agents.dir}`);
+          }
+        }
+        if (from === 'CLAUDE.md' && cap.context?.file) {
+          // Context dosyasi eslesmesi — location ile birlestirilerek kontrol edilir
+          const expectedContext = cap.context.location === 'root'
+            ? cap.context.file
+            : `${cap.context.location}/${cap.context.file}`;
+          if (to !== cap.context.file && to !== expectedContext) {
+            mismatches.push(`${cli}: PATH_MAPS[CLAUDE.md]=${to} != context=${expectedContext}`);
+          }
+        }
+      }
+    }
+
+    if (mismatches.length > 0) {
+      assert.fail(`PATH_MAPS / CLI_CAPABILITIES uyumsuzluklari:\n  ${mismatches.join('\n  ')}`);
+    }
+  });
+
+  it('her CLI en az commands veya agents path eslesmesi icermeli', () => {
+    for (const cli of cliNames) {
+      const maps = PATH_MAPS[cli];
+      assert.ok(maps, `${cli} icin PATH_MAPS tanimli olmali`);
+      const hasCommandsMap = Object.keys(maps).some(k => k.includes('commands'));
+      const hasAgentsMap = Object.keys(maps).some(k => k.includes('agents'));
+      assert.ok(
+        hasCommandsMap || hasAgentsMap,
+        `${cli}: en az commands veya agents path eslesmesi olmali`
+      );
+    }
+  });
+});
+
+describe('PATH_MAPS frozen snapshot — kasitli olmayan drift korunmasi', () => {
+  // Bu snapshot bilerek degistirilmedikce PATH_MAPS in sessiz drift ini yakalar.
+  // PATH_MAPS guncellediginde bu testi de guncelle.
+  const EXPECTED_SNAPSHOT = {
+    gemini: {
+      '.claude/commands/': '.gemini/commands/',
+      '.claude/agents/': '.gemini/agents/',
+      'CLAUDE.md': 'GEMINI.md',
+    },
+    codex: {
+      '.claude/commands/': '.codex/skills/',
+      '.claude/agents/': '.codex/skills/',
+      'CLAUDE.md': 'AGENTS.md',
+    },
+    kimi: {
+      '.claude/commands/': '.kimi/skills/',
+      '.claude/agents/': '.kimi/agents/',
+      'CLAUDE.md': '.kimi/agents/default-prompt.md',
+    },
+    opencode: {
+      '.claude/commands/': '.opencode/skills/',
+      '.claude/agents/': '.opencode/agents/',
+      'CLAUDE.md': '.opencode/AGENTS.md',
+    },
+  };
+
+  it('PATH_MAPS snapshot ile eslesir — drift varsa bu testi guncelle', () => {
+    assert.deepEqual(
+      PATH_MAPS,
+      EXPECTED_SNAPSHOT,
+      'PATH_MAPS degismis! Kasitli ise snapshot i guncelle, degilse drift var.'
+    );
+  });
+
+  it('CLI_CAPABILITIES CLI sayisi PATH_MAPS CLI sayisi ile esit', () => {
+    assert.equal(
+      Object.keys(CLI_CAPABILITIES).length,
+      Object.keys(PATH_MAPS).length,
+      'CLI sayisi uyumsuz — yeni CLI eklendiginde her iki map de guncellemeli'
+    );
+  });
+});

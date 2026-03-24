@@ -164,6 +164,14 @@ function adaptInvokeSyntax(content, targetCli) {
 // PATH REFERENCES DONUSUMU
 // ─────────────────────────────────────────────────────
 
+// PATH_MAPS: metin-ici .claude/ referanslarini hedef CLI dizinlerine donusturur.
+// CLI_CAPABILITIES ile tutarli tutulmali — her iki map ayni CLI setini icermeli.
+//
+// Kapsam DISI yollar (donusturme YAPILMAZ, aynen kalir):
+//   - Docbase/agentic/  → CLI-agnostik manifest konumu, tum CLI lar ayni yolu kullanir
+//   - ../Codebase       → Fiziksel dizin referansi, CLI ye bagli degil
+//   - backlog/          → Agentbase icinde, CLI ye bagli degil
+// Bu yollar proje yapisini ifade eder, CLI aracini degil — donusturme gereksizdir.
 const PATH_MAPS = {
   gemini: {
     '.claude/commands/': '.gemini/commands/',
