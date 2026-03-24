@@ -1,0 +1,66 @@
+name: Otomatik Release
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    # CHANGELOG bot commit'lerinde ve release commit'lerinde calisma
+    if: |
+      !contains(github.event.head_commit.message, '[skip ci]') &&
+      !startsWith(github.event.head_commit.message, 'release:') &&
+      !startsWith(github.event.head_commit.message, 'docs: CHANGELOG')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Son tag'den bu yana commit var mi?
+        id: check
+        run: |
+          LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          if [ -z "$LATEST_TAG" ]; then
+            echo "commits=true" >> $GITHUB_OUTPUT
+            echo "count=$(git rev-list --count HEAD)" >> $GITHUB_OUTPUT
+          else
+            COUNT=$(git rev-list --count ${LATEST_TAG}..HEAD)
+            echo "commits=$([ $COUNT -gt 0 ] && echo true || echo false)" >> $GITHUB_OUTPUT
+            echo "count=$COUNT" >> $GITHUB_OUTPUT
+          fi
+          echo "tag=$LATEST_TAG" >> $GITHUB_OUTPUT
+
+      - name: Bump tipi tespit et
+        if: steps.check.outputs.commits == 'true'
+        id: bump
+        run: |
+          TAG="${{ steps.check.outputs.tag }}"
+          RANGE="${TAG:+$TAG..HEAD}"
+          COMMITS=$(git log $RANGE --pretty=format:"%s" --no-merges)
+
+          if echo "$COMMITS" | grep -qE "BREAKING|!:"; then
+            echo "type=major" >> $GITHUB_OUTPUT
+          elif echo "$COMMITS" | grep -q "^feat"; then
+            echo "type=minor" >> $GITHUB_OUTPUT
+          else
+            echo "type=patch" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Release yap
+        if: steps.check.outputs.commits == 'true'
+        working-directory: Agentbase
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          node bin/release.js ${{ steps.bump.outputs.type }}
