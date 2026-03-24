@@ -1,5 +1,9 @@
 ![Agentic Workflow banner](Docbase/assets/agentic-workflow-banner.png)
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Claude Code](https://img.shields.io/badge/Claude_Code-Powered-blueviolet?logo=anthropic)](https://docs.anthropic.com/claude-code)
+[![GitHub Stars](https://img.shields.io/github/stars/varienos/agentic-workflow)](https://github.com/varienos/agentic-workflow)
+
 > **[English version (README.en.md)](README.en.md)**
 
 > [!IMPORTANT]

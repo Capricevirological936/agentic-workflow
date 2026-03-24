@@ -90,7 +90,7 @@ Agentbase/backlog/
 # Agentbase/bin/session-monitor.js         ← Oturum izleme araci
 # Agentbase/tests/                         ← Test suite
 # Agentbase/*.md stub'lari                 ← Bootstrap dolduracak
-# Docs/superpowers/                        ← Spec ve plan dokumanlari
+# Docbase/superpowers/                      ← Spec ve plan dokumanlari
 # ─────────────────────────────────────────────────────
 
 # Test ortami (bootstrap test icin kullanilir, icerik ignore)
@@ -102,7 +102,7 @@ test/*
 Codebase/*
 !Codebase/.gitkeep
 
-# Docs (Bootstrap uretir — proje-spesifik)
-Docs/agentic/project-manifest.yaml
-/Docs/superpowers/
-/Docs/agentic/
+# Docbase (Bootstrap uretir — proje-spesifik)
+Docbase/agentic/project-manifest.yaml
+/Docbase/superpowers/
+/Docbase/agentic/
