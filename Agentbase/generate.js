@@ -197,8 +197,8 @@ function processConditionalBlock(block, activeModules, manifest) {
   for (const [condKey, value] of Object.entries(block)) {
     if (condKey === '__doc__') continue;
 
-    // Kosul kontrol: "modul_active" formatinda (slash destekli: nodejs/express_active)
-    const modulMatch = condKey.match(/^([\w/]+)_active$/);
+    // Kosul kontrol: "modul_active" formatinda (slash ve tire destekli: nodejs/express_active, django-orm_active)
+    const modulMatch = condKey.match(/^([\w/\-]+)_active$/);
     if (modulMatch) {
       const modulName = modulMatch[1];
       if (!activeModules.has(modulName)) continue;

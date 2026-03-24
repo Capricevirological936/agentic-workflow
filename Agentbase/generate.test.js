@@ -380,6 +380,56 @@ describe('processJsonGenerateKeys', () => {
     assert.strictEqual(bashGroup.hooks[0].command, 'node prisma-bash-guard.js');
   });
 
+  it('tire iceren modul adi (django-orm_active) dogru eslesir', () => {
+    const djangoManifest = { modules: { active: { orm: ['django-orm'] } } };
+    const obj = {
+      hooks: {
+        PreToolUse: [
+          {
+            __GENERATE__BASH_HOOKS__: {
+              matcher: 'Bash',
+              'django-orm_active': { type: 'command', command: 'node manage-py-guard.js', timeout: 10 },
+            },
+          },
+        ],
+      },
+    };
+    const result = processJsonGenerateKeys(obj, djangoManifest);
+    const bashGroup = result.obj.hooks.PreToolUse.find(g => g.matcher === 'Bash');
+    assert.ok(bashGroup, 'Bash matcher li hook group olmali');
+    assert.ok(bashGroup.hooks.some(h => h.command === 'node manage-py-guard.js'), 'django-orm hook eklenmeli');
+  });
+
+  it('eloquent aktifken artisan-migrate-guard ve eloquent-migration-check ekleniyor', () => {
+    const eloquentManifest = { modules: { active: { orm: ['eloquent'] } } };
+    const obj = {
+      hooks: {
+        PreToolUse: [
+          {
+            __GENERATE__PRE_BASH__: {
+              matcher: 'Bash',
+              eloquent_active: { type: 'command', command: 'node artisan-migrate-guard.js', timeout: 10 },
+            },
+          },
+        ],
+        PostToolUse: [
+          {
+            matcher: 'Edit|Write',
+            hooks: [],
+            __GENERATE__POST_EDIT__: {
+              eloquent_active: { type: 'command', command: 'node eloquent-migration-check.js' },
+            },
+          },
+        ],
+      },
+    };
+    const result = processJsonGenerateKeys(obj, eloquentManifest);
+    const bashGroup = result.obj.hooks.PreToolUse.find(g => g.matcher === 'Bash');
+    assert.ok(bashGroup.hooks.some(h => h.command === 'node artisan-migrate-guard.js'), 'artisan-migrate-guard eklenmeli');
+    const editGroup = result.obj.hooks.PostToolUse.find(g => g.matcher === 'Edit|Write');
+    assert.ok(editGroup.hooks.some(h => h.command === 'node eloquent-migration-check.js'), 'eloquent-migration-check eklenmeli');
+  });
+
   it('ENABLED_PLUGINS root-level merge yapar', () => {
     const expoManifest = {
       ...testManifest,

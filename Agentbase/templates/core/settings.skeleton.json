@@ -55,6 +55,42 @@
             "type": "command",
             "command": "jq -r 'if (.tool_input.command // \"\" | test(\"prisma db push|prisma.*db.*push\")) then {\"decision\":\"block\",\"reason\":\"db push yasak. prisma migrate dev kullanin.\"} else empty end'",
             "timeout": 5
+          },
+          "eloquent_active": {
+            "__doc__": "Eloquent aktifse: artisan migrate:fresh/reset/db:wipe engelle",
+            "type": "command",
+            "command": "node .claude/hooks/artisan-migrate-guard.js",
+            "timeout": 10
+          },
+          "typeorm_active": {
+            "__doc__": "TypeORM aktifse: schema:sync/drop engelle",
+            "type": "command",
+            "command": "node .claude/hooks/typeorm-sync-guard.js",
+            "timeout": 10
+          },
+          "django-orm_active": {
+            "__doc__": "Django ORM aktifse: manage.py flush/reset_db engelle",
+            "type": "command",
+            "command": "node .claude/hooks/manage-py-guard.js",
+            "timeout": 10
+          },
+          "laravel_active": {
+            "__doc__": "Laravel aktifse: artisan db:wipe/tinker engelle",
+            "type": "command",
+            "command": "node .claude/hooks/artisan-guard.js",
+            "timeout": 10
+          },
+          "codeigniter4_active": {
+            "__doc__": "CI4 aktifse: spark migrate:refresh engelle",
+            "type": "command",
+            "command": "node .claude/hooks/spark-guard.js",
+            "timeout": 10
+          },
+          "django_active": {
+            "__doc__": "Django backend aktifse: manage.py shell/flush engelle",
+            "type": "command",
+            "command": "node .claude/hooks/django-guard.js",
+            "timeout": 10
           }
         }
       }
@@ -107,6 +143,11 @@
             "__doc__": "Prisma aktifse: migration kontrol hook'u ekle",
             "type": "command",
             "command": "node .claude/hooks/prisma-migration-check.js"
+          },
+          "eloquent_active": {
+            "__doc__": "Eloquent aktifse: migration degisiklik kontrolu",
+            "type": "command",
+            "command": "node .claude/hooks/eloquent-migration-check.js"
           }
         }
       },
