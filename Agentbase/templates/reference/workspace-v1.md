@@ -2,7 +2,7 @@
 
 ## Dizin Ağacı
 
-- Docs
+- Docbase
 - Scripts
 - Agents _(Ajanslar burada init olacak)_
   - backlog _(proje planlamasının omurgası - https://github.com/MrLesk/Backlog.md)_

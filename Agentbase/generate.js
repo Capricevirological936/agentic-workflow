@@ -11,10 +11,10 @@
  *   node generate.js <manifest-yolu> [--output-dir <cikti-dizini>] [--modules <modul-listesi>] [--dry-run] [--verbose]
  *
  * Ornekler:
- *   node Agentbase/generate.js Docs/agentic/project-manifest.yaml
- *   node Agentbase/generate.js Docs/agentic/project-manifest.yaml --dry-run
- *   node Agentbase/generate.js Docs/agentic/project-manifest.yaml --modules "mobile/expo,deploy/docker"
- *   node Agentbase/generate.js Docs/agentic/project-manifest.yaml --output-dir ./out
+ *   node Agentbase/generate.js Docbase/agentic/project-manifest.yaml
+ *   node Agentbase/generate.js Docbase/agentic/project-manifest.yaml --dry-run
+ *   node Agentbase/generate.js Docbase/agentic/project-manifest.yaml --modules "mobile/expo,deploy/docker"
+ *   node Agentbase/generate.js Docbase/agentic/project-manifest.yaml --output-dir ./out
  */
 
 const fs = require('fs');

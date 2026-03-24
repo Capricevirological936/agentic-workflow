@@ -12,7 +12,7 @@ const SCAN_DIRS = [
   REPO_ROOT,                                       // root README, CONTRIBUTING, vs.
   path.join(REPO_ROOT, 'Agentbase', 'templates'),  // tum template .md dosyalari
   path.join(REPO_ROOT, 'Agentbase'),               // PROJECT.md, STACK.md, vs.
-  path.join(REPO_ROOT, 'Docs'),                    // proje dokumanlari
+  path.join(REPO_ROOT, 'Docbase'),                  // proje dokumanlari
 ];
 
 const SKIP_DIRS = ['node_modules', '.git', 'backlog', '.claude'];

@@ -9,7 +9,7 @@
 ## ADIM 1 — Mevcut Manifest'i Oku
 
 ```
-Docs/agentic/project-manifest.yaml dosyasini oku.
+Docbase/agentic/project-manifest.yaml dosyasini oku.
 meta.last_analyzed ve meta.codebase_hash alanlarini not al.
 Manifest yoksa: "Manifest bulunamadi. Once /bootstrap calistirin." uyarisi ver.
 ```
@@ -88,7 +88,7 @@ meta:
 | orm/prisma | -Kaldirilan | Uygulandi |
 | api test komutu | ~Degisen | Uygulandi |
 
-Manifest: Docs/agentic/project-manifest.yaml (yedek: .backup)
+Manifest: Docbase/agentic/project-manifest.yaml (yedek: .backup)
 Uretilen dosyalar: 4 yeni, 2 guncellenen, 0 silinen
 ```
 
@@ -112,7 +112,7 @@ Ornek cikti:
 
 Bu proje {project.name} icin ozellestirilmistir.
 Stack: {stack.primary}
-Manifest: Docs/agentic/project-manifest.yaml
+Manifest: Docbase/agentic/project-manifest.yaml
 Aktif moduller: {modules.active listesi}
 Kutsal Kurallar:
 - Config dosyalari SADECE Agentbase icinde yasar

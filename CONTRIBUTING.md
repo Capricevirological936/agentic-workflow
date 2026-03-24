@@ -99,7 +99,7 @@ Her modul, o modulun projeye uygulanip uygulanmayacagini belirleyen bir `detect.
 ### Onemli Dizin Aciklamalari
 
 - **`Codebase/`** — Uzerinde calisilan gercek proje kodunu temsil eder. Bu dizin depoda yer tutucudur; kullanici kendi projesini symlink ile baglar (`ln -s /path/to/project Codebase`). Greenfield modunda bos birakilir ve bootstrap sifirdan olusturur.
-- **`Docs/agentic/project-manifest.yaml`** — Bootstrap tarafindan uretilen manifest dosyasi. Depoda bastan YOKTUR — ilk `/bootstrap` calistirmasinda olusturulur. `generate.js` ve `transform.js` bu dosyayi girdi olarak kullanir.
+- **`Docbase/agentic/project-manifest.yaml`** — Bootstrap tarafindan uretilen manifest dosyasi. Depoda bastan YOKTUR — ilk `/bootstrap` calistirmasinda olusturulur. `generate.js` ve `transform.js` bu dosyayi girdi olarak kullanir.
 
 ### Bootstrap Roportaj Sablonlari
 
@@ -112,7 +112,7 @@ Her modul, o modulun projeye uygulanip uygulanmayacagini belirleyen bir `detect.
 | `phase-3-developer.md` | Gelistirici profili — deneyim seviyesi, calisma dili, otonom calisma beklentisi | `DEVELOPER.md`, agent davranis kalibrasyonu |
 | `phase-4-rules.md` | Domain kurallari — yasakli komutlar, tasarim sistemi, guvenlik seviyesi | `rules/` dizini, koruma hook'lari |
 
-**Nasil calisir:** Bootstrap, `/bootstrap` komutu calistirildiginda bu roportaj sablonlarini sirasi ile izler. Her phase, kullaniciya sorular sormadan once codebase'i otomatik olarak tarar (auto-detection) ve mevcut bilgileri on doldurur. Kullanicinin yanitleri `Docs/agentic/project-manifest.yaml` dosyasina kaydedilir ve `generate.js` bu manifestten proje-spesifik dosyalari uretir.
+**Nasil calisir:** Bootstrap, `/bootstrap` komutu calistirildiginda bu roportaj sablonlarini sirasi ile izler. Her phase, kullaniciya sorular sormadan once codebase'i otomatik olarak tarar (auto-detection) ve mevcut bilgileri on doldurur. Kullanicinin yanitleri `Docbase/agentic/project-manifest.yaml` dosyasina kaydedilir ve `generate.js` bu manifestten proje-spesifik dosyalari uretir.
 
 **Katkida bulunmak icin:** Yeni bir soru veya auto-detection kurali eklemek istiyorsaniz ilgili phase dosyasini duzenleyin. Mevcut soru yapisini (`Questions`, `Skip condition`, `Maps to`, `Downstream`) koru.
 

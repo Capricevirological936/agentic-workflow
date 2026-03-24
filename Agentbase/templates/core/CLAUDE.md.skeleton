@@ -205,7 +205,7 @@ Edit/Write sonrasi `auto-test-runner` hook'u degisen dosyanin katmanini tespit e
 ```
 Agentbase/        # Sen buradasin — tum agent yapilandirmasi
 ../Codebase/      # Proje kaynak kodu — BURAYA ERISIRSIN
-../Docs/          # Proje dokumantasyonu ve manifest
+../Docbase/       # Proje dokumantasyonu ve manifest
 ```
 
 ### Temel Dosyalar

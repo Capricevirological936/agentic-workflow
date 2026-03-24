@@ -1,4 +1,4 @@
-![Agentic Workflow banner](Docs/assets/agentic-workflow-banner.png)
+![Agentic Workflow banner](Docbase/assets/agentic-workflow-banner.png)
 
 > **[English version (README.en.md)](README.en.md)**
 
@@ -37,12 +37,12 @@ Bu repo dört ana çalışma alanı üzerine kuruludur:
 | `Agentbase/` | Şablonlar, üretim mantığı, Claude komutları ve yardımcı araçlar |
 | `Agentbase/backlog/` | Görev yaşam döngüsü — Backlog.md CLI ile yönetilen task'lar |
 | `Codebase/` | Üzerinde çalışılacak gerçek proje kodu |
-| `Docs/agentic/` | Bootstrap tarafından üretilen manifest dosyası (`project-manifest.yaml`) |
+| `Docbase/agentic/` | Bootstrap tarafından üretilen manifest dosyası (`project-manifest.yaml`) |
 
 Bu ayrımın iki önemli sonucu vardır:
 
 - Git işlemleri hedef proje tarafında, yani `Codebase/` içinde yürür.
-- Bootstrap süreci `Codebase/` dizinine yazmaz; üretimi `Agentbase/` ve `Docs/agentic/` altında yapar. Backlog da `Agentbase/backlog/` içinde oluşturulur.
+- Bootstrap süreci `Codebase/` dizinine yazmaz; üretimi `Agentbase/` ve `Docbase/agentic/` altında yapar. Backlog da `Agentbase/backlog/` içinde oluşturulur.
 
 ### Worktree Avantajı
 
@@ -139,7 +139,7 @@ Bootstrap boş Codebase tespit ettiğinde greenfield moduna geçer: stack seçim
 1. Ön koşulları doğrular. Backlog CLI, `Codebase/` erişimi ve varsa önceki manifest kontrol edilir.
 2. Hedef projeyi analiz eder. Proje tipi, dizin yapısı, alt projeler, paket yöneticisi, test araçları ve modül adayları çıkarılır.
 3. Eksik bilgileri fazlı röportajla toplar. Proje, teknik tercih, geliştirici profili ve domain kuralları netleştirilir.
-4. `Docs/agentic/project-manifest.yaml` dosyasını üretir.
+4. `Docbase/agentic/project-manifest.yaml` dosyasını üretir.
 5. Manifeste göre ilgili komutları, ajanları, hook'ları, kuralları ve yardımcı dokümanları oluşturur.
 6. Backlog'u başlatır ve başlangıç görevlerini oluşturur (`backlog/` root dizinde).
 7. Röportajda seçilen hedef CLI araçları varsa (Gemini/Codex/Kimi/OpenCode) `transform.js` ile `.claude/` çıktılarını ilgili formatlara dönüştürür.
@@ -369,7 +369,7 @@ Go, Rust ve Java/Kotlin mevcut proje analizinde de otomatik tespit edilir (`go.m
 Claude Code çıktıları `transform.js` ile diğer CLI formatlarına dönüştürülebilir. Bootstrap röportajında hedef araçlar seçilir veya mevcut projeler `--targets` parametresiyle doğrudan çalıştırabilir:
 
 ```bash
-node transform.js ../Docs/agentic/project-manifest.yaml --targets gemini,codex,kimi,opencode
+node transform.js ../Docbase/agentic/project-manifest.yaml --targets gemini,codex,kimi,opencode
 ```
 
 | Hedef CLI | Komut Formatı | Agent Formatı | Bağlam Dosyası |
@@ -403,8 +403,8 @@ cd Agentbase && npm test                                                    # Te
 cd Agentbase && node bin/session-monitor.js                                 # Oturum izleme
 
 # Bootstrap sonrası — manifest üretildikten sonra çalışır:
-cd Agentbase && node generate.js ../Docs/agentic/project-manifest.yaml --dry-run  # Kuru çalıştırma
-cd Agentbase && node transform.js ../Docs/agentic/project-manifest.yaml --targets gemini,codex --dry-run  # CLI dönüştürme
+cd Agentbase && node generate.js ../Docbase/agentic/project-manifest.yaml --dry-run  # Kuru çalıştırma
+cd Agentbase && node transform.js ../Docbase/agentic/project-manifest.yaml --targets gemini,codex --dry-run  # CLI dönüştürme
 ```
 
 ### Release ve CHANGELOG
