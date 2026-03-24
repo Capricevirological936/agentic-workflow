@@ -4,9 +4,6 @@ on:
   push:
     branches: [main]
   pull_request:
-    paths:
-      - 'Agentbase/**'
-      - 'package*.json'
 
 permissions:
   contents: read
@@ -23,10 +20,14 @@ jobs:
       - uses: gitleaks/gitleaks-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # GitHub Organization kullaniliyorsa lisans gerekli:
+          # GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
 
   audit:
     name: Dependency Audit
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
 
