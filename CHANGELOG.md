@@ -3,6 +3,16 @@
 Tüm önemli değişiklikler bu dosyada belgelenir.
 Format [Keep a Changelog](https://keepachangelog.com/tr/1.1.0/) standardını takip eder.
 
+## [1.4.2] - 2026-03-24
+
+### Eklenen
+
+- bootstrap hedef projelerde backlog'u Agentbase icinde olustursun (`f767d1f`)
+
+### Bakım
+
+- release oncesi bekleyen degisiklikler (`c7ee059`)
+
 ## [1.4.1] - 2026-03-24
 
 ### Düzeltilen
