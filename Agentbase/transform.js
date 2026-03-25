@@ -159,8 +159,8 @@ function extractDescription(content) {
 // INVOKE SYNTAX DONUSUMU
 // ─────────────────────────────────────────────────────
 
-function adaptInvokeSyntax(content, targetCli) {
-  const cap = effectiveCapabilities[targetCli];
+function adaptInvokeSyntax(content, targetCli, capabilities = CLI_CAPABILITIES) {
+  const cap = capabilities[targetCli];
   if (!cap) return content;
 
   const prefix = cap.invoke.prefix;
@@ -209,7 +209,6 @@ const PATH_MAPS = {
 
 // Manifest transform.skip_paths ile override edilebilir
 // .claude/rules/ ayri dosya olarak uretilmiyor — inline-context ile context dosyasina gomulur
-let SKIP_PATHS = ['.claude/hooks/', '.claude/tracking/', '.claude/reports/'];
 
 /**
  * Varsayılan PATH_MAPS ile manifest'ten gelen özel path eşlemelerini birleştirir.
@@ -241,10 +240,12 @@ function mergePathMaps(manifestPathMaps) {
   return merged;
 }
 
-function adaptPathReferences(content, targetCli, pathMaps = PATH_MAPS) {
+const DEFAULT_SKIP_PATHS = ['.claude/hooks/', '.claude/tracking/', '.claude/reports/'];
+
+function adaptPathReferences(content, targetCli, pathMaps = PATH_MAPS, skipPaths = DEFAULT_SKIP_PATHS, capabilities = CLI_CAPABILITIES) {
   let result = content;
 
-  for (const skipPath of SKIP_PATHS) {
+  for (const skipPath of skipPaths) {
     result = result.replace(new RegExp(`^.*${escapeRegex(skipPath)}.*$`, 'gm'), '');
   }
   result = result.replace(/\n{3,}/g, '\n\n');
@@ -259,21 +260,25 @@ function adaptPathReferences(content, targetCli, pathMaps = PATH_MAPS) {
   }
 
   // Skill-based CLI'lar: {skills_dir}/{name}.md → {skills_dir}/{name}/SKILL.md
-  const cap = effectiveCapabilities[targetCli];
+  // NOT: Zaten /SKILL.md formatinda olan yollar atlanir (double-transform koruması)
+  const cap = capabilities[targetCli];
   if (cap?.skills?.dir) {
     const skillsDir = cap.skills.dir;
     result = result.replace(
-      new RegExp(`${escapeRegex(skillsDir)}/([\\w-]+)\\.md`, 'g'),
-      `${skillsDir}/$1/SKILL.md`
+      new RegExp(`${escapeRegex(skillsDir)}/([\\w-]+)\\.md(?!/SKILL\\.md)`, 'g'),
+      (match, name) => name === 'SKILL' ? match : `${skillsDir}/${name}/SKILL.md`
     );
     // Custom path_maps ile donusturulmus dizinler icin de normalize et
     const customMaps = pathMaps[targetCli];
     if (customMaps) {
-      for (const to of Object.values(customMaps)) {
-        if (to !== skillsDir && to.includes('skills')) {
+      for (let to of Object.values(customMaps)) {
+        // Trailing slash normalize
+        to = to.endsWith('/') ? to : to + '/';
+        const toNoSlash = to.slice(0, -1);
+        if (toNoSlash !== skillsDir && to.includes('skills')) {
           result = result.replace(
-            new RegExp(`${escapeRegex(to)}([\\w-]+)\\.md`, 'g'),
-            `${to}$1/SKILL.md`
+            new RegExp(`${escapeRegex(toNoSlash)}/([\\w-]+)\\.md(?!/SKILL\\.md)`, 'g'),
+            (match, name) => name === 'SKILL' ? match : `${toNoSlash}/${name}/SKILL.md`
           );
         }
       }
@@ -335,13 +340,13 @@ function inlineRules(content, rules) {
 // ADAPT CONTENT WRAPPER
 // ─────────────────────────────────────────────────────
 
-function adaptContent(content, targetCli, rules, pathMaps = PATH_MAPS) {
+function adaptContent(content, targetCli, rules, pathMaps = PATH_MAPS, skipPaths = DEFAULT_SKIP_PATHS, capabilities = CLI_CAPABILITIES) {
   let result = stripClaudeOnlySections(content);
   if (rules && rules.length > 0) {
     result = inlineRules(result, rules);
   }
-  result = adaptPathReferences(result, targetCli, pathMaps);
-  result = adaptInvokeSyntax(result, targetCli);
+  result = adaptPathReferences(result, targetCli, pathMaps, skipPaths, capabilities);
+  result = adaptInvokeSyntax(result, targetCli, capabilities);
   return result;
 }
 
@@ -484,33 +489,33 @@ function formatAgent(name, desc, adapted, cap, targetCli) {
 // PIPELINE ORKESTRASYONU
 // ─────────────────────────────────────────────────────
 
-function transformForTarget(source, targetCli, pathMaps = PATH_MAPS) {
-  const cap = effectiveCapabilities[targetCli];
+function transformForTarget(source, targetCli, pathMaps = PATH_MAPS, skipPaths = DEFAULT_SKIP_PATHS, capabilities = CLI_CAPABILITIES) {
+  const cap = capabilities[targetCli];
   if (!cap) return {};
 
   const fileMap = {};
 
   for (const cmd of source.commands) {
-    const adapted = adaptContent(cmd.content, targetCli, undefined, pathMaps);
+    const adapted = adaptContent(cmd.content, targetCli, undefined, pathMaps, skipPaths, capabilities);
     const desc = extractDescription(adapted);
     Object.assign(fileMap, formatCommand(cmd.name, desc, adapted, cap));
   }
 
   for (const agent of source.agents) {
-    const adapted = adaptContent(agent.content, targetCli, undefined, pathMaps);
+    const adapted = adaptContent(agent.content, targetCli, undefined, pathMaps, skipPaths, capabilities);
     const desc = extractDescription(adapted);
     Object.assign(fileMap, formatAgent(agent.name, desc, adapted, cap, targetCli));
   }
 
   if (cap.context.file) {
-    const contextContent = adaptContent(source.context, targetCli, source.rules, pathMaps);
+    const contextContent = adaptContent(source.context, targetCli, source.rules, pathMaps, skipPaths, capabilities);
     const loc = cap.context.location === 'root'
       ? cap.context.file
       : `${cap.context.location}/${cap.context.file}`;
     fileMap[loc] = contextContent;
   } else if (cap.context.strategy === 'agent-yaml-prompt') {
     // Kimi default agent
-    const contextContent = adaptContent(source.context, targetCli, source.rules, pathMaps);
+    const contextContent = adaptContent(source.context, targetCli, source.rules, pathMaps, skipPaths, capabilities);
     fileMap[`${cap.agents.dir}/default.yaml`] = toKimiAgentYaml('default', './default-prompt.md');
     fileMap[`${cap.agents.dir}/default-prompt.md`] = contextContent;
   }
@@ -523,13 +528,24 @@ function writeTarget(outputDir, targetCli, fileMap) {
   for (const [relPath, content] of Object.entries(fileMap)) {
     const fullPath = path.join(outputDir, relPath);
     try {
-      // Path traversal koruması
+      // Path traversal koruması (lexical + symlink resolution)
       const resolvedFull = path.resolve(fullPath);
       const resolvedBase = path.resolve(outputDir);
       if (!resolvedFull.startsWith(resolvedBase + path.sep) && resolvedFull !== resolvedBase) {
         throw new Error(`Path traversal: ${relPath} dizin disinda`);
       }
       fs.mkdirSync(path.dirname(fullPath), { recursive: true });
+      // Symlink resolution: dizin olusturulduktan sonra gercek yolu kontrol et
+      try {
+        const realDir = fs.realpathSync(path.dirname(fullPath));
+        const realBase = fs.realpathSync(outputDir);
+        if (!realDir.startsWith(realBase + path.sep) && realDir !== realBase) {
+          throw new Error(`Symlink traversal: ${relPath} gercek yol dizin disinda`);
+        }
+      } catch (symlinkErr) {
+        if (symlinkErr.message.includes('Symlink traversal')) throw symlinkErr;
+        // realpathSync ENOENT olabilir — lexical kontrol yeterli
+      }
       fs.writeFileSync(fullPath, content, 'utf8');
     } catch (err) {
       errors.push(`${relPath}: ${err.message}`);
@@ -546,11 +562,8 @@ function writeTarget(outputDir, targetCli, fileMap) {
 // CLI ENTRY POINT
 // ─────────────────────────────────────────────────────
 
-// Effective capabilities — loadExternalCapabilities ile genisletilir
-let effectiveCapabilities = { ...CLI_CAPABILITIES };
-
-function resolveTargets(manifest, targetsFlag) {
-  const validSet = new Set(Object.keys(effectiveCapabilities));
+function resolveTargets(manifest, targetsFlag, capabilities = CLI_CAPABILITIES) {
+  const validSet = new Set(Object.keys(capabilities));
   const manifestTargets = (manifest.targets || []).filter(t => t !== 'claude');
 
   let targets;
@@ -624,13 +637,14 @@ function main() {
     process.exit(1);
   }
 
-  // External CLI capability config yukle (varsa)
+  // External CLI capability config yukle (varsa) — lokal scope
+  let localCapabilities = { ...CLI_CAPABILITIES };
   if (manifest?.transform?.cli_config) {
     const configPath = path.resolve(path.dirname(resolvedPath), manifest.transform.cli_config);
-    effectiveCapabilities = loadExternalCapabilities(configPath);
+    localCapabilities = loadExternalCapabilities(configPath);
   }
 
-  const { targets, invalid } = resolveTargets(manifest, flags.targets);
+  const { targets, invalid } = resolveTargets(manifest, flags.targets, localCapabilities);
 
   if (invalid.length > 0) {
     console.error(`Hata: ${invalid.length} gecersiz transform target'i:`);
@@ -643,10 +657,10 @@ function main() {
     return;
   }
 
-  // Manifest transform config ile global sabitleri override et
-  if (Array.isArray(manifest?.transform?.skip_paths)) {
-    SKIP_PATHS = manifest.transform.skip_paths.filter(p => typeof p === 'string');
-  }
+  // Manifest transform config ile lokal scope override
+  const localSkipPaths = Array.isArray(manifest?.transform?.skip_paths)
+    ? manifest.transform.skip_paths.filter(p => typeof p === 'string')
+    : DEFAULT_SKIP_PATHS;
 
   const claudeDir = path.join(AGENTBASE_DIR, '.claude');
   const source = parseClaudeOutput(claudeDir);
@@ -656,7 +670,7 @@ function main() {
 
   for (const target of targets) {
     try {
-      const fileMap = transformForTarget(source, target, effectivePathMaps);
+      const fileMap = transformForTarget(source, target, effectivePathMaps, localSkipPaths, localCapabilities);
       const fileCount = Object.keys(fileMap).length;
 
       if (!flags.dryRun) {
@@ -733,6 +747,7 @@ module.exports = {
   loadExternalCapabilities,
   escapeRegex,
   CLI_CAPABILITIES,
+  DEFAULT_SKIP_PATHS,
   PATH_MAPS,
   AGENTBASE_DIR,
 };
