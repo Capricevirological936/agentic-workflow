@@ -18,7 +18,7 @@
 const { execSync, spawnSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
-const { getLatestTag, getCommits: changelogGetCommits } = require('./changelog.js');
+const { getLatestTag } = require('./changelog.js');
 
 const REPO_ROOT = path.resolve(__dirname, '../..');
 const AGENTBASE_DIR = path.resolve(__dirname, '..');
@@ -33,13 +33,26 @@ function runSafe(cmd) {
   try { return run(cmd); } catch { return ''; }
 }
 
+function parseGitLogMessages(raw) {
+  return String(raw || '')
+    .split('\x1e')
+    .map(entry => entry.trim())
+    .filter(Boolean)
+    .map(entry => {
+      const [subject = '', body = ''] = entry.split('\x1f');
+      return [subject.trim(), body.trim()].filter(Boolean).join('\n\n');
+    });
+}
+
 function getCommitMessages(tag) {
-  const commits = changelogGetCommits(tag, null);
-  return commits.map(c => {
-    // detectBump orijinal subject satirina ihtiyac duyar (feat:, fix:, BREAKING vb.)
-    const prefix = c.type !== 'other' ? `${c.type}${c.scope ? `(${c.scope})` : ''}: ` : '';
-    return `${prefix}${c.message}`;
-  });
+  const args = ['log', '--pretty=format:%s%x1f%b%x1e', '--no-merges'];
+  if (tag) {
+    args.push(`${tag}..HEAD`);
+  }
+
+  const result = spawnSync('git', args, { cwd: REPO_ROOT, encoding: 'utf8' });
+  if (result.status !== 0) return [];
+  return parseGitLogMessages(result.stdout);
 }
 
 function detectBump(commits) {
@@ -48,9 +61,14 @@ function detectBump(commits) {
   let hasFix = false;
 
   for (const msg of commits) {
-    if (msg.includes('BREAKING') || msg.includes('!:')) hasBreaking = true;
-    if (msg.startsWith('feat')) hasFeat = true;
-    if (msg.startsWith('fix')) hasFix = true;
+    const message = String(msg || '');
+    const subject = message.split('\n')[0];
+
+    if (/^(\w+(\(.*?\))?!:)/.test(subject) || /^BREAKING(?:[ -]CHANGE)?[\s:]/m.test(message)) {
+      hasBreaking = true;
+    }
+    if (/^feat(\(|:)/.test(subject)) hasFeat = true;
+    if (/^fix(\(|:)/.test(subject)) hasFix = true;
   }
 
   if (hasBreaking) return 'major';
@@ -101,12 +119,43 @@ function extractReleaseNotes(version) {
   if (!fs.existsSync(changelogPath)) return `v${version} release`;
 
   const content = fs.readFileSync(changelogPath, 'utf8');
-  const sectionRegex = new RegExp(`## \\[${version.replace(/\./g, '\\.')}\\][^]*?(?=\\n## \\[|$)`);
+  const escaped = version.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const sectionRegex = new RegExp(`## \\[${escaped}\\][^]*?(?=\\n## \\[|$)`);
   const match = content.match(sectionRegex);
   if (!match) return `v${version} release`;
 
   // Bölüm başlığını çıkar, sadece içeriği al
   return match[0].replace(/^## \[.*?\].*\n+/, '').trim();
+}
+
+/**
+ * package.json, latest tag ve CHANGELOG ust bolumu arasindaki senkronizasyonu dogrular.
+ * Drift varsa detayli hata mesaji doner, senkronse null doner.
+ */
+function validateVersionSync(pkgVersion, latestTag, changelogContent) {
+  const drifts = [];
+  const tagVersion = latestTag ? latestTag.replace(/^v/, '') : null;
+
+  // package.json ve latest tag eslesmeli
+  if (tagVersion && tagVersion !== pkgVersion) {
+    drifts.push(`package.json (${pkgVersion}) != latest tag (${latestTag})`);
+  }
+
+  // CHANGELOG ust released section eslesmeli
+  if (changelogContent) {
+    const topSection = changelogContent.match(/## \[([^\]]+)\]/);
+    if (topSection) {
+      const changelogVersion = topSection[1];
+      if (changelogVersion !== 'Yayınlanmamış' && tagVersion && changelogVersion !== tagVersion) {
+        drifts.push(`CHANGELOG ust bolum (${changelogVersion}) != latest tag (${latestTag})`);
+      }
+      if (changelogVersion !== 'Yayınlanmamış' && changelogVersion !== pkgVersion) {
+        drifts.push(`CHANGELOG ust bolum (${changelogVersion}) != package.json (${pkgVersion})`);
+      }
+    }
+  }
+
+  return drifts.length > 0 ? drifts : null;
 }
 
 function main() {
@@ -125,6 +174,23 @@ function main() {
   const latestTag = getLatestTag();
   console.log(`  Mevcut versiyon: ${currentVersion}`);
   console.log(`  Son tag: ${latestTag || 'yok'}`);
+
+  // 1.5. Versiyon senkronizasyon dogrulamasi
+  const changelogPath = path.join(REPO_ROOT, 'CHANGELOG.md');
+  const changelogContent = fs.existsSync(changelogPath) ? fs.readFileSync(changelogPath, 'utf8') : null;
+  const drifts = validateVersionSync(currentVersion, latestTag, changelogContent);
+  if (drifts) {
+    console.error('');
+    console.error('  VERSIYON DRIFT TESPIT EDILDI:');
+    for (const d of drifts) console.error(`    ! ${d}`);
+    console.error('');
+    if (dryRun) {
+      console.error('  [DRY RUN] Drift raporlandi, devam ediliyor.');
+    } else {
+      console.error('  Duzeltme: package.json version, git tag ve CHANGELOG ust bolumunu senkronlayin.');
+      process.exit(1);
+    }
+  }
 
   // 2. Uncommitted degisiklikler
   if (hasUncommittedChanges()) {
@@ -188,16 +254,16 @@ function main() {
   // 10. GitHub Release olustur (gh CLI varsa)
   // NOT: --notes-file kullanilir — backtick iceren CHANGELOG satirlari
   // --notes ile shell'de komut olarak yorumlanir
+  const notesFile = path.join(REPO_ROOT, '.release-notes.tmp');
   try {
     const notes = extractReleaseNotes(newVersion);
-    const notesFile = path.join(REPO_ROOT, '.release-notes.tmp');
     fs.writeFileSync(notesFile, notes, 'utf8');
     run(`gh release create v${newVersion} --title "v${newVersion}" --notes-file "${notesFile}"`);
-    try { fs.unlinkSync(notesFile); } catch {}
     console.log(`  GitHub Release: v${newVersion}`);
   } catch {
     console.log('  GitHub Release olusturulamadi (gh CLI yok veya auth gerekli)');
-    try { fs.unlinkSync(path.join(REPO_ROOT, '.release-notes.tmp')); } catch {}
+  } finally {
+    try { fs.unlinkSync(notesFile); } catch {}
   }
 
   console.log('');
@@ -210,5 +276,5 @@ function main() {
 if (require.main === module) {
   main();
 } else {
-  module.exports = { detectBump, bumpVersion, extractReleaseNotes };
+  module.exports = { detectBump, bumpVersion, extractReleaseNotes, parseGitLogMessages, validateVersionSync };
 }
