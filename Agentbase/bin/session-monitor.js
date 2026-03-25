@@ -1214,8 +1214,11 @@ module.exports = {
   resetState() {
     viewMode = 'timeline'; detailView = false; showHelp = false;
     showClosed = true; selectedIndex = 0; selectedId = null;
-    cleanedUp = false; renderTimeout = null; lastRender = 0;
-    watcher = null; refreshInterval = null;
+    cleanedUp = false; lastRender = 0;
+    sessions = []; loadMeta = null;
+    if (renderTimeout) { clearTimeout(renderTimeout); renderTimeout = null; }
+    if (watcher) { try { watcher.close(); } catch {} watcher = null; }
+    if (refreshInterval) { clearInterval(refreshInterval); refreshInterval = null; }
   },
 };
 
