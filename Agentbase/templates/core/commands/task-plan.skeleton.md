@@ -3,6 +3,14 @@
 > Codebase'i derinlemesine analiz ederek kaliteli, uygulanabilir gorev olusturur.
 > Kullanim: `/task-plan <istek>`, `/task-plan "login sayfasina remember me ekle"`
 
+**ULTRATHINK MODE — Bu komut maksimum dusunme derinligi ile calisir.**
+
+- ACELE ETME. Her adimda once dusun, sonra hareket et.
+- Yuzeysel analiz YASAK. Varsayimlarini sorgula, alternatiflerini degerlendir.
+- Bir sey "bariz" gorunuyorsa, neden bariz oldugunu kanitla.
+- Ilk aklina gelen cozum muhtemelen eksik — en az 3 alternatif dusun.
+- Bu komut OPUS modeli ile calistirilmalidir. Sonnet ile task-plan calistirmak YASAKTIR.
+
 ---
 
 <!-- GENERATE: CODEBASE_CONTEXT
@@ -25,7 +33,60 @@ Kutsal Kurallar:
 
 ---
 
+## Step 0 — Ultrathink: Derin Dusunme Fazi
+
+**Bu faz ZORUNLUDUR. Atlanamaz. Ciktisi kullaniciya gosterilmez ama tum sonraki adimlari yonlendirir.**
+
+Codebase'e dokunmadan ONCE, sadece dusun:
+
+### 0.1 — Hipotez Uretimi
+
+Istegin en az 3 farkli yorumunu uret:
+- **Hipotez A:** En bariz yorum — kullanici buyuk ihtimalle bunu kastetmistir
+- **Hipotez B:** Alternatif yorum — belki farkli bir aci var
+- **Hipotez C:** En az bariz ama olasi yorum — gozden kacabilecek perspektif
+
+Her hipotez icin: "Bu dogruysa ne yapilmali?" sorusunu cevapla.
+
+### 0.2 — Varsayim Sorgulamasi
+
+Her hipotezdeki gizli varsayimlari cikar ve sorgula:
+- Hangi dosyalarin var oldugunu varsayiyorsun? (henuz dogrulamadin)
+- Hangi pattern'lerin kullanildigini varsayiyorsun? (henuz okumadin)
+- Kullanicinin gercekten ne istedigini varsayiyorsun? (kendi yorumun mu?)
+- Kapsamin ne oldugunu varsayiyorsun? (belirtilmemis sinirlari eklemedin mi?)
+
+### 0.3 — Devil's Advocate
+
+En guclu hipotezi sec, sonra onu kirmaya calis:
+- Bu yaklasimin en buyuk riski ne?
+- Hangi durumda tamamen yanlis olur?
+- Daha basit bir cozum var mi ki karmasikligi gereksiz yere artiriyorsun?
+- Gozden kacirdgin bir bagimlilik veya yan etki var mi?
+
+### 0.4 — Edge Case Taramasi
+
+Sistematik olarak dusun:
+- Bu degisiklik mevcut islevselliMgi kirar mi?
+- Hangi sinir durumlari var?
+- Baska hangi dosyalar dolayli etkilenir?
+- Test edilmesi zor olan bir durum var mi?
+
+### 0.5 — Kapsam Karari
+
+Net bir karar ver ve yazili olarak ifade et:
+- Bu tek bir task mi, yoksa bolunmeli mi?
+- Kapsam cok genis mi? Daraltilmali mi?
+- Kapsam cok dar mi? Genisletilmeli mi?
+- Kesin kapsam tanimi: "[X] yapilacak, [Y] YAPILMAYACAK"
+
+**Step 0 tamamlanmadan sonraki adimlara GECME. Step 0'in ciktilari sonraki adimlarin kalitesini belirler.**
+
+---
+
 ## Step 1 — Istek Analizi
+
+> **DUSUNME KAPISI:** Step 0'daki varsayimlarin hala gecerli mi? Bu adima gecmeden once Step 0'in ciktisini sorgula. Yeni bilgi varsayimlarini degistirdiyse Step 0'a don.
 
 ### 1.1 — Istegi Cozumle
 
@@ -48,6 +109,8 @@ Kullanicinin istegindan asagidakileri cikar:
 ---
 
 ## Step 2 — Derin Analiz
+
+> **DUSUNME KAPISI:** Step 0'daki varsayimlarin hala gecerli mi? Bu adima gecmeden once bir onceki adimin ciktisini sorgula. Yeni bilgi varsayimlarini degistirdiyse Step 0'a don.
 
 ### 2.1 — Dosya Tespiti
 
@@ -94,6 +157,8 @@ Degisikligin etkili oldugu alanlari belirle:
 
 ## Step 3 — Uygulama Plani
 
+> **DUSUNME KAPISI:** Step 0'daki varsayimlarin hala gecerli mi? Bu adima gecmeden once bir onceki adimin ciktisini sorgula. Yeni bilgi varsayimlarini degistirdiyse Step 0'a don.
+
 ### 3.1 — Karmasiklik Puanlama
 
 | Puan | Seviye | Kriter |
@@ -109,8 +174,8 @@ Karmasikliga gore hangi agent modeli kullanilmali:
 
 | Karmasiklik | Onerilen Model | Gerekcesi |
 |---|---|---|
-| 1-3 | Sonnet | Hizli, yeterli, maliyet dusuk |
-| 4-6 | Sonnet | Pattern takibi yeterli, hiz onemli |
+| 1-3 | Opus (minimum) | Planlama kalite-kritik, dusuk karmasiklik bile derin analiz gerektirir |
+| 4-6 | Opus | Pattern takibi + karar verme, kalite oncelikli |
 | 7-8 | Opus | Karmasik karar verme, coklu dosya analizi gerekli |
 | 9-10 | Opus + Teammate | Bolunmus calisma, paralel uygulama |
 
@@ -148,6 +213,8 @@ Karmasiklik 7+ ise gorevi alt gorevlere bol:
 
 ## Step 4 — Kalite Kontrolu
 
+> **DUSUNME KAPISI:** Step 0'daki varsayimlarin hala gecerli mi? Bu adima gecmeden once bir onceki adimin ciktisini sorgula. Yeni bilgi varsayimlarini degistirdiyse Step 0'a don.
+
 ### 4.1 — Gorev Kalite Kontrol Listesi
 
 Gorevi olusturmadan once dogrula:
@@ -172,6 +239,8 @@ Asagidaki anti-pattern'lerden kacin:
 ---
 
 ## Step 5 — Backlog Gorevi Olustur
+
+> **DUSUNME KAPISI:** Step 0'daki varsayimlarin hala gecerli mi? Bu adima gecmeden once bir onceki adimin ciktisini sorgula. Yeni bilgi varsayimlarini degistirdiyse Step 0'a don.
 
 ### 5.1 — Kabul Kriterleri Sablonlari
 
@@ -292,6 +361,8 @@ backlog task create "feat: Order listesi frontend sayfasi (#ana_gorev)" --priori
 ---
 
 ## Step 6 — Kullanici Raporu
+
+> **DUSUNME KAPISI:** Step 0'daki varsayimlarin hala gecerli mi? Bu adima gecmeden once bir onceki adimin ciktisini sorgula. Yeni bilgi varsayimlarini degistirdiyse Step 0'a don.
 
 ```
 ## Gorev Plani Raporu
