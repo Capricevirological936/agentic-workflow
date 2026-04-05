@@ -93,6 +93,9 @@ Agentbase/backlog/
 # Docbase/superpowers/                      ← Spec ve plan dokumanlari
 # ─────────────────────────────────────────────────────
 
+# Superpowers docs (spec/plan dosyalari — lokal gelistirme icin, repoya GIRMEZ)
+/docs/
+
 # Test ortami (bootstrap test icin kullanilir, icerik ignore)
 test/*
 !test/.gitkeep
